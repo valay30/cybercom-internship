@@ -1,0 +1,76 @@
+body {
+  background-color: linen;
+  text-align: center;
+}
+
+#title1 {
+  color: maroon;
+  text-align: center;
+}
+
+h1 {
+  text-align: center;
+}
+
+#target {
+  text-align: center;
+}
+
+
+iframe{
+    width: 500px;
+    height: 200px;
+}
+
+.navbar {
+  background-color: #111;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  position: relative;
+  padding: 5px 0;
+  transition: color 0.3s ease;
+}
+
+.navbar a::after {
+  content: "";
+  position: absolute;
+  width: 0%;
+  height: 2px;
+  left: 0;
+  bottom: 0;
+  background-color: maroon;
+  transition: width 0.3s ease;
+}
+
+.navbar a:hover {
+  color: maroon;
+}
+
+.navbar a:hover::after {
+  width: 100%;
+}
+
+.button {
+    background: maroon;
+    color: white;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.button:hover {
+    box-shadow: 0 12px 20px rgba(0, 123, 255, 0.5);
+}

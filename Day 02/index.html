@@ -5,28 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Day 02</title>
-    <style>
-        body {
-            background-color: linen;
-            text-align: center;
-        }
-
-        #title1 {
-            color: maroon;
-            text-align: center;
-        }
-
-        h1 {
-            text-align: center;
-        }
-
-        #target {
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+    <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="services.html">Services</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+
+
     <h1 id="title1">Cybercom Creation</h1>
     <h2 style="text-align: center;">Day 02</h2>
     <hr>
@@ -39,7 +29,7 @@
     <p>Small : <small>Example of smaller text</small></p>
     <p>Mark : <mark>Important / Highlight</mark></p>
     <p>Del Tag: <del>ABCD</del></p>
-    <p>Ins Tag: <ins>red</ins>.</p>
+    <p>Ins Tag: <ins>EFGH</ins>.</p>
     <hr>
     <p>Subscript tex: H<sub>2</sub>O</p>
     <p>Superscript text: 4<sup>2</sup></p>
@@ -53,15 +43,16 @@
     </a>
 
     <br> <br>
-    <a href="mailto:patelvalay308@gmail.com">Send email</a>
+    <a href="mailto:patelvalay308@gmail.com" class="button">Send Email</a> <br><br><br>
     <a href="tel:+928200321064">+92 8200321064</a>
 
+    <hr>
     <h2 id="target">Target Attribute</h2>
     <a href="https://www.cybercom.co.in/" target="_blank"> _black : Cybercom Creation</a>
     <br><br>
-    <a href="page2.html" target="_self"> _self : Page2</a>
+    <a href="about.html" target="_self"> _self : About</a>
     <br><br>
-    <a href="page2.html" target="_top"> _top : Page2</a>
+    <a href="about.html" target="_top"> _top : About</a>
     <br><br>
     <iframe src="about.html" frameborder="0" style="border: 3px solid black;"></iframe>
     <br><br>
@@ -74,20 +65,18 @@
     <p><a href="https://www.amazon.com/">Amazon</a></p>
 
     <h2>Relative URLs</h2>
-    <p><a href="page2.html">Page2</a></p>
+    <p><a href="about.html">About</a></p>
+    <p><a href="services.html">Service</a></p>
 
     <hr>
     <h1>Comment</h1>
     <!-- This is comment -->
-    <p>Inline comment <!--ABCD--></p>
+    <p>Inline comment : <!--ABCD--></p>
 
     <hr>
-    <h1>Multipage Website Navigation</h1>
-    
-    <a href="index.html">Home</a> 
-    <a href="about.html">About</a> 
-    <a href="services.html">Services</a> 
-    <a href="contact.html">Contact</a>
+
+
+
 
 
 </body>
