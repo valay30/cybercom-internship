@@ -8,8 +8,6 @@
 body {
     background: #f5f5f5;
     color: #333;
-     height: 100%;
-    margin: 0;
 }
 
 .navbar {
@@ -156,7 +154,6 @@ body {
     background: #f9f9f9;
     padding: 30px;
     border-radius: 15px;
-    /* display: inline-block; */
     box-shadow: 0 6px 15px rgba(0,0,0,0.08);
 }
 
@@ -192,7 +189,6 @@ body {
     color: #007bff;
 }
 
-/* CONTACT PAGE */
 .contact-page {
     text-align: center;
 }
@@ -202,7 +198,6 @@ body {
     margin: 10px 0 30px;
     color: #555;
 }
-
 
 .contact-form {
     max-width: 500px;
