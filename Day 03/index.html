@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Day 03</title>
+    <title>Product</title>
+    <link rel="icon" type="image/x-icon" href="/Day 03/images/cart.png">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -28,6 +29,7 @@
                 <th>Product Name</th>
                 <th>Features</th>
                 <th>Price</th>
+                <th>Quantity</th>
                 <th>Availability</th>
             </tr>
         </thead>
@@ -41,9 +43,11 @@
                         <li>M4 Chip</li>
                         <li>10 hours Battery Life</li>
                         <li>16GB Ram</li>
+                        <li>Sleek and elegant design</li>
                     </ul>
                 </td>
-                <td>₹60,000</td>
+                <td class="price">₹60,000</td>
+                <td><input type="number" class="quantity" value="10" min="1" max="100"></td>
                 <td><select class="availability">
                         <option value="in-stock">In Stock</option>
                         <option value="out-of-stock">Out of Stock</option>
@@ -59,9 +63,11 @@
                         <li>Snapdragon 8 Elite</li>
                         <li>5000mAh Battery</li>
                         <li>12GB RAM</li>
+                        <li>120Hz Display</li>
                     </ul>
                 </td>
-                <td>₹75,000</td>
+                <td class="price">₹75,000</td>
+                <td><input type="number" class="quantity" value="5" min="1" max="100"></td>
                 <td><select class="availability">
                         <option value="in-stock">In Stock</option>
                         <option value="out-of-stock">Out of Stock</option>
@@ -77,9 +83,11 @@
                         <li>Active Noise Cancellation</li>
                         <li>40mm Drivers</li>
                         <li>20 Hours Battery Life</li>
+                        <li>Wireless Connection</li>
                     </ul>
                 </td>
-                <td>₹3,000</td>
+                <td class="price">₹3,000</td>
+                <td><input type="number" class="quantity" value="12" min="1" max="100"></td>
                 <td><select class="availability">
                         <option value="in-stock">In Stock</option>
                         <option value="out-of-stock">Out of Stock</option>
@@ -94,10 +102,12 @@
                         <li>Apple M3 Chip</li>
                         <li>24-inch Retina Display</li>
                         <li>16GB RAM</li>
+                        <li>4.5K Retina Display</li>
                     </ul>
 
                 </td>
-                <td>₹1,00,000</td>
+                <td class="price">₹1,00,000</td>
+                <td><input type="number" class="quantity" value="3" min="1" max="100"></td>
                 <td><select class="availability">
                         <option value="in-stock">In Stock</option>
                         <option value="out-of-stock">Out of Stock</option>
@@ -116,7 +126,28 @@
                     </ul>
 
                 </td>
-                <td>₹70,000</td>
+                <td class="price">₹70,000</td>
+                <td><input type="number" class="quantity" value="10" min="1" max="100"></td>
+                <td><select class="availability">
+                        <option value="in-stock">In Stock</option>
+                        <option value="out-of-stock">Out of Stock</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><img src="images/ps5.jpg" alt="PS5"></td>
+                <td>Playstation 5</td>
+                <td>
+                    <ul>
+                        <li>4K Gaming Support</li>
+                        <li>DualSense Wireless Controller</li>
+                        <li>Ultra High Speed SSD</li>
+                        <li>Highend Processor</li>
+                    </ul>
+
+                </td>
+                <td class="price">₹50,000</td>
+                <td><input type="number" class="quantity" value="7" min="1" max="100"></td>
                 <td><select class="availability">
                         <option value="in-stock">In Stock</option>
                         <option value="out-of-stock">Out of Stock</option>

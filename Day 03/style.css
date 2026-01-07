@@ -147,3 +147,29 @@ body {
     border: 1px solid white;
     cursor: pointer;
 }
+.price {
+    font-weight: bold;
+    font-size: 18px;
+    color: #e31313;
+}
+
+
+.quantity {
+    background-color: black;
+    font-size: 17px;
+    text-align: center;
+    display: inline-block;
+    padding: 10px 14px;
+    color: white;
+    border-radius: 25px;
+    appearance: none;
+    width: 80%;
+    border: 1px solid white;
+    cursor: pointer;
+}
+
+.quantity::-webkit-outer-spin-button,
+.quantity::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
