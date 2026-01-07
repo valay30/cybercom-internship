@@ -239,3 +239,54 @@ body {
     border: none;
     cursor: pointer;
 }
+
+
+
+
+.page-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex: 1;
+}
+
+
+.skills-page {
+    text-align: center;
+}
+
+.skills-page h1 {
+    font-size: 38px;
+    margin-bottom: 10px;
+}
+
+.skills-intro {
+    font-size: 18px;
+    margin-bottom: 40px;
+    color: #555;
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 25px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.skill-card {
+    background: #f2f2f2;
+    padding: 20px 10px;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: 500;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+}
+
+.skill-card:hover {
+    background: #000;
+    color: #fff;
+}
