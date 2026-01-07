@@ -192,54 +192,6 @@ body {
     color: #007bff;
 }
 
-
-
-/* SKILLS PAGE */
-.skills-page {
-    text-align: center;
-}
-
-.skills-intro {
-    font-size: 18px;
-    margin: 15px 0 30px;
-    color: #555;
-}
-
-/* GRID */
-.skills-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 25px;
-    margin-top: 20px;
-}
-
-/* SKILL CARD */
-.skill-card {
-    background: #f2f2f2;
-    padding: 20px;
-    border-radius: 30px;
-    font-size: 18px;
-    font-weight: 500;
-    box-shadow: 0 6px 12px rgba(0,0,0,0.08);
-    transition: transform 0.3s ease, background 0.3s ease;
-}
-
-.skill-card:hover {
-    transform: translateY(-6px);
-    background: #007bff;
-    color: white;
-}
-
-.page-wrapper {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.content {
-    flex: 1; 
-}
-
 /* CONTACT PAGE */
 .contact-page {
     text-align: center;
@@ -251,7 +203,7 @@ body {
     color: #555;
 }
 
-/* FORM */
+
 .contact-form {
     max-width: 500px;
     margin: auto;
@@ -287,7 +239,6 @@ body {
     border-color: #007bff;
 }
 
-/* BUTTON */
 .contact-form .btn {
     width: 100%;
     border: none;
