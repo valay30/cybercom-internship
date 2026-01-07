@@ -1,13 +1,24 @@
 body {
   background-color: rgb(162, 113, 65);
-  text-align: center;
   color: white;
 }
 
 #title1 {
-  /* text-align: center; */
+  text-align: center;
+}
+
+#title2 {
+  text-align: center;
 }
 
 h1 {
-  /* text-align: center; */
+  text-align: center;
 }
+
+#logo{
+  display: block;
+  margin: 0 auto;
+  width: 200px;
+  height: auto;
+}
+
