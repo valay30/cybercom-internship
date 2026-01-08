@@ -9,11 +9,70 @@
 </head>
 
 <body>
-    <div style="background-color:black;color:white;padding:20px;">
-        <h2>London</h2>
-        <p>London is the capital city of England. It is the most populous city in the United Kingdom, with a
-            metropolitan area of over 13 million inhabitants.</p>
-    </div>
+
+    <h1 id="title">Cybercom Creation</h1>
+    <h2 id="title2">Registration Form</h2>
+    <hr><br>
+
+    <form>
+        <section>
+            <div id="genInfo">
+                <h2>General Information</h2><br>
+
+                <label for="fname">First Name:</label>
+                <input type="text" id="fname" required placeholder="Enter your first name"><br><br>
+
+                <label for="lname">Last Name:</label>
+                <input type="text" id="lname" required placeholder="Enter your last name"><br><br>
+
+                <label for="email">Email Id:</label>
+                <input type="email" id="email" required placeholder="Enter email"><br><br>
+
+                <label for="age">Age:</label>
+                <input type="number" id="age" min="1" max="100"><br><br>
+
+                <label>Gender:</label>
+                <input type="radio" name="gender" required> Male
+                <input type="radio" name="gender"> Female<br><br>
+
+                <label>Qualification:</label>
+                <input type="checkbox"> SSC
+                <input type="checkbox"> HSC
+                <input type="checkbox"> Graduation<br><br>
+            </div>
+
+            <div id="conInfo">
+                <h2>Contact Information</h2><br>
+
+                <label for="number">Mobile Number:</label>
+                <input type="tel" id="number" pattern="[0-9]{10}" required placeholder="9999999999"><br><br>
+
+                <label>Address:</label><br>
+                <textarea rows="4" cols="30" placeholder="Enter Address"></textarea>
+
+                <label for="nationality">Nationality:</label>
+                <select name="nationality" id="nationality">
+                    <option value="Indian">Indian</option>
+                    <option value="American">American</option>
+                    <option value="Australian">Australian</option>
+                    <option value="Canadian">Canadian</option>
+                    <option value="French">French</option>
+                    <option value="German">German</option>
+                </select>
+                <label for="password">Password:</label>
+                <input type="password" required>
+            </div>
+
+        </section>
+
+        <br>
+
+        <section id="subButton">
+            <input type="submit" value="Register">
+        </section>
+
+    </form>
+
 </body>
 
 </html>
