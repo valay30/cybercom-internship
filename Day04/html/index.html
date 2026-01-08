@@ -10,45 +10,49 @@
 
 <body>
 
-    <h1 id="title">Cybercom Creation</h1>
-    <h2 id="title2">Registration Form</h2>
-    <hr><br>
+    <header>
+        <h1 id="title">Cybercom Creation</h1>
+        <h2 id="title2">Registration Form</h2>
+    </header>
 
     <form>
         <section>
             <div id="genInfo">
-                <h2>General Information</h2><br>
+                <h2>General Information</h2>
 
                 <label for="fname">First Name:</label>
-                <input type="text" id="fname" required placeholder="Enter your first name"><br><br>
+                <input type="text" id="fname" name="fname" required placeholder="Enter your first name">
 
                 <label for="lname">Last Name:</label>
-                <input type="text" id="lname" required placeholder="Enter your last name"><br><br>
+                <input type="text" id="lname" name="lname" required placeholder="Enter your last name">
 
                 <label for="email">Email Id:</label>
-                <input type="email" id="email" required placeholder="Enter email"><br><br>
+                <input type="email" id="email" required placeholder="Enter your email id">
 
                 <label for="age">Age:</label>
-                <input type="number" id="age" min="1" max="100"><br><br>
+                <input type="number" id="age" min="1" max="100">
 
-                <label>Gender:</label>
-                <input type="radio" name="gender" required> Male
-                <input type="radio" name="gender"> Female<br><br>
+                <label for="dob">Date of Birth</label>
+                <input type="date" name="dob" id="dob">
+
+                <label for="gender">Gender:</label>
+                <input type="radio" name="gender" value="Male"> Male
+                <input type="radio" name="gender" value="Female"> Female
 
                 <label>Qualification:</label>
                 <input type="checkbox"> SSC
                 <input type="checkbox"> HSC
-                <input type="checkbox"> Graduation<br><br>
+                <input type="checkbox"> Graduation
             </div>
 
             <div id="conInfo">
-                <h2>Contact Information</h2><br>
+                <h2>Contact Information</h2>
 
                 <label for="number">Mobile Number:</label>
-                <input type="tel" id="number" pattern="[0-9]{10}" required placeholder="9999999999"><br><br>
+                <input type="tel" id="number" required placeholder="9999999999">
 
-                <label>Address:</label><br>
-                <textarea rows="4" cols="30" placeholder="Enter Address"></textarea>
+                <label for="Address">Address:</label>
+                <textarea rows="1" cols="30" id="Address" placeholder="Enter Address"></textarea>
 
                 <label for="nationality">Nationality:</label>
                 <select name="nationality" id="nationality">
@@ -60,15 +64,14 @@
                     <option value="German">German</option>
                 </select>
                 <label for="password">Password:</label>
-                <input type="password" required>
+                <input type="password" id="password" required>
             </div>
 
         </section>
 
-        <br>
-
         <section id="subButton">
             <input type="submit" value="Register">
+            <a href="login.html" id="logBtn">Login</a>
         </section>
 
     </form>
