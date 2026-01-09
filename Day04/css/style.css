@@ -30,6 +30,7 @@ header{
     letter-spacing: 2px;
 }
 
+/* Form CSS */
 form{
     background: #ffffff;
     padding: 30px;
@@ -45,6 +46,7 @@ section {
     margin-bottom: 20px;
 }
 
+/*Information Section CSS */
 #genInfo, #conInfo {
     width: 50%;
 }
@@ -64,6 +66,7 @@ label {
     font-weight: bold;
 }
 
+/* Input Tag CSS */
 input[type="text"],
 input[type="email"],
 input[type="number"],
@@ -79,11 +82,13 @@ input[type="date"] {
     font-size: 14px;
 }
 
+/* Radio button & Checkbox */
 input[type="radio"],
 input[type="checkbox"] {
     margin: 6px 6px 15px;
 }
 
+/*Submit Button*/
 #subButton {
     display: flex;
     justify-content: center;

@@ -21,6 +21,7 @@ iframe{
     height: 200px;
 }
 
+/* Navbar */
 .navbar {
   background-color: #111;
   padding: 15px 30px;
@@ -56,6 +57,7 @@ iframe{
   width: 100%;
 }
 
+
 .button {
     background: maroon;
     color: white;
@@ -71,4 +73,9 @@ iframe{
 
 .button:hover {
     box-shadow: 0 12px 20px rgba(0, 123, 255, 0.5);
+}
+
+table, th, td {
+  border: 1px solid rgb(0, 0, 0);
+  border-collapse: collapse;
 }
