@@ -13,12 +13,12 @@ console.log(person1);
 
 let abc = 5;
 console.log(abc);
-if (abc <10) {
-    let abc = 10;
-    console.log(abc);
+if (abc < 10) {
+  let abc = 10;
+  console.log(abc);
 } else {
-    let abc = 0;
-    console.log(abc);
+  let abc = 0;
+  console.log(abc);
 }
 
 function myFunction() {
@@ -60,13 +60,13 @@ let data = null;
 let bigNumber = 12345678901234567890n;
 
 //Object
-const phone = {company:"Apple", camera:50};
+const phone = { company: "Apple", camera: 50 };
 console.log(phone.company);
 console.log(phone.camera);
 
 //Symbol
 const xyz = Symbol();
-console.log(typeof xyz); 
+console.log(typeof xyz);
 
 console.log(typeof marks);
 console.log(typeof name);
@@ -75,16 +75,16 @@ console.log(typeof isLoggedIn);
 console.log(typeof bigNumber);
 console.log(typeof data);
 
-console.log(typeof 0)              
+console.log(typeof 0)
 console.log(typeof "314")
 
 
 let b = -1;
 
 if (b === 0) {
-    console.error("Division by zero");
-  }
+  console.error("Division by zero");
+}
 
-  if (b < 0) {
-    console.warn("Negative divisor");
-  }
+if (b < 0) {
+  console.warn("Negative divisor");
+}
