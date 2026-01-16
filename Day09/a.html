@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Complete DOM</title>
+
+  <style>
+
+    .box {
+      padding: 15px;
+      margin: 10px 0;
+      background: #f2f2f2;
+      cursor: pointer;
+    }
+
+    .highlight {
+      background: lightcoral;
+      color: white;
+    }
+
+    button {
+      margin: 5px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+
+    input {
+      padding: 6px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="mainTitle">DOM </h1>
+  <p id="info">Learning DOM</p>
+
+  <div class="box">Click Me (Box 1)</div>
+  <div class="box">Click Me (Box 2)</div>
+
+  <button id="textBtn">Change Title Text</button>
+  <button id="styleBtn">Change Style</button>
+  <button id="addBtn">Add Item</button>
+
+  <br><br>
+
+  <input id="nameInput" placeholder="Type your name">
+  <p id="output"></p>
+
+  <ul id="list"></ul>
+
+  <script>
+
+    // document is the root of the DOM tree
+    console.log(document);
+    console.log(document.body);
+    console.log(document.title); 
+
+    // ELEMENT SELECTION
+
+    // Select by ID
+    const title = document.getElementById("mainTitle");
+    const info = document.getElementById("info");
+
+    // Select by Class
+    const boxesHTML = document.getElementsByClassName("box");
+
+
+    const firstBox = document.querySelector(".box");
+    const allBoxes = document.querySelectorAll(".box");
+
+    console.log(firstBox);
+    console.log(allBoxes);
+    
+
+    //EVENTS
+
+    // Click event on button
+    document.getElementById("textBtn").addEventListener("click", () => {
+      title.textContent = "Title Updated Using DOM";
+    });
+
+    // Change style dynamically
+    document.getElementById("styleBtn").addEventListener("click", () => {
+      title.style.color = "blue";
+      title.style.backgroundColor = "lightyellow";
+    });
+
+    // Event on multiple elements
+    allBoxes.forEach((box) => {
+      box.addEventListener("click", () => {
+        box.classList.toggle("highlight");
+      });
+    });
+
+    /* ====================================
+       4️⃣ DYNAMIC UI UPDATES
+       ==================================== */
+
+    // Add elements dynamically
+    document.getElementById("addBtn").addEventListener("click", () => {
+      const li = document.createElement("li");
+      li.textContent = "Item added at " + new Date().toLocaleTimeString();
+      document.getElementById("list").appendChild(li);
+    });
+
+    // Live input handling
+    document.getElementById("nameInput").addEventListener("input", (e) => {
+      document.getElementById("output").textContent =
+        "Hello, " + e.target.value;
+    });
+
+    /* ====================================
+       5️⃣ DOM TRAVERSAL (EXTRA)
+       ==================================== */
+
+    console.log(firstBox.parentElement);
+    console.log(firstBox.nextElementSibling);
+    console.log(document.getElementById("list").children);
+
+    /* ====================================
+       6️⃣ REMOVE ELEMENT
+       ==================================== */
+
+    // Remove item when clicked
+    document.getElementById("list").addEventListener("click", (e) => {
+      if (e.target.tagName === "LI") {
+        e.target.remove();
+      }
+    });
+
+    /* ====================================
+       7️⃣ CLASS LIST METHODS
+       ==================================== */
+
+    title.classList.add("highlight");
+    setTimeout(() => title.classList.remove("highlight"), 1500);
+
+  </script>
+
+</body>
+</html>
