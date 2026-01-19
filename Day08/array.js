@@ -59,7 +59,6 @@ const spliced = months.toSpliced(0, 1);
 console.log(spliced);
 
 
-
 console.log(" ");
 const fruits = ["Banana", "Orange", "Apple", "Mango"];
 console.log(fruits.sort());
