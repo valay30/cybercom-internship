@@ -34,13 +34,11 @@ iframe{
   color: white;
   text-decoration: none;
   font-size: 18px;
-  position: relative;
   padding: 5px 0;
 }
 
 .navbar a::after {
   content: "";
-  position: absolute;
   width: 0%;
   height: 2px;
   left: 0;
@@ -57,7 +55,6 @@ iframe{
   width: 100%;
 }
 
-
 .button {
     background: maroon;
     color: white;
@@ -71,9 +68,6 @@ iframe{
     text-decoration: none;
 }
 
-.button:hover {
-    box-shadow: 0 12px 20px rgba(0, 123, 255, 0.5);
-}
 
 table, th, td {
   border: 1px solid rgb(0, 0, 0);

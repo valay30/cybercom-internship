@@ -51,18 +51,14 @@
 
   <script>
 
-    // document is the root of the DOM tree
     console.log(document);
     console.log(document.body);
     console.log(document.title); 
-
-    // ELEMENT SELECTION
 
     // Select by ID
     const title = document.getElementById("mainTitle");
     const info = document.getElementById("info");
 
-    // Select by Class
     const boxesHTML = document.getElementsByClassName("box");
 
 
@@ -75,27 +71,22 @@
 
     //EVENTS
 
-    // Click event on button
     document.getElementById("textBtn").addEventListener("click", () => {
       title.textContent = "Title Updated Using DOM";
     });
 
-    // Change style dynamically
     document.getElementById("styleBtn").addEventListener("click", () => {
       title.style.color = "blue";
       title.style.backgroundColor = "lightyellow";
     });
 
-    // Event on multiple elements
+
     allBoxes.forEach((box) => {
       box.addEventListener("click", () => {
         box.classList.toggle("highlight");
       });
     });
 
-    /* ====================================
-       4️⃣ DYNAMIC UI UPDATES
-       ==================================== */
 
     // Add elements dynamically
     document.getElementById("addBtn").addEventListener("click", () => {
@@ -110,17 +101,10 @@
         "Hello, " + e.target.value;
     });
 
-    /* ====================================
-       5️⃣ DOM TRAVERSAL (EXTRA)
-       ==================================== */
 
     console.log(firstBox.parentElement);
     console.log(firstBox.nextElementSibling);
     console.log(document.getElementById("list").children);
-
-    /* ====================================
-       6️⃣ REMOVE ELEMENT
-       ==================================== */
 
     // Remove item when clicked
     document.getElementById("list").addEventListener("click", (e) => {
@@ -128,13 +112,6 @@
         e.target.remove();
       }
     });
-
-    /* ====================================
-       7️⃣ CLASS LIST METHODS
-       ==================================== */
-
-    title.classList.add("highlight");
-    setTimeout(() => title.classList.remove("highlight"), 1500);
 
   </script>
 

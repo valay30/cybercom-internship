@@ -2,13 +2,10 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  color: white;
+  color: rgb(0, 0, 0);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-body {
-  background-color: black;
-}
 
 .navbar {
   display: flex;
@@ -16,7 +13,7 @@ body {
   align-items: center;
   padding: 18px 40px;
 
-  background-color: #111;
+  background-color: #50738d;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -57,7 +54,6 @@ body {
   padding: 18px;
   font-size: 18px;
   letter-spacing: 0.5px;
-  background-color: #222;
   border: 1px solid #444;
 }
 
@@ -70,7 +66,7 @@ body {
 }
 
 .product_table tbody tr:hover {
-  background-color: #141414;
+  background-color: #7a4646;
   transition: background 0.3s ease;
 }
 
@@ -135,7 +131,7 @@ body {
 }
 
 .availability{
-    background-color: black;
+    background-color: #50738d;
     font-size: 17px;
     text-align: center;
     display: inline-block;
@@ -154,7 +150,7 @@ body {
 
 
 .quantity {
-    background-color: black;
+    background-color: #50738d;
     font-size: 17px;
     text-align: center;
     display: inline-block;
@@ -167,8 +163,3 @@ body {
     cursor: pointer;
 }
 
-.quantity::-webkit-outer-spin-button,
-.quantity::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
