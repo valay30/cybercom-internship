@@ -86,7 +86,7 @@ const Renderer = {
         });
     },
 
-    renderDashboard(state) {
+renderDashboard(state) {
         this.headerActions.innerHTML = '';
         const activeCount = state.interns.filter(i => i.status === 'ACTIVE').length;
         const openTasks = state.tasks.filter(t => t.status !== 'COMPLETED').length;
@@ -97,18 +97,43 @@ const Renderer = {
             const myTasks = state.tasks.filter(t => t.assignedTo === state.user.internId && t.status !== 'COMPLETED');
             const myHours = myTasks.reduce((sum, t) => sum + (parseFloat(t.estTime) || 0), 0);
 
+            // NEW: Calculate Skill Gaps
+            const mySkills = currentIntern?.skills || [];
+            const requiredByAssigned = myTasks.flatMap(t => t.requiredSkills || []);
+            const skillGaps = [...new Set(requiredByAssigned.filter(s => !mySkills.includes(s)))];
+
             this.viewContainer.innerHTML = `
                 <div style="background: linear-gradient(to right, #2563eb, #4338ca); color: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 20px rgba(37,99,235,0.2); margin-bottom: 32px;">
                     <h1 style="font-size: 2rem; margin-bottom: 8px;">Hello, ${currentIntern ? currentIntern.name : 'Intern'}!</h1>
-                    <p style="opacity: 0.9;">You have <strong>${myTasks.length}</strong> active tasks, totaling <strong>${myHours} hours</strong> of work.</p>
+                    <p style="opacity: 0.9;">You have <strong>${myTasks.length}</strong> active tasks, totaling <strong>${myHours} hours</strong>.</p>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Active Profile</div>
-                    <div style="font-size: 1rem; font-weight: 600;">ID: <span class="text-mono">${state.user.internId || 'No Record'}</span></div>
-                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Email: ${currentIntern ? currentIntern.email : 'N/A'}</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Active Profile</div>
+                        <div style="font-size: 1rem; font-weight: 600;">ID: <span class="text-mono">${state.user.internId || 'No Record'}</span></div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Email: ${currentIntern ? currentIntern.email : 'N/A'}</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-label">Skills to Improve</div>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px;">
+                            ${skillGaps.length > 0 
+                                ? skillGaps.map(s => `<span class="badge" style="background:#fee2e2; color:#991b1b;">${s}</span>`).join('') 
+                                : '<span style="font-size: 0.8rem; color: var(--success);">All skills up to date!</span>'}
+                        </div>
+                    </div>
                 </div>
             `;
         } else {
+            // NEW: Manager Analytics - Skill Distribution
+            const skillCounts = {};
+            state.interns.forEach(i => {
+                (i.skills || []).forEach(skill => {
+                    skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+                });
+            });
+
             this.viewContainer.innerHTML = `
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -122,6 +147,18 @@ const Renderer = {
                     <div class="stat-card highlight">
                         <div class="stat-label" style="color: var(--primary);">Total Project Hours</div>
                         <div class="stat-value">${totalEstimatedHours}h</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="margin-top: 24px;">
+                    <div class="stat-label">Team Skill Distribution</div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px;">
+                        ${Object.entries(skillCounts).map(([skill, count]) => `
+                            <div style="background: #f1f5f9; padding: 12px; border-radius: 12px; flex: 1; min-width: 120px; text-align: center;">
+                                <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary);">${count}</div>
+                                <div style="font-size: 0.65rem; text-transform: uppercase; font-weight: bold; color: var(--text-muted);">${skill}</div>
+                            </div>
+                        `).join('') || '<p style="color: var(--text-muted); font-size: 0.875rem;">No skills logged yet.</p>'}
                     </div>
                 </div>
             `;
