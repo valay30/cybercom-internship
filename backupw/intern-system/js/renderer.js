@@ -200,22 +200,18 @@ const Renderer = {
                     <div style="grid-column: 1/-1; padding: 60px; text-align: center; background: white; border: 2px dashed var(--border-color); border-radius: 20px; color: var(--text-muted);">
                         No tasks available in this view.
                     </div>
-                ` : tasksToShow.map(t => {
-                    // Logic: Check if task is blocked by unfinished dependencies
-                    const isBlocked = t.status === 'BLOCKED' || !RulesEngine.areDependenciesResolved(t.id, state.tasks);
-                    
-                    return `
-                    <div class="task-card ${isBlocked ? 'task-blocked' : ''}">
+                ` : tasksToShow.map(t => `
+                    <div class="task-card">
                         <div class="flex-between">
                             <h4 style="font-weight: 800; line-height: 1.2;">${t.title}</h4>
                             <span class="badge text-mono" style="font-size: 0.6rem;">${t.id}</span>
                         </div>
                         <p style="font-size: 0.75rem; color: var(--text-muted); min-height: 40px;">${t.description || 'No description provided.'}</p>
                         
-                        <div class="mt-2">
-                            <div class="stat-label" style="font-size: 0.6rem; margin-bottom: 4px;">Dependencies</div>
+                        <div>
+                            <div class="stat-label" style="font-size: 0.6rem; margin-bottom: 4px;">Required Skills</div>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                ${(t.dependencies || []).map(depId => `<span class="badge" style="background: #fee2e2; color: #991b1b;">${depId}</span>`).join('') || '<span class="badge">None</span>'}
+                                ${(t.requiredSkills || []).map(s => `<span class="badge" style="background: #eff6ff; color: #1e61eb; font-weight: 600;">${s}</span>`).join('') || '<span class="badge">None</span>'}
                             </div>
                         </div>
 
@@ -230,26 +226,17 @@ const Renderer = {
 
                         <div class="flex-between gap-2 mt-4">
                             ${t.status !== 'COMPLETED' ? `
-                                ${!t.assignedTo && canAssign && !isBlocked ? `<button class="btn btn-dark assign-task-btn" style="flex: 1; font-size: 0.65rem;" data-id="${t.id}">Assign</button>` : ''}
-                                <button class="btn btn-success complete-task-btn" 
-                                    style="flex: 1; font-size: 0.65rem;" 
-                                    data-id="${t.id}"
-                                    ${isBlocked ? 'disabled title="Unresolved dependencies"' : ''}>
-                                    Mark Done
-                                </button>
+                                ${!t.assignedTo && canAssign ? `<button class="btn btn-dark assign-task-btn" style="flex: 1; font-size: 0.65rem;" data-id="${t.id}">Assign</button>` : ''}
+                                <button class="btn btn-success complete-task-btn" style="flex: 1; font-size: 0.65rem;" data-id="${t.id}">Mark Done</button>
                             ` : `<div style="flex: 1; padding: 8px; background: #f8fafc; text-align: center; border-radius: 8px; font-size: 0.65rem; color: #94a3b8; font-weight: bold;">Completed</div>`}
                         </div>
                     </div>
-                `}).join('')}
+                `).join('')}
             </div>
         `;
 
         if (canCreate) document.getElementById('create-task-btn').onclick = () => this.showTaskModal();
-        document.querySelectorAll('.complete-task-btn').forEach(btn => {
-            btn.onclick = () => {
-                if (!btn.disabled) FakeServer.completeTask(btn.dataset.id);
-            };
-        });
+        document.querySelectorAll('.complete-task-btn').forEach(btn => btn.onclick = () => FakeServer.completeTask(btn.dataset.id));
         document.querySelectorAll('.assign-task-btn').forEach(btn => btn.onclick = () => this.showAssignModal(btn.dataset.id));
     },
 
@@ -287,11 +274,11 @@ const Renderer = {
             <form id="intern-form">
                 <div class="form-group">
                     <label>Full Name</label>
-                    <input type="text" name="name" required class="form-control" placeholder="e.g. Valay Patel">
+                    <input type="text" name="name" required class="form-control" placeholder="e.g. Alex Johnson">
                 </div>
                 <div class="form-group">
                     <label>Email ID</label>
-                    <input type="email" name="email" required class="form-control" placeholder="valay@gmail.com">
+                    <input type="email" name="email" required class="form-control" placeholder="alex@company.com">
                 </div>
                 <div class="form-group">
                     <label>Skills (comma separated)</label>
@@ -322,8 +309,6 @@ const Renderer = {
 
     showTaskModal() {
         this.modalPortal.classList.remove('hidden');
-        const tasks = State.data.tasks;
-
         this.modalBody.innerHTML = `
             <h3 style="font-weight: 800; margin-bottom: 24px;">Define New Task</h3>
             <form id="task-form">
@@ -333,13 +318,11 @@ const Renderer = {
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea name="description" class="form-control" style="height: 60px; resize: none;" placeholder="Requirements..."></textarea>
+                    <textarea name="description" class="form-control" style="height: 80px; resize: none;" placeholder="Requirements and context..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Dependencies (Select multiple with Ctrl/Cmd)</label>
-                    <select name="dependencies" multiple class="form-control" style="height: 80px;">
-                        ${tasks.map(t => `<option value="${t.id}">${t.id}: ${t.title}</option>`).join('')}
-                    </select>
+                    <label>Required Skills (comma separated)</label>
+                    <input type="text" name="requiredSkills" class="form-control" placeholder="e.g. React, CSS">
                 </div>
                 <div class="form-group">
                     <label>Est. Time (Hours)</label>
@@ -352,22 +335,16 @@ const Renderer = {
             </form>
         `;
         const form = document.getElementById('task-form');
-        form.onsubmit = async (e) => {
+        form.onsubmit = (e) => {
             e.preventDefault();
             const fd = new FormData(form);
-            
-            try {
-                await FakeServer.createTask({
-                    title: fd.get('title'),
-                    description: fd.get('description'),
-                    estTime: fd.get('estTime'),
-                    dependencies: fd.getAll('dependencies'),
-                    requiredSkills: []
-                });
-                this.closeModal();
-            } catch (err) {
-                this.showErrorModal(err.message);
-            }
+            FakeServer.createTask({
+                title: fd.get('title'),
+                description: fd.get('description'),
+                estTime: fd.get('estTime'),
+                requiredSkills: fd.get('requiredSkills').split(',').map(s => s.trim()).filter(s => s)
+            });
+            this.closeModal();
         };
     },
 

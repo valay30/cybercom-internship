@@ -1,0 +1,61 @@
+/* CSS RESET & VARIABLES */
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --sidebar-bg: #1e293b;
+    --sidebar-link: #94a3b8;
+    --sidebar-active: #2563eb;
+    --bg-main: #f8fafc;
+    --border-color: #e2e8f0;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --white: #ffffff;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* UTILITIES */
+.text-mono {
+    font-family: monospace;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gap-2 {
+    gap: 8px;
+}
+
+.mt-4 {
+    margin-top: 16px;
+}
+
+.badge {
+    font-size: 0.65rem;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
