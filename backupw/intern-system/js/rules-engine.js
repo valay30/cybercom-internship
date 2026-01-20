@@ -1,5 +1,6 @@
 /**
  * BUSINESS RULES ENGINE
+ * Contains all business logic and permissions
  */
 const RulesEngine = {
     permissions: {
@@ -19,17 +20,6 @@ const RulesEngine = {
 
     hasAction(role, action) {
         return this.permissions[role]?.actions.includes(action);
-    },
-
-    // NEW: Check if all dependencies for a task are COMPLETED
-    areDependenciesResolved(taskId, allTasks) {
-        const task = allTasks.find(t => t.id === taskId);
-        if (!task || !task.dependencies || task.dependencies.length === 0) return true;
-        
-        return task.dependencies.every(depId => {
-            const depTask = allTasks.find(t => t.id === depId);
-            return depTask && depTask.status === 'COMPLETED';
-        });
     },
 
     canTransitionIntern(current, next) {

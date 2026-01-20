@@ -1,5 +1,6 @@
 /**
  * VALIDATORS
+ * Form and data validation logic
  */
 const Validators = {
     validateEmail(email) {
@@ -10,24 +11,14 @@ const Validators = {
         return true;
     },
 
-    // NEW: Detects if adding dependencies creates a circular loop
-    checkCircularDependency(taskId, requestedDeps, allTasks) {
-        const checkMap = new Map(allTasks.map(t => [t.id, t.dependencies || []]));
-        
-        const hasLoop = (currentId, path = new Set()) => {
-            if (path.has(currentId)) return true;
-            path.add(currentId);
-            
-            const deps = currentId === taskId ? requestedDeps : (checkMap.get(currentId) || []);
-            for (const depId of deps) {
-                if (hasLoop(depId, new Set(path))) return true;
-            }
-            return false;
-        };
-
-        if (hasLoop(taskId)) {
-            throw new Error('Circular dependency detected! A task cannot depend on itself or its own descendants.');
+    validateInternData(data) {
+        if (!data.name || data.name.trim().length === 0) {
+            throw new Error('Name is required.');
         }
+        if (!data.email || data.email.trim().length === 0) {
+            throw new Error('Email is required.');
+        }
+        this.validateEmail(data.email);
         return true;
     },
 
