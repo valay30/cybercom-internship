@@ -26,10 +26,7 @@ const Renderer = {
     },
 
     render(state) {
-        // Global Loading UI
         this.loadingOverlay.classList.toggle('hidden', !state.isLoading);
-
-        // Sidebar Logic
         const isInternRole = state.user.role === 'INTERN';
         document.getElementById('current-role-display').textContent = state.user.role === 'MANAGER' ? 'Operations Manager' : 'Intern User';
         this.internIdContainer.classList.toggle('hidden', !isInternRole);
@@ -45,7 +42,6 @@ const Renderer = {
 
         this.renderSidebar(state);
 
-        // Access Protection
         if (!RulesEngine.canView(state.user.role, state.currentView)) {
             State.update('currentView', 'dashboard');
             return;
@@ -201,7 +197,6 @@ const Renderer = {
                         No tasks available in this view.
                     </div>
                 ` : tasksToShow.map(t => {
-                    // Logic: Check if task is blocked by unfinished dependencies
                     const isBlocked = t.status === 'BLOCKED' || !RulesEngine.areDependenciesResolved(t.id, state.tasks);
                     
                     return `
@@ -213,6 +208,10 @@ const Renderer = {
                         <p style="font-size: 0.75rem; color: var(--text-muted); min-height: 40px;">${t.description || 'No description provided.'}</p>
                         
                         <div class="mt-2">
+                             <div class="stat-label" style="font-size: 0.6rem; margin-bottom: 4px;">Required Skills</div>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+                                ${(t.requiredSkills || []).map(s => `<span class="badge" style="background: #e0f2fe; color: #0369a1;">${s}</span>`).join('') || '<span class="badge">General</span>'}
+                            </div>
                             <div class="stat-label" style="font-size: 0.6rem; margin-bottom: 4px;">Dependencies</div>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 ${(t.dependencies || []).map(depId => `<span class="badge" style="background: #fee2e2; color: #991b1b;">${depId}</span>`).join('') || '<span class="badge">None</span>'}
@@ -336,6 +335,10 @@ const Renderer = {
                     <textarea name="description" class="form-control" style="height: 60px; resize: none;" placeholder="Requirements..."></textarea>
                 </div>
                 <div class="form-group">
+                    <label>Required Skills (comma separated)</label>
+                    <input type="text" name="requiredSkills" class="form-control" placeholder="e.g. React, SQL, Node">
+                </div>
+                <div class="form-group">
                     <label>Dependencies (Select multiple with Ctrl/Cmd)</label>
                     <select name="dependencies" multiple class="form-control" style="height: 80px;">
                         ${tasks.map(t => `<option value="${t.id}">${t.id}: ${t.title}</option>`).join('')}
@@ -362,7 +365,8 @@ const Renderer = {
                     description: fd.get('description'),
                     estTime: fd.get('estTime'),
                     dependencies: fd.getAll('dependencies'),
-                    requiredSkills: []
+                    // NEW: Capture and parse required skills
+                    requiredSkills: fd.get('requiredSkills').split(',').map(s => s.trim()).filter(s => s)
                 });
                 this.closeModal();
             } catch (err) {
@@ -377,6 +381,7 @@ const Renderer = {
 
         const activeAndQualified = State.data.interns.filter(i => {
             const isActive = i.status === 'ACTIVE';
+            // Logic: Intern must have ALL skills listed in the task requirements
             const hasSkills = required.every(skill => (i.skills || []).includes(skill));
             return isActive && hasSkills;
         });
