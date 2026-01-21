@@ -27,6 +27,33 @@
     <main>
         <h2>Checkout</h2>
 
+        <!-- Personal Details Section -->
+        <section>
+            <h3>Personal Details</h3>
+            <form id="personal-details-form">
+                <p>
+                    <label for="fullname">Full Name</label>
+                    <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+                </p>
+                <p>
+                    <label for="address">Address</label>
+                    <textarea id="address" name="address" rows="3" placeholder="Enter your full address"
+                        required></textarea>
+                </p>
+                <div class="form-row">
+                    <p>
+                        <label for="mobile">Mobile Number</label>
+                        <input type="tel" id="mobile" name="mobile" placeholder="Enter 10-digit mobile number"
+                            pattern="[0-9]{10}" required>
+                    </p>
+                    <p>
+                        <label for="email">Email ID</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                    </p>
+                </div>
+            </form>
+        </section>
+
         <!-- Shipping Options Section -->
         <section>
             <h3>Shipping Options</h3>
