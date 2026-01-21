@@ -25,17 +25,51 @@ const Renderer = {
         this.internIdContainer = document.getElementById('intern-identity-container');
     },
 
+    captureFocus() {
+        const el = document.activeElement;
+        if (!el) return null;
+        if (!el.id) return null;
+        const tag = (el.tagName || '').toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea') return null;
+        if (typeof el.selectionStart !== 'number' || typeof el.selectionEnd !== 'number') {
+            return { id: el.id };
+        }
+        return { id: el.id, start: el.selectionStart, end: el.selectionEnd };
+    },
+
+    restoreFocus(snapshot) {
+        if (!snapshot?.id) return;
+        const el = document.getElementById(snapshot.id);
+        if (!el) return;
+        el.focus();
+        if (typeof snapshot.start === 'number' && typeof snapshot.end === 'number' && typeof el.setSelectionRange === 'function') {
+            el.setSelectionRange(snapshot.start, snapshot.end);
+        }
+    },
+
     render(state) {
+        // Auth gate
+        const authScreen = document.getElementById('auth-screen');
+        const appRoot = document.getElementById('app');
+        const isAuthed = !!state.auth?.isAuthenticated;
+        authScreen.classList.toggle('hidden', isAuthed);
+        appRoot.classList.toggle('hidden', !isAuthed);
+        if (!isAuthed) {
+            this.loadingOverlay.classList.add('hidden');
+            return;
+        }
+
+        const focusSnapshot = this.captureFocus();
         this.loadingOverlay.classList.toggle('hidden', !state.isLoading);
         const isInternRole = state.user.role === 'INTERN';
         document.getElementById('current-role-display').textContent = state.user.role === 'MANAGER' ? 'Operations Manager' : 'Intern User';
-        this.internIdContainer.classList.toggle('hidden', !isInternRole);
+        // Intern identity selector only relevant for managers / debug; interns don't switch profiles
+        this.internIdContainer.classList.add('hidden');
 
         const idCtx = document.getElementById('intern-id-context');
         if (isInternRole) {
             idCtx.classList.remove('hidden');
             idCtx.textContent = `Acting as ID: ${state.user.internId || 'N/A'}`;
-            this.updateInternSelector(state);
         } else {
             idCtx.classList.add('hidden');
         }
@@ -55,6 +89,9 @@ const Renderer = {
             case 'tasks': this.renderTasks(state); break;
             case 'logs': this.renderLogs(state); break;
         }
+
+        // Keep typing experience stable across state-driven re-renders
+        this.restoreFocus(focusSnapshot);
     },
 
     updateInternSelector(state) {
@@ -96,6 +133,7 @@ renderDashboard(state) {
             const currentIntern = state.interns.find(i => i.id === state.user.internId);
             const myTasks = state.tasks.filter(t => t.assignedTo === state.user.internId && t.status !== 'COMPLETED');
             const myHours = myTasks.reduce((sum, t) => sum + (parseFloat(t.estTime) || 0), 0);
+            const canComplete = RulesEngine.hasAction(state.user.role, 'COMPLETE_TASK');
 
             // NEW: Calculate Skill Gaps
             const mySkills = currentIntern?.skills || [];
@@ -106,6 +144,12 @@ renderDashboard(state) {
                 <div style="background: linear-gradient(to right, #2563eb, #4338ca); color: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 20px rgba(37,99,235,0.2); margin-bottom: 32px;">
                     <h1 style="font-size: 2rem; margin-bottom: 8px;">Hello, ${currentIntern ? currentIntern.name : 'Intern'}!</h1>
                     <p style="opacity: 0.9;">You have <strong>${myTasks.length}</strong> active tasks, totaling <strong>${myHours} hours</strong>.</p>
+                    ${currentIntern && currentIntern.status !== 'ACTIVE' ? `
+                        <div style="margin-top: 14px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25); padding: 12px 14px; border-radius: 14px;">
+                            <div style="font-weight: 800;">Account Status: ${currentIntern.status}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.9;">Waiting for the manager to activate your profile.</div>
+                        </div>
+                    ` : ''}
                 </div>
                 
                 <div class="stats-grid">
@@ -113,6 +157,9 @@ renderDashboard(state) {
                         <div class="stat-label">Active Profile</div>
                         <div style="font-size: 1rem; font-weight: 600;">ID: <span class="text-mono">${state.user.internId || 'No Record'}</span></div>
                         <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 4px;">Email: ${currentIntern ? currentIntern.email : 'N/A'}</div>
+                        <div style="margin-top: 10px;">
+                            <span class="status-pill status-${(currentIntern?.status || 'onboarding').toLowerCase()}">${currentIntern?.status || 'ONBOARDING'}</span>
+                        </div>
                     </div>
 
                     <div class="stat-card">
@@ -124,7 +171,63 @@ renderDashboard(state) {
                         </div>
                     </div>
                 </div>
+
+                <div class="stat-card" style="margin-top: 8px;">
+                    <div class="flex-between" style="margin-bottom: 12px;">
+                        <div>
+                            <div style="font-weight: 900;">My Assigned Tasks</div>
+                            <div class="stat-label" style="margin-bottom: 0;">Only tasks assigned to you</div>
+                        </div>
+                        <div class="stat-label" style="margin-bottom: 0;">Active: <span style="color: var(--text-main);">${myTasks.length}</span></div>
+                    </div>
+
+                    ${myTasks.length === 0 ? `
+                        <div style="padding: 18px; border: 1px dashed var(--border-color); border-radius: 14px; color: var(--text-muted); text-align: center;">
+                            No tasks assigned yet.
+                        </div>
+                    ` : `
+                        <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
+                            ${myTasks.map(t => `
+                                <div class="task-card" style="box-shadow:none;">
+                                    <div class="flex-between">
+                                        <div style="font-weight: 900;">${t.title}</div>
+                                        <span class="badge text-mono" style="font-size: 0.6rem;">${t.id}</span>
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);">${t.description || 'No description provided.'}</div>
+                                    <div class="flex-between" style="border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: 8px;">
+                                        <div class="stat-label" style="margin-bottom: 0;">Time: <span style="color: var(--text-main);">${t.estTime}h</span></div>
+                                        <span style="font-size: 0.7rem; font-weight: 900;" class="status-${t.status.toLowerCase()}">${t.status}</span>
+                                    </div>
+                                    ${canComplete ? `
+                                        <div class="flex-between gap-2 mt-4">
+                                            <button class="btn btn-success intern-complete-task-btn"
+                                                style="flex: 1; font-size: 0.75rem;"
+                                                data-id="${t.id}"
+                                                ${RulesEngine.areDependenciesResolved(t.id, state.tasks) ? '' : 'disabled title="Unresolved dependencies"'}>
+                                                Mark Done
+                                            </button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                </div>
             `;
+
+            // Bind intern completion buttons
+            if (canComplete) {
+                document.querySelectorAll('.intern-complete-task-btn').forEach(btn => {
+                    btn.onclick = async () => {
+                        if (btn.disabled) return;
+                        try {
+                            await FakeServer.completeTask(btn.dataset.id);
+                        } catch (err) {
+                            this.showErrorModal(err.message);
+                        }
+                    };
+                });
+            }
         } else {
             // NEW: Manager Analytics - Skill Distribution
             const skillCounts = {};
@@ -166,9 +269,38 @@ renderDashboard(state) {
     },
 
     renderInterns(state) {
+        const internSearch = (state.filters?.internSearch || '');
+        const searchValue = internSearch.toLowerCase();
+        const filteredInterns = state.interns.filter(i => {
+            if (!searchValue) return true;
+            const haystack = [
+                i.id,
+                i.name,
+                i.email,
+                (i.skills || []).join(' '),
+                i.status
+            ].join(' ').toLowerCase();
+            return haystack.includes(searchValue);
+        });
+
+        const canEditIntern = RulesEngine.hasAction(state.user.role, 'UPDATE_INTERN');
         this.headerActions.innerHTML = `<button id="add-intern-btn" class="btn btn-primary">+ Add Intern</button>`;
 
         this.viewContainer.innerHTML = `
+            <div class="flex-between gap-2" style="margin-bottom: 16px; flex-wrap: wrap;">
+                <div style="display:flex; gap:8px; align-items:center; flex: 1; min-width: 240px;">
+                    <input 
+                        id="intern-search" 
+                        class="form-control" 
+                        type="search" 
+                        placeholder="Search interns by name, email, ID, skill..." 
+                        value="${internSearch}" 
+                        style="max-width: 420px;"
+                    />
+                    ${internSearch ? `<button id="clear-intern-search" class="btn btn-ghost" type="button">Clear</button>` : ''}
+                </div>
+                <div class="stat-label" style="margin-bottom: 0;">Showing <span style="color: var(--text-main);">${filteredInterns.length}</span> / ${state.interns.length}</div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
@@ -177,10 +309,11 @@ renderDashboard(state) {
                             <th>Name & Skills</th>
                             <th>Status</th>
                             <th>Manage</th>
+                            ${canEditIntern ? '<th style="width: 110px;"></th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
-                        ${state.interns.length === 0 ? `<tr><td colspan="4" style="padding: 40px; text-align: center; color: var(--text-muted);">No interns onboarded yet.</td></tr>` : state.interns.map(i => `
+                        ${filteredInterns.length === 0 ? `<tr><td colspan="${canEditIntern ? 5 : 4}" style="padding: 40px; text-align: center; color: var(--text-muted);">${state.interns.length === 0 ? 'No interns onboarded yet.' : 'No interns match your search.'}</td></tr>` : filteredInterns.map(i => `
                             <tr>
                                 <td class="text-mono" style="text-align: center; font-size: 0.7rem; color: var(--text-muted);">${i.id}</td>
                                 <td>
@@ -200,6 +333,11 @@ renderDashboard(state) {
                                         <option value="EXITED" ${i.status === 'EXITED' ? 'selected' : ''}>Exited</option>
                                     </select>
                                 </td>
+                                ${canEditIntern ? `
+                                    <td>
+                                        <button class="btn btn-ghost edit-intern-btn" style="padding: 6px 10px; font-size: 0.75rem;" data-id="${i.id}">Edit</button>
+                                    </td>
+                                ` : ''}
                             </tr>
                         `).join('')}
                     </tbody>
@@ -207,7 +345,15 @@ renderDashboard(state) {
             </div>
         `;
 
+        document.getElementById('intern-search').oninput = (e) => {
+            State.update('filters.internSearch', e.target.value);
+        };
+        const clearBtn = document.getElementById('clear-intern-search');
+        if (clearBtn) clearBtn.onclick = () => State.update('filters.internSearch', '');
         document.getElementById('add-intern-btn').onclick = () => this.showInternModal();
+        document.querySelectorAll('.edit-intern-btn').forEach(btn => {
+            btn.onclick = () => this.showEditInternModal(btn.dataset.id);
+        });
         document.querySelectorAll('.status-select-action').forEach(sel => {
             sel.onchange = async (e) => {
                 try {
@@ -223,17 +369,48 @@ renderDashboard(state) {
     renderTasks(state) {
         const canCreate = RulesEngine.hasAction(state.user.role, 'CREATE_TASK');
         const canAssign = RulesEngine.hasAction(state.user.role, 'ASSIGN_TASK');
+        const canEditTask = RulesEngine.hasAction(state.user.role, 'UPDATE_TASK');
+        const canDeleteTask = RulesEngine.hasAction(state.user.role, 'DELETE_TASK');
         const tasksToShow = state.user.role === 'INTERN' ? state.tasks.filter(t => t.assignedTo === state.user.internId) : state.tasks;
+
+        const taskSearch = (state.filters?.taskSearch || '');
+        const searchValue = taskSearch.toLowerCase();
+        const filteredTasks = tasksToShow.filter(t => {
+            if (!searchValue) return true;
+            const haystack = [
+                t.id,
+                t.title,
+                t.description,
+                t.assignedTo,
+                t.status,
+                (t.requiredSkills || []).join(' ')
+            ].join(' ').toLowerCase();
+            return haystack.includes(searchValue);
+        });
 
         this.headerActions.innerHTML = canCreate ? `<button id="create-task-btn" class="btn btn-primary">+ New Task</button>` : '';
 
         this.viewContainer.innerHTML = `
+            <div class="flex-between gap-2" style="margin-bottom: 16px; flex-wrap: wrap;">
+                <div style="display:flex; gap:8px; align-items:center; flex: 1; min-width: 240px;">
+                    <input 
+                        id="task-search" 
+                        class="form-control" 
+                        type="search" 
+                        placeholder="Search tasks by title, ID, skills..." 
+                        value="${taskSearch}" 
+                        style="max-width: 420px;"
+                    />
+                    ${taskSearch ? `<button id="clear-task-search" class="btn btn-ghost" type="button">Clear</button>` : ''}
+                </div>
+                <div class="stat-label" style="margin-bottom: 0;">Showing <span style="color: var(--text-main);">${filteredTasks.length}</span> / ${tasksToShow.length}</div>
+            </div>
             <div class="card-grid">
-                ${tasksToShow.length === 0 ? `
+                ${filteredTasks.length === 0 ? `
                     <div style="grid-column: 1/-1; padding: 60px; text-align: center; background: white; border: 2px dashed var(--border-color); border-radius: 20px; color: var(--text-muted);">
-                        No tasks available in this view.
+                        ${tasksToShow.length === 0 ? 'No tasks available in this view.' : 'No tasks match your search.'}
                     </div>
-                ` : tasksToShow.map(t => {
+                ` : filteredTasks.map(t => {
                     const isBlocked = t.status === 'BLOCKED' || !RulesEngine.areDependenciesResolved(t.id, state.tasks);
                     
                     return `
@@ -273,6 +450,8 @@ renderDashboard(state) {
                                     ${isBlocked ? 'disabled title="Unresolved dependencies"' : ''}>
                                     Mark Done
                                 </button>
+                                ${canEditTask ? `<button class="btn btn-ghost edit-task-btn" style="flex: 1; font-size: 0.65rem;" data-id="${t.id}">Edit</button>` : ''}
+                                ${canDeleteTask ? `<button class="btn btn-danger delete-task-btn" style="flex: 1; font-size: 0.65rem;" data-id="${t.id}">Delete</button>` : ''}
                             ` : `<div style="flex: 1; padding: 8px; background: #f8fafc; text-align: center; border-radius: 8px; font-size: 0.65rem; color: #94a3b8; font-weight: bold;">Completed</div>`}
                         </div>
                     </div>
@@ -280,6 +459,11 @@ renderDashboard(state) {
             </div>
         `;
 
+        document.getElementById('task-search').oninput = (e) => {
+            State.update('filters.taskSearch', e.target.value);
+        };
+        const clearBtn = document.getElementById('clear-task-search');
+        if (clearBtn) clearBtn.onclick = () => State.update('filters.taskSearch', '');
         if (canCreate) document.getElementById('create-task-btn').onclick = () => this.showTaskModal();
         document.querySelectorAll('.complete-task-btn').forEach(btn => {
             btn.onclick = () => {
@@ -287,6 +471,8 @@ renderDashboard(state) {
             };
         });
         document.querySelectorAll('.assign-task-btn').forEach(btn => btn.onclick = () => this.showAssignModal(btn.dataset.id));
+        document.querySelectorAll('.edit-task-btn').forEach(btn => btn.onclick = () => this.showEditTaskModal(btn.dataset.id));
+        document.querySelectorAll('.delete-task-btn').forEach(btn => btn.onclick = () => this.showDeleteTaskModal(btn.dataset.id));
     },
 
     renderLogs(state) {
@@ -356,6 +542,51 @@ renderDashboard(state) {
         };
     },
 
+    showEditInternModal(internId) {
+        const intern = State.data.interns.find(i => i.id === internId);
+        if (!intern) return this.showErrorModal('Intern record not found.');
+
+        this.modalPortal.classList.remove('hidden');
+        this.modalBody.innerHTML = `
+            <h3 style="font-weight: 800; margin-bottom: 8px;">Edit Intern</h3>
+            <div class="stat-label" style="margin-bottom: 24px;">ID: <span class="text-mono" style="color: var(--text-main);">${intern.id}</span></div>
+            <form id="intern-edit-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" required class="form-control" value="${intern.name || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Email ID</label>
+                    <input type="email" name="email" required class="form-control" value="${intern.email || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Skills (comma separated)</label>
+                    <input type="text" name="skills" class="form-control" value="${(intern.skills || []).join(', ')}">
+                </div>
+                <div class="flex-between gap-2 mt-4" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-ghost" onclick="Renderer.closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        `;
+
+        const form = document.getElementById('intern-edit-form');
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            try {
+                await FakeServer.updateIntern(internId, {
+                    name: fd.get('name'),
+                    email: fd.get('email'),
+                    skills: fd.get('skills').toString().split(',').map(s => s.trim()).filter(s => s)
+                });
+                this.closeModal();
+            } catch (err) {
+                this.showErrorModal(err.message);
+            }
+        };
+    },
+
     showTaskModal() {
         this.modalPortal.classList.remove('hidden');
         const tasks = State.data.tasks;
@@ -410,6 +641,107 @@ renderDashboard(state) {
                 this.showErrorModal(err.message);
             }
         };
+    },
+
+    showEditTaskModal(taskId) {
+        const task = State.data.tasks.find(t => t.id === taskId);
+        if (!task) return this.showErrorModal('Task not found.');
+
+        this.modalPortal.classList.remove('hidden');
+        const tasks = State.data.tasks.filter(t => t.id !== taskId);
+
+        this.modalBody.innerHTML = `
+            <h3 style="font-weight: 800; margin-bottom: 8px;">Edit Task</h3>
+            <div class="stat-label" style="margin-bottom: 24px;">Task ID: <span class="text-mono" style="color: var(--text-main);">${taskId}</span></div>
+            <form id="task-edit-form">
+                <div class="form-group">
+                    <label>Task Name</label>
+                    <input type="text" name="title" required class="form-control" value="${task.title || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control" style="height: 60px; resize: none;">${task.description || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Required Skills (comma separated)</label>
+                    <input type="text" name="requiredSkills" class="form-control" value="${(task.requiredSkills || []).join(', ')}">
+                </div>
+                <div class="form-group">
+                    <label>Dependencies (Select multiple with Ctrl/Cmd)</label>
+                    <select name="dependencies" multiple class="form-control" style="height: 120px;">
+                        ${tasks.map(t => `<option value="${t.id}" ${(task.dependencies || []).includes(t.id) ? 'selected' : ''}>${t.id}: ${t.title}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Est. Time (Hours)</label>
+                    <input type="number" name="estTime" required class="form-control" value="${task.estTime || ''}">
+                </div>
+                <div class="flex-between gap-2 mt-4" style="justify-content: flex-end;">
+                    <button type="button" class="btn btn-ghost" onclick="Renderer.closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        `;
+
+        const form = document.getElementById('task-edit-form');
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const fd = new FormData(form);
+            try {
+                await FakeServer.updateTask(taskId, {
+                    title: fd.get('title'),
+                    description: fd.get('description'),
+                    estTime: fd.get('estTime'),
+                    dependencies: fd.getAll('dependencies'),
+                    requiredSkills: fd.get('requiredSkills').toString().split(',').map(s => s.trim()).filter(s => s)
+                });
+                this.closeModal();
+            } catch (err) {
+                this.showErrorModal(err.message);
+            }
+        };
+    },
+
+    showDeleteTaskModal(taskId) {
+        const task = State.data.tasks.find(t => t.id === taskId);
+        if (!task) return this.showErrorModal('Task not found.');
+
+        const dependents = State.data.tasks.filter(t => (t.dependencies || []).includes(taskId));
+        const blockedReason = dependents.length > 0
+            ? `This task is required by: ${dependents.map(d => d.id).join(', ')}`
+            : null;
+
+        this.modalPortal.classList.remove('hidden');
+        this.modalBody.innerHTML = `
+            <div style="text-align: center;">
+                <div style="width: 64px; height: 64px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 1.5rem; font-weight: 900;">×</div>
+                <h3 style="font-weight: 800; margin-bottom: 8px;">Delete Task</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 12px;">
+                    Are you sure you want to delete <span class="text-mono" style="font-weight: 800; color: var(--text-main);">${taskId}</span>?
+                </p>
+                <div style="background:#f8fafc; border:1px solid var(--border-color); padding: 12px; border-radius: 12px; text-align:left; margin-bottom: 16px;">
+                    <div style="font-weight: 800; margin-bottom: 4px;">${task.title || '(Untitled)'}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${task.description || 'No description provided.'}</div>
+                </div>
+                ${blockedReason ? `<div style="background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding: 10px; border-radius: 12px; font-size: 0.8rem; margin-bottom: 16px;"><strong>Cannot delete:</strong> ${blockedReason}</div>` : ''}
+                <div class="flex-between gap-2" style="justify-content: flex-end;">
+                    <button class="btn btn-ghost" type="button" onclick="Renderer.closeModal()">Cancel</button>
+                    <button id="confirm-delete-task" class="btn btn-danger" type="button" ${blockedReason ? 'disabled' : ''}>Delete</button>
+                </div>
+            </div>
+        `;
+
+        const btn = document.getElementById('confirm-delete-task');
+        if (btn && !btn.disabled) {
+            btn.onclick = async () => {
+                try {
+                    await FakeServer.deleteTask(taskId);
+                    this.closeModal();
+                } catch (err) {
+                    this.showErrorModal(err.message);
+                }
+            };
+        }
     },
 
     showAssignModal(taskId) {

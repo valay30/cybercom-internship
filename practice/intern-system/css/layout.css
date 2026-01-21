@@ -7,19 +7,24 @@
     flex-direction: column;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
     color: var(--white);
-    flex-shrink: 0;
+    flex-shrink: 0; /* Ensure sidebar never shrinks */
 }
 
 .main-content {
     flex-grow: 1;
     height: 100vh;
-    overflow-y: auto;
+    /* Prevent content from pushing the container width */
+    min-width: 0; 
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
     display: flex;
     flex-direction: column;
+    background-color: #f8fafc; /* Optional: standard bg color */
 }
 
 header {
     height: 64px;
+    width: 100%; /* Force full width of container */
     background: var(--white);
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -29,10 +34,15 @@ header {
     position: sticky;
     top: 0;
     z-index: 10;
+    flex-shrink: 0; /* Prevents the header height or width from collapsing */
+    box-sizing: border-box; /* Ensures padding doesn't add to width */
 }
 
 .view-container {
     padding: 32px;
+    width: 100%;
+    max-width: 100%; /* Prevent horizontal overflow from content */
+    box-sizing: border-box;
 }
 
 /* SIDEBAR COMPONENTS */

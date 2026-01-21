@@ -4,6 +4,10 @@
  */
 const State = {
     data: {
+        auth: {
+            isAuthenticated: false,
+            email: null
+        },
         user: {
             role: 'MANAGER',
             internId: null
@@ -12,7 +16,11 @@ const State = {
         tasks: [],
         logs: [],
         currentView: 'dashboard',
-        isLoading: false
+        isLoading: false,
+        filters: {
+            internSearch: '',
+            taskSearch: ''
+        }
     },
 
     listeners: [],
@@ -46,9 +54,20 @@ const State = {
 
     load() {
         try {
-            const saved = localStorage.getItem('internSystemState');
-            if (saved) {
-                this.data = { ...this.data, ...JSON.parse(saved) };
+            const savedStr = localStorage.getItem('internSystemState');
+            if (savedStr) {
+                const saved = JSON.parse(savedStr);
+                this.data = { ...this.data, ...saved };
+                this.data.filters = {
+                    internSearch: '',
+                    taskSearch: '',
+                    ...(saved.filters || {})
+                };
+                this.data.auth = {
+                    isAuthenticated: false,
+                    email: null,
+                    ...(saved.auth || {})
+                };
             }
         } catch (e) {
             console.warn('Failed to load state from localStorage:', e);

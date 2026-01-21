@@ -5,10 +5,10 @@ const RulesEngine = {
     permissions: {
         'MANAGER': {
             views: ['dashboard', 'interns', 'tasks', 'logs'],
-            actions: ['CREATE_INTERN', 'UPDATE_STATUS', 'CREATE_TASK', 'ASSIGN_TASK', 'COMPLETE_TASK']
+            actions: ['CREATE_INTERN', 'UPDATE_STATUS', 'UPDATE_INTERN', 'CREATE_TASK', 'UPDATE_TASK', 'DELETE_TASK', 'ASSIGN_TASK', 'COMPLETE_TASK']
         },
         'INTERN': {
-            views: ['dashboard', 'tasks'],
+            views: ['dashboard'],
             actions: ['COMPLETE_TASK']
         }
     },
