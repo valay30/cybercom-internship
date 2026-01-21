@@ -18,8 +18,8 @@
             <a href="plp.html">Products</a>
             <a href="cart.html">Cart</a>
             <a href="orders.html">My Orders</a>
-            <a href="login.html" class="user-icon" title="Login / Signup"><i class="fa-solid fa-user"></i></a>
         </nav>
+        <a href="login.html" class="user-icon" title="Login / Signup"><i class="fa-solid fa-user"></i></a>
         <hr>
     </header>
 
@@ -27,90 +27,127 @@
     <main>
         <h2>Products</h2>
 
-        <table>
-            <tr>
+        <div class="products-section">
+            <div class="product-grid">
                 <!-- Product 1 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Wireless Headphones.png"
-                        alt="Wireless Headphones">
+                <div class="product-card">
+                    <img src="images/Wireless Headphones.png" alt="Wireless Headphones">
                     <h3>Wireless Headphones</h3>
                     <p>Price: ₹9999</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 2 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Smart Watch.png" alt="Smart Watch">
+                <div class="product-card">
+                    <img src="images/Smart Watch.png" alt="Smart Watch">
                     <h3>Smart Watch</h3>
                     <p>Price: ₹1999</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 3 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Running Shoes.png" alt="Running Shoes">
+                <div class="product-card">
+                    <img src="images/Running Shoes.png" alt="Running Shoes">
                     <h3>Running Shoes</h3>
                     <p>Price: ₹999</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
-            </tr>
-            <tr>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 4 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Laptop Bag.png" alt="Laptop Bag">
+                <div class="product-card">
+                    <img src="images/Laptop Bag.png" alt="Laptop Bag">
                     <h3>Laptop Bag</h3>
-                    <p>Price: ₹999</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
+                    <p>Price: ₹4999</p>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 5 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Bluetooth Speaker.png"
-                        alt="Bluetooth Speaker">
+                <div class="product-card">
+                    <img src="images/Bluetooth Speaker.png" alt="Bluetooth Speaker">
                     <h3>Bluetooth Speaker</h3>
                     <p>Price: ₹1999</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 6 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Gaming Mouse.png" alt="Gaming Mouse">
+                <div class="product-card">
+                    <img src="images/Gaming Mouse.png" alt="Gaming Mouse">
                     <h3>Gaming Mouse</h3>
                     <p>Price: ₹999</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
-            </tr>
-            <tr>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 7 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Mechanical Keyboard.png"
-                        alt="Mechanical Keyboard">
+                <div class="product-card">
+                    <img src="images/Mechanical Keyboard.png" alt="Mechanical Keyboard">
                     <h3>Mechanical Keyboard</h3>
                     <p>Price: ₹1299</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 8 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/USB-C Hub.png" alt="USB-C Hub">
+                <div class="product-card">
+                    <img src="images/USB-C Hub.png" alt="USB-C Hub">
                     <h3>USB-C Hub</h3>
                     <p>Price: ₹599</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
                 <!-- Product 9 -->
-                <td>
-                    <img style="width: 100px; height: 100px;" src="images/Webcam HD.png" alt="Webcam HD">
+                <div class="product-card">
+                    <img src="images/Webcam HD.png" alt="Webcam HD">
                     <h3>Webcam HD</h3>
                     <p>Price: ₹3999</p>
-                    <a href="pdp.html">View Details</a>
-                </td>
-            </tr>
-        </table>
-
-        <br>
-        <a href="index.html">Back to Home</a>
+                    <a href="pdp.html"><button class="product-btn">View Details</button></a>
+                </div>
+            </div>
+        </div>
     </main>
 
     <hr>
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2026 EasyCart. All rights reserved.</p>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
+                <p>Your one-stop destination for all your shopping needs. Quality products, fast delivery, and excellent
+                    customer service.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="index.html"><i class="fa-solid fa-angle-right"></i> Home</a></li>
+                    <li><a href="plp.html"><i class="fa-solid fa-angle-right"></i> Products</a></li>
+                    <li><a href="cart.html"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
+                    <li><a href="orders.html"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h3>Customer Service</h3>
+                <ul>
+                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Help Center</a></li>
+                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Track Order</a></li>
+                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Returns</a></li>
+                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Shipping Info</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-column">
+                <h3>Contact Us</h3>
+                <ul class="contact-info">
+                    <li><i class="fa-solid fa-location-dot"></i> 123 Shopping Street, Mumbai, India</li>
+                    <li><i class="fa-solid fa-phone"></i> +91 98765 43210</li>
+                    <li><i class="fa-solid fa-envelope"></i> support@easycart.com</li>
+                    <li><i class="fa-solid fa-clock"></i> Mon - Sat: 9AM - 9PM</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms &
+                    Conditions</a></p>
+        </div>
     </footer>
 </body>
 

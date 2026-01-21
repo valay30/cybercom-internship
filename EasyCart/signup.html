@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EasyCart - Signup</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
@@ -16,52 +17,28 @@
             <a href="index.html">Home</a>
             <a href="plp.html">Products</a>
             <a href="cart.html">Cart</a>
-            <a href="login.html">Login</a>
-            <a href="signup.html">Signup</a>
             <a href="orders.html">My Orders</a>
+            <a href="login.html" class="user-icon" title="Login / Signup"><i class="fa-solid fa-user"></i></a>
         </nav>
         <hr>
     </header>
 
     <!-- Main Content -->
     <main>
-        <h2>Create an Account</h2>
+        <h2>Signup</h2>
 
-        <section>
-            <form>
-                <p>
-                    <label for="fullname">Full Name:</label><br>
-                    <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
-                </p>
+        <form>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
 
-                <p>
-                    <label for="email">Email:</label><br>
-                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
-                </p>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
 
-                <p>
-                    <label for="password">Password:</label><br>
-                    <input type="password" id="password" name="password" placeholder="Create a password" required>
-                </p>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
 
-                <p>
-                    <label for="confirm-password">Confirm Password:</label><br>
-                    <input type="password" id="confirm-password" name="confirm-password"
-                        placeholder="Confirm your password" required>
-                </p>
-
-                <p>
-                    <button type="submit">Sign Up</button>
-                </p>
-            </form>
-
-            <hr>
-
-            <p>Already have an account? <a href="login.html">Login here</a></p>
-        </section>
-
-        <br>
-        <a href="index.html">Back to Home</a>
+            <button type="submit">Signup</button>
+        </form>
     </main>
 
     <hr>
