@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyCart - Checkout</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <!-- Header Section -->
+    <header>
+        <h1>EasyCart</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="plp.html">Products</a>
+            <a href="cart.html">Cart</a>
+            <a href="orders.html">My Orders</a>
+            <a href="login.html" class="user-icon" title="Login / Signup"><i class="fa-solid fa-user"></i></a>
+        </nav>
+        <hr>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <h2>Checkout</h2>
+
+        <!-- Shipping Options Section -->
+        <section>
+            <h3>Shipping Options</h3>
+            <form>
+                <p>
+                    <input type="radio" id="standard" name="shipping" value="standard" checked>
+                    <label for="standard">Standard Delivery (5-7 Business Days) - $9.99</label>
+                </p>
+                <p>
+                    <input type="radio" id="express" name="shipping" value="express">
+                    <label for="express">Express Delivery (1-2 Business Days) - $19.99</label>
+                </p>
+            </form>
+        </section>
+
+        <hr>
+
+        <!-- Order Summary Section -->
+        <section>
+            <h3>Order Summary</h3>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Wireless Headphones</td>
+                        <td>1</td>
+                        <td>$99.99</td>
+                    </tr>
+                    <tr>
+                        <td>Smart Watch</td>
+                        <td>1</td>
+                        <td>$199.99</td>
+                    </tr>
+                    <tr>
+                        <td>Running Shoes</td>
+                        <td>2</td>
+                        <td>$159.98</td>
+                    </tr>
+                    <tr>
+                        <td>Laptop Bag</td>
+                        <td>1</td>
+                        <td>$49.99</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <br>
+
+            <table border="1">
+                <tr>
+                    <td>Subtotal</td>
+                    <td>$509.95</td>
+                </tr>
+                <tr>
+                    <td>Shipping</td>
+                    <td>$9.99</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Amount</strong></td>
+                    <td><strong>$519.94</strong></td>
+                </tr>
+            </table>
+        </section>
+
+        <br>
+
+        <!-- Place Order Button -->
+        <button>Place Order</button>
+
+        <br><br>
+        <a href="cart.html">Back to Cart</a>
+    </main>
+
+    <hr>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 EasyCart. All rights reserved.</p>
+    </footer>
+</body>
+
+</html>
