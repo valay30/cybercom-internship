@@ -1,77 +1,56 @@
+<?php
+require_once 'data.php';
+session_start();
+
+$id = $_GET['id'] ?? 'p1';
+$product = $products[$id] ?? $products['p1'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyCart - Product Details</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title><?php echo $product['name']; ?> - EasyCart</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
-    <!-- Header Section -->
     <header>
         <h1>EasyCart</h1>
         <nav>
-            <a href="index.html">Home</a>
-            <a href="plp.html">Products</a>
-            <a href="cart.html">Cart</a>
-            <a href="orders.html">My Orders</a>
+            <a href="index.php">Home</a>
+            <a href="plp.php">Products</a>
+            <a href="cart.php">Cart</a>
+            <a href="orders.php">My Orders</a>
         </nav>
-        <a href="login.html" class="user-icon" title="Login / Signup"><i class="fa-solid fa-user"></i></a>
-        <hr>
+        <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
     </header>
 
-    <!-- Main Content -->
     <main>
-        <h2>Product Details</h2>
-
-        <!-- Product Container -->
         <div class="product-details-container">
-            <!-- Product Image Section -->
             <section class="pdp-image-section">
-                <img src="images/Wireless Headphones.png" alt="Wireless Headphones">
+                <img src="<?php echo $product['image']; ?>" alt="">
             </section>
-
-            <!-- Product Information Section -->
             <section class="pdp-info-section">
-                <h3>Wireless Headphones</h3>
-                <p class="product-price"><strong>Price:</strong> ₹9999</p>
-
-                <h4>Description</h4>
-                <p>
-                    Experience premium sound quality with our Wireless Headphones.
-                    Featuring advanced noise-cancellation technology, these headphones
-                    deliver crystal-clear audio for music, calls, and gaming. With up to
-                    30 hours of battery life, comfortable over-ear cushions, and Bluetooth 5.0
-                    connectivity, these headphones are perfect for everyday use.
-                    The foldable design makes them easy to carry, while the built-in
-                    microphone ensures clear hands-free calls.
-                </p>
-
-                <h4>Features:</h4>
+                <h3><?php echo $product['name']; ?></h3>
+                <p class="product-price">₹<?php echo number_format($product['price']); ?></p>
+                <p><?php echo $product['description']; ?></p>
+                <h4 style="margin-top:20px">Features:</h4>
                 <ul class="feature-list">
-                    <li>Active Noise Cancellation</li>
-                    <li>30 Hours Battery Life</li>
-                    <li>Bluetooth 5.0</li>
-                    <li>Built-in Microphone</li>
-                    <li>Foldable Design</li>
-                    <li>Comfortable Over-Ear Cushions</li>
+                    <?php foreach ($product['features'] as $feature): ?>
+                        <li><?php echo $feature; ?></li>
+                    <?php endforeach; ?>
                 </ul>
-
-                <button class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
+                <form action="cart.php" method="POST" style="box-shadow:none; padding:0; border:none; max-width:100%;">
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
+                    <button type="submit" class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to
+                        Cart</button>
+                </form>
             </section>
         </div>
-
-        <br>
-        <hr>
-        <a href="plp.html">Back to Products</a>
     </main>
-
-    <hr>
-
-    <!-- Footer -->
     <footer>
         <div class="footer-content">
             <div class="footer-column">
@@ -89,10 +68,10 @@
             <div class="footer-column">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="index.html"><i class="fa-solid fa-angle-right"></i> Home</a></li>
-                    <li><a href="plp.html"><i class="fa-solid fa-angle-right"></i> Products</a></li>
-                    <li><a href="cart.html"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
-                    <li><a href="orders.html"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
+                    <li><a href="index.php"><i class="fa-solid fa-angle-right"></i> Home</a></li>
+                    <li><a href="plp.php"><i class="fa-solid fa-angle-right"></i> Products</a></li>
+                    <li><a href="cart.php"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
+                    <li><a href="orders.php"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
                 </ul>
             </div>
 

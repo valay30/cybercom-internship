@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EasyCart - Login / Signup</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
@@ -14,13 +14,12 @@
     <header>
         <h1>EasyCart</h1>
         <nav>
-            <a href="index.html">Home</a>
-            <a href="plp.html">Products</a>
-            <a href="cart.html">Cart</a>
-            <a href="orders.html">My Orders</a>
+            <a href="index.php">Home</a>
+            <a href="plp.php">Products</a>
+            <a href="cart.php">Cart</a>
+            <a href="orders.php">My Orders</a>
         </nav>
-        <a href="login.html" class="user-icon" title="Login / Signup"><i class="fa-solid fa-user"></i></a>
-        <hr>
+        <a href="login.php" class="user-icon" title="Login / Signup"><i class="fa-solid fa-user"></i></a>
     </header>
 
     <!-- Main Content -->
@@ -35,60 +34,56 @@
             <!-- Login Form -->
             <div id="login-tab" class="tab-content active">
                 <form>
-                    <p>
-                        <label for="login-email">Email:</label><br>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
                         <input type="email" id="login-email" name="email" placeholder="Enter your email" required>
-                    </p>
+                    </div>
 
-                    <p>
-                        <label for="login-password">Password:</label><br>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
                         <input type="password" id="login-password" name="password" placeholder="Enter your password"
                             required>
-                    </p>
+                    </div>
 
-                    <p>
+                    <div class="form-group">
                         <button type="submit">Login</button>
-                    </p>
+                    </div>
                 </form>
             </div>
 
             <!-- Signup Form -->
             <div id="signup-tab" class="tab-content">
                 <form>
-                    <p>
-                        <label for="signup-fullname">Full Name:</label><br>
+                    <div class="form-group">
+                        <label for="signup-fullname">Full Name</label>
                         <input type="text" id="signup-fullname" name="fullname" placeholder="Enter your full name"
                             required>
-                    </p>
+                    </div>
 
-                    <p>
-                        <label for="signup-email">Email:</label><br>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
                         <input type="email" id="signup-email" name="email" placeholder="Enter your email" required>
-                    </p>
+                    </div>
 
-                    <p>
-                        <label for="signup-password">Password:</label><br>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
                         <input type="password" id="signup-password" name="password" placeholder="Create a password"
                             required>
-                    </p>
+                    </div>
 
-                    <p>
-                        <label for="signup-confirm-password">Confirm Password:</label><br>
+                    <div class="form-group">
+                        <label for="signup-confirm-password">Confirm Password</label>
                         <input type="password" id="signup-confirm-password" name="confirm-password"
                             placeholder="Confirm your password" required>
-                    </p>
+                    </div>
 
-                    <p>
+                    <div class="form-group">
                         <button type="submit">Sign Up</button>
-                    </p>
+                    </div>
                 </form>
             </div>
         </section>
-
-        <br>
     </main>
-
-    <hr>
 
     <!-- Footer -->
     <footer>
@@ -108,10 +103,10 @@
             <div class="footer-column">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="index.html"><i class="fa-solid fa-angle-right"></i> Home</a></li>
-                    <li><a href="plp.html"><i class="fa-solid fa-angle-right"></i> Products</a></li>
-                    <li><a href="cart.html"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
-                    <li><a href="orders.html"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
+                    <li><a href="index.php"><i class="fa-solid fa-angle-right"></i> Home</a></li>
+                    <li><a href="plp.php"><i class="fa-solid fa-angle-right"></i> Products</a></li>
+                    <li><a href="cart.php"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
+                    <li><a href="orders.php"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
                 </ul>
             </div>
 
