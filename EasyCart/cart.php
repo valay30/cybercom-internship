@@ -71,25 +71,37 @@ foreach ($_SESSION['cart'] as $item) {
                     <p>Your cart is empty.</p>
                 <?php else: ?>
                     <?php foreach ($_SESSION['cart'] as $id => $item): ?>
-                        <div class="cart-item">
+                        <div class="cart-item" data-product-id="<?php echo $id; ?>" data-price="<?php echo $item['price']; ?>">
                             <img src="<?php echo $item['image']; ?>" alt="">
                             <div class="cart-item-details">
                                 <h4><?php echo $item['name']; ?></h4>
                                 <p>₹<?php echo number_format($item['price']); ?></p>
                             </div>
-                            <form action="cart.php" method="POST"
-                                style="display:flex; border:none; box-shadow:none; padding:0;">
+                            <div class="quantity-controls">
+                                <button class="qty-btn qty-decrease" onclick="updateQuantity('<?php echo $id; ?>', -1)">
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                                <input type="number" class="qty-input" value="<?php echo $item['qty']; ?>"
+                                    data-product-id="<?php echo $id; ?>" readonly>
+                                <button class="qty-btn qty-increase" onclick="updateQuantity('<?php echo $id; ?>', 1)">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="cart-item-total" data-product-id="<?php echo $id; ?>">
+                                ₹<?php echo number_format($item['price'] * $item['qty']); ?>
+                            </div>
+                            <button class="remove-btn" onclick="removeItem('<?php echo $id; ?>')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                            <!-- Hidden form for server-side updates -->
+                            <form action="cart.php" method="POST" class="hidden-update-form" style="display:none;">
                                 <input type="hidden" name="action" value="update">
                                 <input type="hidden" name="id" value="<?php echo $id; ?>">
-                                <input type="number" name="qty" value="<?php echo $item['qty']; ?>"
-                                    style="width:60px; margin-right:5px;">
-                                <button type="submit">Update</button>
+                                <input type="hidden" name="qty" class="hidden-qty" value="<?php echo $item['qty']; ?>">
                             </form>
-                            <div class="cart-item-total">₹<?php echo number_format($item['price'] * $item['qty']); ?></div>
-                            <form action="cart.php" method="POST" style="border:none; box-shadow:none; padding:0;">
+                            <form action="cart.php" method="POST" class="hidden-remove-form" style="display:none;">
                                 <input type="hidden" name="action" value="remove">
                                 <input type="hidden" name="id" value="<?php echo $id; ?>">
-                                <button type="submit" class="remove-btn"><i class="fa-solid fa-trash"></i></button>
                             </form>
                         </div>
                     <?php endforeach; ?>
@@ -101,7 +113,7 @@ foreach ($_SESSION['cart'] as $item) {
                 </div>
 
                 <div class="summary-row total">
-                    <span>Total</span><span>₹<?php echo number_format($subtotal + 99); ?></span>
+                    <span>Total</span><span>₹<?php echo number_format($subtotal); ?></span>
                 </div>
                 <a href="checkout.php"><button class="checkout-btn">Proceed to Checkout</button></a>
             </section>
@@ -156,6 +168,8 @@ foreach ($_SESSION['cart'] as $item) {
                     Conditions</a></p>
         </div>
     </footer>
+
+    <script src="js/cart.js"></script>
 </body>
 
 </html>

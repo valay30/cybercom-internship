@@ -30,7 +30,18 @@ $product = $products[$id] ?? $products['p1'];
     <main>
         <div class="product-details-container">
             <section class="pdp-image-section">
-                <img src="<?php echo $product['image']; ?>" alt="">
+                <div class="pdp-image-container">
+                    <img id="mainImage" src="<?php echo $product['image']; ?>" alt="<?php echo $product['name']; ?>">
+                    <?php if (isset($product['images']) && count($product['images']) > 1): ?>
+                        <div class="image-thumbnails">
+                            <?php foreach ($product['images'] as $index => $img): ?>
+                                <img src="<?php echo $img; ?>" alt="View <?php echo $index + 1; ?>"
+                                    class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>"
+                                    onclick="switchImage('<?php echo $img; ?>', this)">
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </section>
             <section class="pdp-info-section">
                 <h3><?php echo $product['name']; ?></h3>
@@ -100,6 +111,8 @@ $product = $products[$id] ?? $products['p1'];
                     Conditions</a></p>
         </div>
     </footer>
+
+    <script src="js/pdp.js"></script>
 </body>
 
 </html>

@@ -68,16 +68,84 @@ $shipping_cost = 99;
 
                 <hr>
 
+
                 <h3><i class="fa-solid fa-truck"></i> Shipping Options</h3>
-                <div style="margin-bottom: 20px;">
-                    <p>
-                        <input type="radio" id="standard" name="shipping" value="99" checked form="checkoutForm">
-                        <label for="standard">Standard Delivery (5-7 Business Days) - ₹99</label>
-                    </p>
-                    <p>
-                        <input type="radio" id="express" name="shipping" value="199" form="checkoutForm">
-                        <label for="express">Express Delivery (1-2 Business Days) - ₹199</label>
-                    </p>
+                <div class="shipping-options">
+                    <label class="shipping-option active" for="standard">
+                        <input type="radio" id="standard" name="shipping" value="99" checked form="checkoutForm"
+                            onchange="updateShipping(this)">
+                        <div class="shipping-details">
+                            <div class="shipping-name">
+                                <i class="fa-solid fa-truck"></i>
+                                <strong>Standard Delivery</strong>
+                            </div>
+                            <div class="shipping-time">5-7 Business Days</div>
+                            <div class="shipping-price">₹99</div>
+                        </div>
+                    </label>
+                    <label class="shipping-option" for="express">
+                        <input type="radio" id="express" name="shipping" value="199" form="checkoutForm"
+                            onchange="updateShipping(this)">
+                        <div class="shipping-details">
+                            <div class="shipping-name">
+                                <i class="fa-solid fa-rocket"></i>
+                                <strong>Express Delivery</strong>
+                            </div>
+                            <div class="shipping-time">1-2 Business Days</div>
+                            <div class="shipping-price">₹199</div>
+                        </div>
+                    </label>
+                </div>
+
+
+                <hr>
+
+                <h3><i class="fa-solid fa-credit-card"></i> Payment Method</h3>
+                <div class="payment-options">
+                    <label class="payment-option active" for="card">
+                        <input type="radio" id="card" name="payment" value="card" checked form="checkoutForm"
+                            onchange="updatePayment(this)">
+                        <div class="payment-details">
+                            <div class="payment-name">
+                                <i class="fa-solid fa-credit-card"></i>
+                                <strong>Credit / Debit Card</strong>
+                            </div>
+                            <div class="payment-desc">Pay securely with your card</div>
+                        </div>
+                    </label>
+                    <label class="payment-option" for="upi">
+                        <input type="radio" id="upi" name="payment" value="upi" form="checkoutForm"
+                            onchange="updatePayment(this)">
+                        <div class="payment-details">
+                            <div class="payment-name">
+                                <i class="fa-brands fa-google-pay"></i>
+                                <strong>UPI</strong>
+                            </div>
+                            <div class="payment-desc">Google Pay, PhonePe, Paytm & more</div>
+                        </div>
+                    </label>
+                    <label class="payment-option" for="netbanking">
+                        <input type="radio" id="netbanking" name="payment" value="netbanking" form="checkoutForm"
+                            onchange="updatePayment(this)">
+                        <div class="payment-details">
+                            <div class="payment-name">
+                                <i class="fa-solid fa-building-columns"></i>
+                                <strong>Net Banking</strong>
+                            </div>
+                            <div class="payment-desc">Pay via your bank account</div>
+                        </div>
+                    </label>
+                    <label class="payment-option" for="cod">
+                        <input type="radio" id="cod" name="payment" value="cod" form="checkoutForm"
+                            onchange="updatePayment(this)">
+                        <div class="payment-details">
+                            <div class="payment-name">
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                                <strong>Cash on Delivery</strong>
+                            </div>
+                            <div class="payment-desc">Pay when you receive</div>
+                        </div>
+                    </label>
                 </div>
 
                 <hr>
@@ -196,6 +264,9 @@ $shipping_cost = 99;
                     Conditions</a></p>
         </div>
     </footer>
+
+    <script src="js/checkout.js"></script>
 </body>
+
 
 </html>
