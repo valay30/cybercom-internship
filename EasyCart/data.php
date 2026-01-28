@@ -22,7 +22,7 @@ $products = [
         'image' => 'images/Wireless Headphones.png',
         'images' => [
             'images/Wireless Headphones.png',
-            'images/Wireless Headphones.png',
+            'images/Wireless Headphones_2.png',
             'images/Wireless Headphones.png'
         ],
         'category' => 'electronics',
@@ -37,7 +37,7 @@ $products = [
         'image' => 'images/Smart Watch.png',
         'images' => [
             'images/Smart Watch.png',
-            'images/Smart Watch.png',
+            'images/Smart Watch_2.png',
             'images/Smart Watch.png'
         ],
         'category' => 'electronics',
@@ -52,7 +52,7 @@ $products = [
         'image' => 'images/Running Shoes.png',
         'images' => [
             'images/Running Shoes.png',
-            'images/Running Shoes.png',
+            'images/Running Shoes_2.png',
             'images/Running Shoes.png'
         ],
         'category' => 'fashion',
