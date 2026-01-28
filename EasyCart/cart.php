@@ -33,13 +33,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         unset($_SESSION['cart'][$pid]);
     }
 
+    if (isset($_POST['ajax']) && $_POST['ajax'] === 'true') {
+        $subtotal = 0;
+        $itemTotal = 0;
+        foreach ($_SESSION['cart'] as $cartPid => $item) {
+            if (isset($item['qty']) && isset($item['price'])) {
+                $discount_percent = $item['qty'];
+                if ($discount_percent > 50)
+                    $discount_percent = 50;
+
+                $discounted_price = $item['price'] * (1 - ($discount_percent / 100));
+                $line_price = $discounted_price * $item['qty'];
+                $subtotal += $line_price;
+
+                if ($cartPid === $pid) {
+                    $itemTotal = $line_price;
+                }
+            }
+        }
+
+        echo json_encode(['success' => true, 'subtotal' => $subtotal, 'itemTotal' => $itemTotal]);
+        exit;
+    }
+
     header("Location: cart.php");
     exit;
 }
 
 $subtotal = 0;
 foreach ($_SESSION['cart'] as $item) {
-    $subtotal += ($item['price'] * $item['qty']);
+    if (isset($item['qty']) && isset($item['price'])) {
+        $discount_percent = $item['qty'];
+        if ($discount_percent > 50)
+            $discount_percent = 50;
+
+        $discounted_price = $item['price'] * (1 - ($discount_percent / 100));
+        $subtotal += ($discounted_price * $item['qty']);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -61,7 +91,14 @@ foreach ($_SESSION['cart'] as $item) {
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
-        <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
+            <div class="user-info">
+                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
+                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
+        <?php else: ?>
+            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php endif; ?>
     </header>
     <main>
         <h2>My Cart</h2>
@@ -75,7 +112,24 @@ foreach ($_SESSION['cart'] as $item) {
                             <img src="<?php echo $item['image']; ?>" alt="">
                             <div class="cart-item-details">
                                 <h4><?php echo $item['name']; ?></h4>
-                                <p>₹<?php echo number_format($item['price']); ?></p>
+
+                                <?php
+                                $d_percent = $item['qty'];
+                                if ($d_percent > 50)
+                                    $d_percent = 50;
+                                $d_price = $item['price'] * (1 - ($d_percent / 100));
+                                $line_total = $d_price * $item['qty'];
+                                ?>
+
+                                <p>
+                                    <span
+                                        style="text-decoration: line-through; color: #999; font-size: 0.9em;">₹<?php echo number_format($item['price'], 2); ?></span>
+                                    <span
+                                        style="color: black; padding-left: 15px;">₹<?php echo number_format($d_price, 2); ?></span>
+                                </p>
+                                <!-- <span style="background: #fee2e2; color: #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                    <?php echo $d_percent; ?>% OFF
+                                </span> -->
                             </div>
                             <div class="quantity-controls">
                                 <button class="qty-btn qty-decrease" onclick="updateQuantity('<?php echo $id; ?>', -1)">
@@ -88,7 +142,7 @@ foreach ($_SESSION['cart'] as $item) {
                                 </button>
                             </div>
                             <div class="cart-item-total" data-product-id="<?php echo $id; ?>">
-                                ₹<?php echo number_format($item['price'] * $item['qty']); ?>
+                                ₹<?php echo number_format($line_total, 2); ?>
                             </div>
                             <button class="remove-btn" onclick="removeItem('<?php echo $id; ?>')">
                                 <i class="fa-solid fa-trash"></i>
@@ -109,13 +163,20 @@ foreach ($_SESSION['cart'] as $item) {
             </section>
             <section class="cart-summary-section">
                 <h3>Order Summary</h3>
-                <div class="summary-row"><span>Subtotal</span><span>₹<?php echo number_format($subtotal); ?></span>
+                <div class="summary-row"><span>Subtotal</span><span>₹<?php echo number_format($subtotal, 2); ?></span>
                 </div>
 
                 <div class="summary-row total">
-                    <span>Total</span><span>₹<?php echo number_format($subtotal); ?></span>
+                    <span>Total</span><span>₹<?php echo number_format($subtotal, 2); ?></span>
                 </div>
-                <a href="checkout.php"><button class="checkout-btn">Proceed to Checkout</button></a>
+                <?php
+                if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true') {
+                    $checkout_link = "checkout.php";
+                } else {
+                    $checkout_link = "login.php?redirect=checkout.php";
+                }
+                ?>
+                <a href="<?php echo $checkout_link; ?>"><button class="checkout-btn">Proceed to Checkout</button></a>
             </section>
         </div>
     </main>

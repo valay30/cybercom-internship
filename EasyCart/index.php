@@ -22,7 +22,14 @@ session_start();
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
-        <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
+            <div class="user-info">
+                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
+                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
+        <?php else: ?>
+            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php endif; ?>
     </header>
 
     <main>
@@ -54,7 +61,8 @@ session_start();
                 <h2>Popular Categories</h2>
                 <ul class="category-list">
                     <?php foreach ($categories as $cat): ?>
-                        <li><a href="plp.php?cat=<?php echo $cat['id']; ?>"><i class="<?php echo $cat['icon']; ?>"></i>
+                        <li><a href="plp.php?category[]=<?php echo $cat['id']; ?>"><i
+                                    class="<?php echo $cat['icon']; ?>"></i>
                                 <?php echo $cat['name']; ?></a></li>
                     <?php endforeach; ?>
                 </ul>
@@ -63,7 +71,7 @@ session_start();
                 <h2>Popular Brands</h2>
                 <ul class="brand-list">
                     <?php foreach ($brands as $brand): ?>
-                        <li><a href="plp.php?brand=<?php echo $brand['id']; ?>"><i
+                        <li><a href="plp.php?brand[]=<?php echo $brand['id']; ?>"><i
                                     class="<?php echo $brand['icon']; ?>"></i> <?php echo $brand['name']; ?></a></li>
                     <?php endforeach; ?>
                 </ul>

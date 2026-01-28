@@ -4,7 +4,23 @@ session_start();
 
 $id = $_GET['id'] ?? 'p1';
 $product = $products[$id] ?? $products['p1'];
+
+// Check if product is in cart
+$is_in_cart = false;
+$discount_applied = false;
+$final_price = $product['price'];
+
+if (isset($_SESSION['cart'][$product['id']])) {
+    $is_in_cart = true;
+    $qty = $_SESSION['cart'][$product['id']]['qty'];
+
+    $discount_percent = $qty;
+
+    $final_price = $product['price'] * (1 - ($discount_percent / 100));
+    $discount_applied = true;
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -24,7 +40,14 @@ $product = $products[$id] ?? $products['p1'];
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
-        <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
+            <div class="user-info">
+                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
+                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
+        <?php else: ?>
+            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php endif; ?>
     </header>
 
     <main>
@@ -45,7 +68,19 @@ $product = $products[$id] ?? $products['p1'];
             </section>
             <section class="pdp-info-section">
                 <h3><?php echo $product['name']; ?></h3>
-                <p class="product-price">₹<?php echo number_format($product['price']); ?></p>
+                <?php if ($discount_applied): ?>
+                    <p class="product-price">
+                        <span
+                            style="text-decoration: line-through; color:var(--primary); font-size: 0.7em;">₹<?php echo number_format($product['price'], 2); ?></span>
+                        <span style="color: black;">₹<?php echo number_format($final_price, 2); ?></span>
+                        <span
+                            style="background: #fee2e2; color: black; padding: 4px 10px; border-radius: 20px; font-size: 0.5em; vertical-align: middle; margin-left: 10px;">
+                            <?php echo $discount_percent; ?>% OFF
+                        </span>
+                    </p>
+                <?php else: ?>
+                    <p class="product-price">₹<?php echo number_format($product['price'], 2); ?></p>
+                <?php endif; ?>
                 <p><?php echo $product['description']; ?></p>
                 <h4 style="margin-top:20px">Features:</h4>
                 <ul class="feature-list">
@@ -60,6 +95,19 @@ $product = $products[$id] ?? $products['p1'];
                         Cart</button>
                 </form>
             </section>
+        </div>
+        <br>
+        <br>
+        <div class="product-grid">
+            <?php foreach (array_slice($products, 0, 4) as $product): ?>
+                <div class="product-card">
+                    <img src="<?php echo $product['image']; ?>" alt="<?php echo $product['name']; ?>">
+                    <h3><?php echo $product['name']; ?></h3>
+                    <p>₹<?php echo number_format($product['price'], 2); ?></p>
+                    <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
+                            Details</button></a>
+                </div>
+            <?php endforeach; ?>
         </div>
     </main>
     <footer>
@@ -112,7 +160,7 @@ $product = $products[$id] ?? $products['p1'];
         </div>
     </footer>
 
-    <script src="js/pdp.js"></script>
+    <script src="js/pdp.js?v=<?php echo time(); ?>"></script>
 </body>
 
 </html>

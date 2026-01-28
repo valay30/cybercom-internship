@@ -127,9 +127,22 @@ loginForm.addEventListener('submit', function (e) {
     }
 
     if (isValid) {
-        alert('Login successful!');
-        // In production, submit the form
-        // this.submit();
+        // LOGIN LOGIC
+        const users = JSON.parse(localStorage.getItem('easycart_users')) || [];
+        const user = users.find(u => u.email === loginEmail.value && u.password === loginPassword.value);
+
+        if (user) {
+            // Set Cookie for PHP to access
+            document.cookie = "user_logged_in=true; path=/";
+            document.cookie = "user_name=" + encodeURIComponent(user.fullname) + "; path=/";
+
+            // Check for redirect URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect') || 'index.php';
+            window.location.href = redirect;
+        } else {
+            showError(loginPassword, 'Invalid email or password');
+        }
     }
 });
 
@@ -139,6 +152,8 @@ const signupFullname = document.getElementById('signup-fullname');
 const signupEmail = document.getElementById('signup-email');
 const signupPassword = document.getElementById('signup-password');
 const signupConfirmPassword = document.getElementById('signup-confirm-password');
+
+// ... (Existing input listeners remain, only updating submit handler) ...
 
 signupFullname.addEventListener('blur', function () {
     if (this.value.trim() === '') {
@@ -252,9 +267,32 @@ signupForm.addEventListener('submit', function (e) {
     }
 
     if (isValid) {
-        alert('Signup successful!');
-        // In production, submit the form
-        // this.submit();
+        // SIGNUP LOGIC
+        const users = JSON.parse(localStorage.getItem('easycart_users')) || [];
+
+        // Check if email exists
+        if (users.find(u => u.email === signupEmail.value)) {
+            showError(signupEmail, 'Email already registered');
+            return;
+        }
+
+        // Add user
+        users.push({
+            fullname: signupFullname.value,
+            email: signupEmail.value,
+            password: signupPassword.value
+        });
+
+        localStorage.setItem('easycart_users', JSON.stringify(users));
+
+        // Auto Login (Set Cookie)
+        document.cookie = "user_logged_in=true; path=/";
+        document.cookie = "user_name=" + encodeURIComponent(signupFullname.value) + "; path=/";
+
+        // Check for redirect URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect') || 'index.php';
+        window.location.href = redirect;
     }
 });
 

@@ -71,7 +71,14 @@ if ($sort_option === 'price_asc') {
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
-        <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
+            <div class="user-info">
+                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
+                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
+        <?php else: ?>
+            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php endif; ?>
     </header>
 
     <main>
@@ -113,9 +120,9 @@ if ($sort_option === 'price_asc') {
                         <div class="price-slider-container">
                             <div class="price-values">
                                 <span>₹<span id="min-price-disp"><?php echo $min_price ?: '0'; ?></span></span>
-                                    <span>–</span>
-                                    <span>₹<span
-                                            id="max-price-disp"><?php echo $max_price == 15000 ? '15000+' : ($max_price ?: '15000'); ?></span></span>
+                                <span>–</span>
+                                <span>₹<span
+                                        id="max-price-disp"><?php echo $max_price == 15000 ? '15000+' : ($max_price ?: '15000'); ?></span></span>
                             </div>
 
                             <div class="range-slider">

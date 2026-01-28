@@ -5,11 +5,32 @@ session_start();
 $cart = $_SESSION['cart'] ?? [];
 $subtotal = 0;
 foreach ($cart as $item) {
-    $subtotal += ($item['price'] * $item['qty']);
+    if (isset($item['qty']) && isset($item['price'])) {
+        $discount_percent = $item['qty'];
+        if ($discount_percent > 50)
+            $discount_percent = 50;
+
+        $discounted_price = $item['price'] * (1 - ($discount_percent / 100));
+        $subtotal += ($discounted_price * $item['qty']);
+    }
 }
 
-// Shipping cost based on selection (defaulting to Standard)
-$shipping_cost = 99;
+// Calculate Shipping Costs based on Rules
+// Standard: Flat 40
+$shipping_std = 40;
+
+// Express: Flat 80 OR 10% of subtotal (whichever is lower)
+$shipping_express = min(80, $subtotal * 0.10);
+
+// White Glove: Flat 150 OR 5% of subtotal (whichever is lower)
+$shipping_white_glove = min(150, $subtotal * 0.05);
+
+// Freight: 3% of subtotal, Minimum 200
+$shipping_freight = max(200, $subtotal * 0.03);
+
+// Default shipping cost (Standard)
+$shipping_cost = $shipping_std;
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,7 +53,14 @@ $shipping_cost = 99;
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
-        <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
+            <div class="user-info">
+                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
+                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
+        <?php else: ?>
+            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+        <?php endif; ?>
     </header>
 
     <!-- Main Content -->
@@ -71,28 +99,63 @@ $shipping_cost = 99;
 
                 <h3><i class="fa-solid fa-truck"></i> Shipping Options</h3>
                 <div class="shipping-options">
+                    <!-- Standard Shipping -->
                     <label class="shipping-option active" for="standard">
-                        <input type="radio" id="standard" name="shipping" value="99" checked form="checkoutForm"
-                            onchange="updateShipping(this)">
+                        <input type="radio" id="standard" name="shipping" value="<?php echo $shipping_std; ?>" checked
+                            form="checkoutForm" onchange="updateShipping(this)">
                         <div class="shipping-details">
                             <div class="shipping-name">
                                 <i class="fa-solid fa-truck"></i>
-                                <strong>Standard Delivery</strong>
+                                <strong>Standard Shipping</strong>
                             </div>
                             <div class="shipping-time">5-7 Business Days</div>
-                            <div class="shipping-price">₹99</div>
+                            <div class="shipping-price" style="font-size: 0.8em; color: #666;">Flat ₹40</div>
                         </div>
                     </label>
+
+                    <!-- Express Shipping -->
                     <label class="shipping-option" for="express">
-                        <input type="radio" id="express" name="shipping" value="199" form="checkoutForm"
-                            onchange="updateShipping(this)">
+                        <input type="radio" id="express" name="shipping" value="<?php echo $shipping_express; ?>"
+                            form="checkoutForm" onchange="updateShipping(this)">
                         <div class="shipping-details">
                             <div class="shipping-name">
                                 <i class="fa-solid fa-rocket"></i>
-                                <strong>Express Delivery</strong>
+                                <strong>Express Shipping</strong>
                             </div>
                             <div class="shipping-time">1-2 Business Days</div>
-                            <div class="shipping-price">₹199</div>
+                            <div class="shipping-price" style="font-size: 0.8em; color: #666;">Flat ₹80 OR 10% of
+                                subtotal (whichever is lower)</div>
+                        </div>
+                    </label>
+
+                    <!-- White Glove Delivery -->
+                    <label class="shipping-option" for="white-glove">
+                        <input type="radio" id="white-glove" name="shipping"
+                            value="<?php echo $shipping_white_glove; ?>" form="checkoutForm"
+                            onchange="updateShipping(this)">
+                        <div class="shipping-details">
+                            <div class="shipping-name">
+                                <i class="fa-solid fa-hands-holding-circle"></i>
+                                <strong>White Glove Delivery</strong>
+                            </div>
+                            <div class="shipping-time">Scheduled Appointment</div>
+                            <div class="shipping-price" style="font-size: 0.8em; color: #666;">Flat ₹150 OR 5% of
+                                subtotal (whichever is lower)</div>
+                        </div>
+                    </label>
+
+                    <!-- Freight Shipping -->
+                    <label class="shipping-option" for="freight">
+                        <input type="radio" id="freight" name="shipping" value="<?php echo $shipping_freight; ?>"
+                            form="checkoutForm" onchange="updateShipping(this)">
+                        <div class="shipping-details">
+                            <div class="shipping-name">
+                                <i class="fa-solid fa-truck-moving"></i>
+                                <strong>Freight Shipping</strong>
+                            </div>
+                            <div class="shipping-time">7-14 Business Days</div>
+                            <div class="shipping-price" style="font-size: 0.8em; color: #666;">3% of subtotal or Minimum
+                                ₹200</div>
                         </div>
                     </label>
                 </div>
@@ -102,19 +165,8 @@ $shipping_cost = 99;
 
                 <h3><i class="fa-solid fa-credit-card"></i> Payment Method</h3>
                 <div class="payment-options">
-                    <label class="payment-option active" for="card">
-                        <input type="radio" id="card" name="payment" value="card" checked form="checkoutForm"
-                            onchange="updatePayment(this)">
-                        <div class="payment-details">
-                            <div class="payment-name">
-                                <i class="fa-solid fa-credit-card"></i>
-                                <strong>Credit / Debit Card</strong>
-                            </div>
-                            <div class="payment-desc">Pay securely with your card</div>
-                        </div>
-                    </label>
-                    <label class="payment-option" for="upi">
-                        <input type="radio" id="upi" name="payment" value="upi" form="checkoutForm"
+                    <label class="payment-option active" for="upi">
+                        <input type="radio" id="upi" name="payment" value="upi" checked form="checkoutForm"
                             onchange="updatePayment(this)">
                         <div class="payment-details">
                             <div class="payment-name">
@@ -124,6 +176,19 @@ $shipping_cost = 99;
                             <div class="payment-desc">Google Pay, PhonePe, Paytm & more</div>
                         </div>
                     </label>
+
+                    <label class="payment-option" for="card">
+                        <input type="radio" id="card" name="payment" value="card" form="checkoutForm"
+                            onchange="updatePayment(this)">
+                        <div class="payment-details">
+                            <div class="payment-name">
+                                <i class="fa-solid fa-credit-card"></i>
+                                <strong>Credit / Debit Card</strong>
+                            </div>
+                            <div class="payment-desc">Pay securely with your card</div>
+                        </div>
+                    </label>
+
                     <label class="payment-option" for="netbanking">
                         <input type="radio" id="netbanking" name="payment" value="netbanking" form="checkoutForm"
                             onchange="updatePayment(this)">
@@ -146,6 +211,37 @@ $shipping_cost = 99;
                             <div class="payment-desc">Pay when you receive</div>
                         </div>
                     </label>
+                </div>
+
+                <!-- Hidden Payment Fields -->
+                <div class="payment-input-container">
+                    <div id="upi-fields" class="payment-method-fields" style="display: block;">
+                        <div class="form-group">
+                            <label for="upi-id">UPI ID</label>
+                            <input type="text" id="upi-id" name="upi_id" placeholder="example@upi" form="checkoutForm">
+                            <small>Enter your VPA (Virtual Payment Address)</small>
+                        </div>
+                    </div>
+
+                    <div id="card-fields" class="payment-method-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="card-number">Card Number</label>
+                            <input type="text" id="card-number" name="card_number" placeholder="0000 0000 0000 0000"
+                                maxlength="19" form="checkoutForm">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="flex:1">
+                                <label for="card-expiry">Expiry Date</label>
+                                <input type="text" id="card-expiry" name="card_expiry" placeholder="MM/YY" maxlength="5"
+                                    form="checkoutForm">
+                            </div>
+                            <div class="form-group" style="flex:1">
+                                <label for="card-cvv">CVV</label>
+                                <input type="password" id="card-cvv" name="card_cvv" placeholder="123" maxlength="3"
+                                    form="checkoutForm">
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <hr>
@@ -172,8 +268,21 @@ $shipping_cost = 99;
                                 </div>
                                 <div class="row-item product-name"><?php echo $item['name']; ?></div>
                                 <div class="row-item quantity"><?php echo $item['qty']; ?></div>
-                                <div class="row-item unit-price">₹<?php echo number_format($item['price']); ?></div>
-                                <div class="row-item subtotal">₹<?php echo number_format($item['price'] * $item['qty']); ?>
+                                <?php
+                                $d_percent = $item['qty'];
+                                if ($d_percent > 50)
+                                    $d_percent = 50;
+                                $d_price = $item['price'] * (1 - ($d_percent / 100));
+                                $line_total = $d_price * $item['qty'];
+                                ?>
+                                <div class="row-item unit-price">
+                                    <span
+                                        style="text-decoration: line-through; font-size: 0.8em; color: #999;">₹<?php echo number_format($item['price'], 2); ?></span><br>
+                                    ₹<?php echo number_format($d_price, 2); ?>
+                                </div>
+                                <div class="row-item subtotal">
+                                    ₹<?php echo number_format($line_total, 2); ?>
+                                    <div style="font-size: 0.7em; color: #16a34a;"><?php echo $d_percent; ?>% Off</div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -187,18 +296,27 @@ $shipping_cost = 99;
 
                 <div class="summary-row">
                     <span>Subtotal</span>
-                    <span>₹<?php echo number_format($subtotal); ?></span>
+                    <span id="summary-subtotal"
+                        data-subtotal="<?php echo $subtotal; ?>">₹<?php echo number_format($subtotal, 2); ?></span>
                 </div>
                 <div class="summary-row">
                     <span>Shipping Charges</span>
-                    <span>₹<?php echo number_format($shipping_cost); ?></span>
+                    <span id="summary-shipping">₹<?php echo number_format($shipping_cost, 2); ?></span>
+                </div>
+                <?php
+                $tax_amount = ($subtotal + $shipping_cost) * 0.18;
+                $total_amount = $subtotal + $shipping_cost + $tax_amount;
+                ?>
+                <div class="summary-row">
+                    <span>GST (18%)</span>
+                    <span id="summary-tax">₹<?php echo number_format($tax_amount, 2); ?></span>
                 </div>
 
                 <hr>
 
                 <div class="summary-row total">
                     <span>Total Amount</span>
-                    <span>₹<?php echo number_format($subtotal + $shipping_cost); ?></span>
+                    <span id="summary-total">₹<?php echo number_format($total_amount, 2); ?></span>
                 </div>
 
                 <form id="checkoutForm" action="orders.php" method="POST"

@@ -158,6 +158,50 @@ checkoutForm.addEventListener('submit', function (e) {
         showSuccess(addressInput);
     }
 
+    // Payment Validation
+    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+    if (paymentMethod === 'upi') {
+        const upiInput = document.getElementById('upi-id');
+        if (upiInput.value.trim() === '') {
+            showError(upiInput, 'UPI ID is required');
+            isValid = false;
+        } else if (!/^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/.test(upiInput.value)) {
+            showError(upiInput, 'Invalid UPI ID format');
+            isValid = false;
+        } else {
+            showSuccess(upiInput);
+        }
+    } else if (paymentMethod === 'card') {
+        const cardNum = document.getElementById('card-number');
+        const cardExpiry = document.getElementById('card-expiry');
+        const cardCvv = document.getElementById('card-cvv');
+
+        // Validate Card Number
+        if (cardNum.value.replace(/\s/g, '').length < 16) {
+            showError(cardNum, 'Invalid Card Number');
+            isValid = false;
+        } else {
+            showSuccess(cardNum);
+        }
+
+        // Validate Expiry
+        if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(cardExpiry.value)) {
+            showError(cardExpiry, 'Invalid Expiry (MM/YY)');
+            isValid = false;
+        } else {
+            showSuccess(cardExpiry);
+        }
+
+        // Validate CVV
+        if (!/^[0-9]{3}$/.test(cardCvv.value)) {
+            showError(cardCvv, 'Invalid CVV');
+            isValid = false;
+        } else {
+            showSuccess(cardCvv);
+        }
+    }
+
     if (isValid) {
         // In production, submit the form
         this.submit();
@@ -197,27 +241,47 @@ function updateShipping(radio) {
     radio.closest('.shipping-option').classList.add('active');
 
     // Update shipping cost in summary
-    const shippingCost = parseInt(radio.value);
-    const subtotalText = document.querySelector('.summary-row:not(.total) span:last-child').textContent;
-    const subtotal = parseInt(subtotalText.replace(/[^0-9]/g, ''));
-    const total = subtotal + shippingCost;
+    const shippingCost = parseFloat(radio.value);
 
-    // Update shipping charges display
-    const shippingElements = document.querySelectorAll('.summary-row')[1];
-    if (shippingElements) {
-        shippingElements.querySelector('span:last-child').textContent = '₹' + shippingCost.toLocaleString('en-IN');
+    // Get subtotal safely from data attribute
+    const subtotalElement = document.getElementById('summary-subtotal');
+    let subtotal = 0;
+
+    if (subtotalElement && subtotalElement.dataset.subtotal) {
+        subtotal = parseFloat(subtotalElement.dataset.subtotal);
+    } else {
+        // Fallback to text parsing if needed (cleanup)
+        subtotal = parseFloat(subtotalElement.textContent.replace(/[₹,\s]/g, ''));
     }
 
-    // Update total amount display
-    const totalElements = document.querySelector('.summary-row.total span:last-child');
-    if (totalElements) {
-        totalElements.textContent = '₹' + total.toLocaleString('en-IN');
+    // Calculate Tax and Total
+    // Tax is 18% of (Subtotal + Shipping)
+    const taxableAmount = subtotal + shippingCost;
+    const taxAmount = taxableAmount * 0.18;
+    const total = taxableAmount + taxAmount;
+
+    // Update displays using IDs
+    const shippingElement = document.getElementById('summary-shipping');
+    if (shippingElement) {
+        shippingElement.textContent = '₹' + shippingCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    const taxElement = document.getElementById('summary-tax');
+    if (taxElement) {
+        taxElement.textContent = '₹' + taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    const totalElement = document.getElementById('summary-total');
+    if (totalElement) {
+        totalElement.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 }
 
 //JavaScript for Payment Method Highlighting
 
 function updatePayment(radio) {
+    console.log("Payment changed to:", radio.value); // Debug Log
+
     // Remove active class from all payment options
     document.querySelectorAll('.payment-option').forEach(option => {
         option.classList.remove('active');
@@ -225,4 +289,27 @@ function updatePayment(radio) {
 
     // Add active class to selected option
     radio.closest('.payment-option').classList.add('active');
+
+    // Toggle Fields
+    const upiFields = document.getElementById('upi-fields');
+    const cardFields = document.getElementById('card-fields');
+
+    if (upiFields) upiFields.style.display = 'none';
+    if (cardFields) cardFields.style.display = 'none';
+
+    if (radio.value === 'upi' && upiFields) {
+        upiFields.style.display = 'block';
+    } else if (radio.value === 'card' && cardFields) {
+        cardFields.style.display = 'block';
+    }
 }
+
+// Attach Event Listeners on Load
+document.addEventListener('DOMContentLoaded', function () {
+    const paymentRadios = document.querySelectorAll('input[name="payment"]');
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            updatePayment(this);
+        });
+    });
+});
