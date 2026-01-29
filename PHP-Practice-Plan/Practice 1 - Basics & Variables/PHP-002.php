@@ -13,4 +13,10 @@ echo "<pre>";
 print_r($person);
 echo "</pre>";
 
+// var_dump to show data types and lengths.
+echo "<h3>var_dump output:</h3>";
+echo "<pre>";
+var_dump($person);
+echo "</pre>";
+
 ?>
