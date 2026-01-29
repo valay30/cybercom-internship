@@ -423,9 +423,6 @@ function updateShipping(radio) {
             if (data.success) {
                 // Update shipping cost with animation
                 if (shippingElement) {
-                    shippingElement.style.transition = 'all 0.3s ease';
-                    shippingElement.style.transform = 'scale(1.1)';
-                    shippingElement.style.color = '#10b981';
                     shippingElement.textContent = data.formatted.shipping;
 
                     setTimeout(() => {
@@ -434,30 +431,14 @@ function updateShipping(radio) {
                     }, 300);
                 }
 
-                // Update tax with animation
+                // Update tax
                 if (taxElement) {
-                    taxElement.style.transition = 'all 0.3s ease';
-                    taxElement.style.transform = 'scale(1.1)';
-                    taxElement.style.color = '#10b981';
                     taxElement.textContent = data.formatted.tax;
-
-                    setTimeout(() => {
-                        taxElement.style.transform = 'scale(1)';
-                        taxElement.style.color = '';
-                    }, 300);
                 }
 
                 // Update total with animation
                 if (totalElement) {
-                    totalElement.style.transition = 'all 0.3s ease';
-                    totalElement.style.transform = 'scale(1.1)';
-                    totalElement.style.color = '#10b981';
                     totalElement.textContent = data.formatted.total;
-
-                    setTimeout(() => {
-                        totalElement.style.transform = 'scale(1)';
-                        totalElement.style.color = '';
-                    }, 300);
                 }
 
                 // Remove loading state

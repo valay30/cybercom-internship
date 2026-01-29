@@ -97,8 +97,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
                     style="box-shadow:none; padding:0; border:none; max-width:100%; display:inline-block;">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
-                    <button type="submit" class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to
-                        Cart</button>
+                    <button type="submit" class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
                 </form>
                 <?php
                 $in_wishlist = isset($_SESSION['wishlist']) && in_array($product['id'], $_SESSION['wishlist']);
@@ -118,8 +117,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
                     <img src="<?php echo $product['image']; ?>" alt="<?php echo $product['name']; ?>">
                     <h3><?php echo $product['name']; ?></h3>
                     <p>₹<?php echo number_format($product['price'], 2); ?></p>
-                    <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
-                            Details</button></a>
+                    <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View Details</button></a>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -128,8 +126,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
         <div class="footer-content">
             <div class="footer-column">
                 <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one-stop destination for all your shopping needs. Quality products, fast delivery, and excellent
-                    customer service.</p>
+                <p>Your one stop destination for all your shopping needs. Quality products, fast delivery, and excellent customer service.</p>
                 <div class="social-icons">
                     <a href="#"><i class="fa-brands fa-facebook"></i></a>
                     <a href="#"><i class="fa-brands fa-twitter"></i></a>
@@ -169,8 +166,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms &
-                    Conditions</a></p>
+            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></p>
         </div>
     </footer>
 

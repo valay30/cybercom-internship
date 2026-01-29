@@ -195,8 +195,7 @@ foreach ($_SESSION['cart'] as $item) {
         <div class="footer-content">
             <div class="footer-column">
                 <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one-stop destination for all your shopping needs. Quality products, fast delivery, and excellent
-                    customer service.</p>
+                <p>Your one stop destination for all your shopping needs. Quality products, fast delivery, and excellent customer service.</p>
                 <div class="social-icons">
                     <a href="#"><i class="fa-brands fa-facebook"></i></a>
                     <a href="#"><i class="fa-brands fa-twitter"></i></a>
@@ -236,8 +235,7 @@ foreach ($_SESSION['cart'] as $item) {
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms &
-                    Conditions</a></p>
+            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></p>
         </div>
     </footer>
 

@@ -96,12 +96,12 @@ $shipping_cost = $shipping_std;
             <a href="orders.php">My Orders</a>
         </nav>
         <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
-                <div class="user-info">
-                    <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
-                    <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
-                </div>
+            <div class="user-info">
+                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
+                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            </div>
         <?php else: ?>
-                <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
         <?php endif; ?>
     </header>
 
@@ -307,36 +307,36 @@ $shipping_cost = $shipping_std;
                         <div class="header-item">Subtotal</div>
                     </div>
                     <?php if (empty($cart)): ?>
-                            <div class="table-row empty-cart">
-                                <div class="row-item" colspan="5" style="text-align:center;">Your cart is empty</div>
-                            </div>
+                        <div class="table-row empty-cart">
+                            <div class="row-item" colspan="5" style="text-align:center;">Your cart is empty</div>
+                        </div>
                     <?php else: ?>
-                            <?php foreach ($cart as $id => $item): ?>
-                                    <div class="table-row">
-                                        <div class="row-item">
-                                            <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>"
-                                                class="product-image">
-                                        </div>
-                                        <div class="row-item product-name"><?php echo $item['name']; ?></div>
-                                        <div class="row-item quantity"><?php echo $item['qty']; ?></div>
-                                        <?php
-                                        $d_percent = $item['qty'];
-                                        if ($d_percent > 50)
-                                            $d_percent = 50;
-                                        $d_price = $item['price'] * (1 - ($d_percent / 100));
-                                        $line_total = $d_price * $item['qty'];
-                                        ?>
-                                        <div class="row-item unit-price">
-                                            <span
-                                                style="text-decoration: line-through; font-size: 0.8em; color: #999;">₹<?php echo number_format($item['price'], 2); ?></span><br>
-                                            ₹<?php echo number_format($d_price, 2); ?>
-                                        </div>
-                                        <div class="row-item subtotal">
-                                            ₹<?php echo number_format($line_total, 2); ?>
-                                            <div style="font-size: 0.7em; color: #999;"><?php echo $d_percent; ?>% Off</div>
-                                        </div>
-                                    </div>
-                            <?php endforeach; ?>
+                        <?php foreach ($cart as $id => $item): ?>
+                            <div class="table-row">
+                                <div class="row-item">
+                                    <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>"
+                                        class="product-image">
+                                </div>
+                                <div class="row-item product-name"><?php echo $item['name']; ?></div>
+                                <div class="row-item quantity"><?php echo $item['qty']; ?></div>
+                                <?php
+                                $d_percent = $item['qty'];
+                                if ($d_percent > 50)
+                                    $d_percent = 50;
+                                $d_price = $item['price'] * (1 - ($d_percent / 100));
+                                $line_total = $d_price * $item['qty'];
+                                ?>
+                                <div class="row-item unit-price">
+                                    <span
+                                        style="text-decoration: line-through; font-size: 0.8em; color: #999;">₹<?php echo number_format($item['price'], 2); ?></span><br>
+                                    ₹<?php echo number_format($d_price, 2); ?>
+                                </div>
+                                <div class="row-item subtotal">
+                                    ₹<?php echo number_format($line_total, 2); ?>
+                                    <div style="font-size: 0.7em; color: #999;"><?php echo $d_percent; ?>% Off</div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
             </section>
@@ -388,8 +388,7 @@ $shipping_cost = $shipping_std;
         <div class="footer-content">
             <div class="footer-column">
                 <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one-stop destination for all your shopping needs. Quality products, fast delivery, and excellent
-                    customer service.</p>
+                <p>Your one stop destination for all your shopping needs. Quality products, fast delivery, and excellent customer service.</p>
                 <div class="social-icons">
                     <a href="#"><i class="fa-brands fa-facebook"></i></a>
                     <a href="#"><i class="fa-brands fa-twitter"></i></a>
@@ -429,8 +428,7 @@ $shipping_cost = $shipping_std;
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms &
-                    Conditions</a></p>
+            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></p>
         </div>
     </footer>
 

@@ -54,6 +54,7 @@ if ($sort_option === 'price_asc') {
         return $b['price'] - $a['price'];
     });
 }
+
 // Pagination
 $items_per_page = 9;
 $total_items = count($filtered_products);
@@ -220,12 +221,8 @@ $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
                         ?>
                         <select name="sort" onchange="document.getElementById('sortForm').submit()">
                             <option value="">Sort By: Relevance</option>
-                            <option value="price_asc" <?php echo $sort_option === 'price_asc' ? 'selected' : ''; ?>>Price:
-                                Low
-                                to High</option>
-                            <option value="price_desc" <?php echo $sort_option === 'price_desc' ? 'selected' : ''; ?>>
-                                Price:
-                                High to Low</option>
+                            <option value="price_asc" <?php echo $sort_option === 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
+                            <option value="price_desc" <?php echo $sort_option === 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
                         </select>
                     </form>
                 </div>
@@ -294,8 +291,7 @@ $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
         <div class="footer-content">
             <div class="footer-column">
                 <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one-stop destination for all your shopping needs. Quality products, fast delivery, and excellent
-                    customer service.</p>
+                <p>Your one-stop destination for all your shopping needs. Quality products, fast delivery, and excellent customer service.</p>
                 <div class="social-icons">
                     <a href="#"><i class="fa-brands fa-facebook"></i></a>
                     <a href="#"><i class="fa-brands fa-twitter"></i></a>
@@ -335,8 +331,7 @@ $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms &
-                    Conditions</a></p>
+            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></p>
         </div>
     </footer>
 
