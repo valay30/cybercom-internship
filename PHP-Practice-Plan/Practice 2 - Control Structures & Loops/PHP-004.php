@@ -25,4 +25,14 @@ foreach ($student as $key => $value) {
     echo "$key: $value<br>";
 }
 
+// do while loop
+echo "<h3>do while loop</h3>";
+$i = 10;
+
+do {
+    echo $i;
+    $i++;
+} while ($i < 5);
+
+
 ?>
