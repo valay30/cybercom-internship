@@ -150,6 +150,141 @@ $products = [
         'description' => 'High-definition webcam with a wide-angle lens and built-in microphone for clear video calls and streaming.',
         'features' => ['1080p Full HD', 'Wide-Angle Lens', 'Built-in Microphone']
     ],
+    'p10' => [
+        'id' => 'p10',
+        'name' => 'Designer Sunglasses',
+        'price' => 2499,
+        'image' => 'images/Designer Sunglasses.png',
+        'images' => [
+            'images/Designer Sunglasses.png',
+            'images/Designer Sunglasses_2.png',
+            'images/Designer Sunglasses.png'
+        ],
+        'category' => 'fashion',
+        'brand' => 'rayban',
+        'description' => 'Stylish and protective sunglasses with UV400 lenses. Perfect for any sunny day.',
+        'features' => ['UV Protection', 'Scratch Resistant', 'Lightweight Frame']
+    ],
+    'p11' => [
+        'id' => 'p11',
+        'name' => 'Coffee Maker',
+        'price' => 3999,
+        'image' => 'images/Coffee Maker.png',
+        'images' => [
+            'images/Coffee Maker.png',
+            'images/Coffee Maker.png',
+            'images/Coffee Maker.png'
+        ],
+        'category' => 'home',
+        'brand' => 'philips',
+        'description' => 'Brew cafe-quality coffee at home with this easy-to-use drip coffee maker. Features a programmable timer.',
+        'features' => ['Programmable Timer', 'Keep Warm Function', 'Reusable Filter']
+    ],
+    'p12' => [
+        'id' => 'p12',
+        'name' => 'Face Serum',
+        'price' => 899,
+        'image' => 'images/Face Serum.png',
+        'images' => [
+            'images/Face Serum.png',
+            'images/Face Serum.png',
+            'images/Face Serum.png'
+        ],
+        'category' => 'beauty',
+        'brand' => 'loreal',
+        'description' => 'Revitalize your skin with this hydrating face serum. Rich in Vitamin C and Hyaluronic Acid.',
+        'features' => ['Hydrating', 'Vitamin C Enriched', 'For All Skin Types']
+    ],
+    'p13' => [
+        'id' => 'p13',
+        'name' => 'Gaming Headset',
+        'price' => 2500,
+        'image' => 'images/Gaming Headset.png',
+        'images' => [
+            'images/Gaming Headset.png',
+            'images/Gaming Headset.png',
+            'images/Gaming Headset.png'
+        ],
+        'category' => 'electronics',
+        'brand' => 'logitech',
+        'description' => 'Immersive surround sound gaming headset with a noise-cancelling microphone for clear communication.',
+        'features' => ['7.1 Surround Sound', 'Noise Cancelling Mic', 'Memory Foam Earcups']
+    ],
+    'p14' => [
+        'id' => 'p14',
+        'name' => 'Cotton T-Shirt',
+        'price' => 499,
+        'image' => 'images/Cotton T-Shirt.png',
+        'images' => [
+            'images/Cotton T-Shirt.png',
+            'images/Cotton T-Shirt.png',
+            'images/Cotton T-Shirt.png'
+        ],
+        'category' => 'fashion',
+        'brand' => 'nike',
+        'description' => 'Soft and breathable 100% cotton t-shirt. Essential casual wear for everyday comfort.',
+        'features' => ['100% Cotton', 'Regular Fit', 'Machine Washable']
+    ],
+    'p15' => [
+        'id' => 'p15',
+        'name' => 'Air Fryer',
+        'price' => 5999,
+        'image' => 'images/Air Fryer.png',
+        'images' => [
+            'images/Air Fryer.png',
+            'images/Air Fryer.png',
+            'images/Air Fryer.png'
+        ],
+        'category' => 'home',
+        'brand' => 'philips',
+        'description' => 'Cook healthy and delicious meals with up to 90% less fat. Versatile cooking functions for frying, baking, and roasting.',
+        'features' => ['Rapid Air Technology', 'Digital Touchscreen', 'Easy to Clean']
+    ],
+    'p16' => [
+        'id' => 'p16',
+        'name' => 'Matte Lipstick',
+        'price' => 599,
+        'image' => 'images/Matte Lipstick.png',
+        'images' => [
+            'images/Matte Lipstick.png',
+            'images/Matte Lipstick.png',
+            'images/Matte Lipstick.png'
+        ],
+        'category' => 'beauty',
+        'brand' => 'lakme',
+        'description' => 'Long-lasting matte lipstick with intense color payoff. Enriched with moisturizing ingredients to keep lips soft.',
+        'features' => ['Long Lasting', 'Intense Color', 'Moisturizing']
+    ],
+    'p17' => [
+        'id' => 'p17',
+        'name' => 'Yoga Mat',
+        'price' => 799,
+        'image' => 'images/Yoga Mat.png',
+        'images' => [
+            'images/Yoga Mat.png',
+            'images/Yoga Mat.png',
+            'images/Yoga Mat.png'
+        ],
+        'category' => 'fashion',
+        'brand' => 'adidas',
+        'description' => 'Non-slip yoga mat providing excellent cushioning and support for your practice. Lightweight and portable.',
+        'features' => ['Non-Slip Surface', 'Eco-Friendly Material', 'Carrying Strap Included']
+    ],
+    'p18' => [
+        'id' => 'p18',
+        'name' => 'Portable Power Bank',
+        'price' => 1299,
+        'image' => 'images/Power Bank.png',
+        'images' => [
+            'images/Power Bank.png',
+            'images/Power Bank.png',
+            'images/Power Bank.png'
+        ],
+        'category' => 'electronics',
+        'brand' => 'samsung',
+        'description' => 'High-capacity 10000mAh power bank with fast charging support. Keep your devices charged on the go.',
+        'features' => ['10000mAh Capacity', 'Fast Charging', 'Dual USB Output']
+    ],
 ];
 
 $orders = [

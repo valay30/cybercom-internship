@@ -1,6 +1,9 @@
 <?php
 require_once 'data.php';
 session_start();
+if (!isset($_SESSION['wishlist'])) {
+    $_SESSION['wishlist'] = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -19,6 +22,7 @@ session_start();
         <nav>
             <a href="index.php">Home</a>
             <a href="plp.php">Products</a>
+            <a href="wishlist.php">Wishlist</a>
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
@@ -36,7 +40,7 @@ session_start();
         <section class="hero-section">
             <div class="hero-content">
                 <h2><i class="fa-solid fa-cart-shopping"></i> Shop Smart with EasyCart</h2>
-                <p>Discover quality products at unbeatable prices – shop with confidence!</p>
+                <p>Discover quality products at unbeatable prices , shop with confidence!</p>
                 <a href="plp.php"><button class="hero-btn">Browse Products</button></a>
             </div>
         </section>
@@ -49,8 +53,18 @@ session_start();
                         <img src="<?php echo $product['image']; ?>" alt="<?php echo $product['name']; ?>">
                         <h3><?php echo $product['name']; ?></h3>
                         <p>₹<?php echo number_format($product['price']); ?></p>
-                        <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
-                                Details</button></a>
+                        <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
+                            <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
+                                    Details</button></a>
+                            <?php
+                            $in_wishlist = isset($_SESSION['wishlist']) && in_array($product['id'], $_SESSION['wishlist']);
+                            ?>
+                            <button class="wishlist-btn" onclick="toggleWishlist('<?php echo $product['id']; ?>', this)"
+                                style="background: white; border: 1px solid #ddd; padding: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                <i class="<?php echo $in_wishlist ? 'fa-solid' : 'fa-regular'; ?> fa-heart"
+                                    style="color: <?php echo $in_wishlist ? '#ef4444' : '#64748b'; ?>; font-size: 1.2rem;"></i>
+                            </button>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -128,6 +142,8 @@ session_start();
                     Conditions</a></p>
         </div>
     </footer>
+    <script src="js/wishlist.js"></script>
+    
 </body>
 
 </html>

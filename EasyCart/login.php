@@ -16,6 +16,7 @@
         <nav>
             <a href="index.php">Home</a>
             <a href="plp.php">Products</a>
+            <a href="wishlist.php">Wishlist</a>
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>

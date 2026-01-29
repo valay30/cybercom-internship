@@ -22,6 +22,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'qty' => 1
             ];
         }
+
+        if (isset($_POST['ajax']) && $_POST['ajax'] === 'true') {
+            // Return info for immediate frontend update (e.g. dynamic discount on PDP)
+            echo json_encode([
+                'success' => true,
+                'newQty' => $_SESSION['cart'][$pid]['qty'],
+                'productPrice' => $products[$pid]['price'] // Original Price
+            ]);
+            exit;
+        }
     } elseif ($action === 'update') {
         $qty = (int) $_POST['qty'];
         if ($qty > 0) {
@@ -88,6 +98,7 @@ foreach ($_SESSION['cart'] as $item) {
         <nav>
             <a href="index.php">Home</a>
             <a href="plp.php">Products</a>
+            <a href="wishlist.php">Wishlist</a>
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>

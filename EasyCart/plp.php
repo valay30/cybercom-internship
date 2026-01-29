@@ -1,6 +1,9 @@
 <?php
 require_once 'data.php';
 session_start();
+if (!isset($_SESSION['wishlist'])) {
+    $_SESSION['wishlist'] = [];
+}
 
 // Get filter parameters
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -51,6 +54,18 @@ if ($sort_option === 'price_asc') {
         return $b['price'] - $a['price'];
     });
 }
+// Pagination
+$items_per_page = 9;
+$total_items = count($filtered_products);
+$total_pages = ceil($total_items / $items_per_page);
+$current_page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+if ($current_page < 1)
+    $current_page = 1;
+if ($current_page > $total_pages && $total_pages > 0)
+    $current_page = $total_pages;
+
+$offset = ($current_page - 1) * $items_per_page;
+$paginated_products = array_slice($filtered_products, $offset, $items_per_page);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -68,6 +83,7 @@ if ($sort_option === 'price_asc') {
         <nav>
             <a href="index.php">Home</a>
             <a href="plp.php">Products</a>
+            <a href="wishlist.php">Wishlist</a>
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
@@ -181,8 +197,9 @@ if ($sort_option === 'price_asc') {
                     </form>
 
                     <!-- Product Count -->
-                    <span class="product-count">Showing <strong><?php echo count($filtered_products); ?></strong>
-                        products</span>
+                    <span class="product-count">Showing
+                        <strong><?php echo $offset + 1; ?>-<?php echo min($offset + count($paginated_products), $total_items); ?></strong>
+                        of <strong><?php echo $total_items; ?></strong> items</span>
 
                     <!-- Sort Dropdown -->
                     <form id="sortForm" action="plp.php" method="GET"
@@ -190,7 +207,7 @@ if ($sort_option === 'price_asc') {
                         <!-- Preserve other filters -->
                         <?php
                         foreach ($_GET as $key => $val) {
-                            if ($key == 'sort')
+                            if ($key == 'sort' || $key == 'page') // Exclude page from sort reset, usually go to page 1? Yes.
                                 continue;
                             if (is_array($val)) {
                                 foreach ($val as $v) {
@@ -214,23 +231,62 @@ if ($sort_option === 'price_asc') {
                 </div>
 
                 <div class="product-grid">
-                    <?php if (empty($filtered_products)): ?>
+                    <?php if (empty($paginated_products)): ?>
                         <div style="grid-column:1/-1; text-align:center; padding:50px;">
                             <h3>No products found</h3>
                             <p>Try adjusting your search or filters.</p>
                         </div>
                     <?php else: ?>
-                        <?php foreach ($filtered_products as $product): ?>
+                        <?php foreach ($paginated_products as $product): ?>
                             <div class="product-card">
                                 <img src="<?php echo $product['image']; ?>" alt="">
                                 <h3><?php echo $product['name']; ?></h3>
                                 <p>₹<?php echo number_format($product['price']); ?></p>
-                                <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
-                                        Details</button></a>
+                                <div class="product-actions"
+                                    style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                                    <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
+                                            Details</button></a>
+                                    <?php
+                                    $in_wishlist = isset($_SESSION['wishlist']) && in_array($product['id'], $_SESSION['wishlist']);
+                                    ?>
+                                    <button class="wishlist-btn" onclick="toggleWishlist('<?php echo $product['id']; ?>', this)"
+                                        style="background: white; border: 1px solid #ddd; padding: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+                                        <i class="<?php echo $in_wishlist ? 'fa-solid' : 'fa-regular'; ?> fa-heart"
+                                            style="color: <?php echo $in_wishlist ? '#ef4444' : '#64748b'; ?>; font-size: 1.2rem;"></i>
+                                    </button>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
+
+                <!-- Pagination -->
+                <?php if ($total_pages > 1): ?>
+                    <div class="pagination" style="display:flex; justify-content:center; gap:10px; margin-top:40px;">
+                        <?php
+                        $queryParams = $_GET;
+                        // Unset page to append cleanly or just overwrite
+                        ?>
+
+                        <?php if ($current_page > 1): ?>
+                            <?php $queryParams['page'] = $current_page - 1; ?>
+                            <a href="?<?php echo http_build_query($queryParams); ?>" class="pagination-btn"><i
+                                    class="fa-solid fa-angle-left"></i> </a>
+                        <?php endif; ?>
+
+                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                            <?php $queryParams['page'] = $i; ?>
+                            <a href="?<?php echo http_build_query($queryParams); ?>"
+                                class="pagination-btn <?php echo $i === $current_page ? 'active' : ''; ?>"><?php echo $i; ?></a>
+                        <?php endfor; ?>
+
+                        <?php if ($current_page < $total_pages): ?>
+                            <?php $queryParams['page'] = $current_page + 1; ?>
+                            <a href="?<?php echo http_build_query($queryParams); ?>" class="pagination-btn"><i
+                                    class="fa-solid fa-angle-right"></i></a>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
             </section>
         </div>
     </main>
@@ -284,7 +340,11 @@ if ($sort_option === 'price_asc') {
         </div>
     </footer>
 
+    <script>
+        const WISHLIST_IDS = <?php echo json_encode(isset($_SESSION['wishlist']) ? array_values($_SESSION['wishlist']) : []); ?>;
+    </script>
     <script src="js/plp.js"></script>
+    <script src="js/wishlist.js"></script>
 </body>
 
 </html>

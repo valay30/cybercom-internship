@@ -56,6 +56,155 @@ const mobileInput = document.getElementById('mobile');
 const emailInput = document.getElementById('email');
 const addressInput = document.getElementById('address');
 
+// ===================================
+// LocalStorage Form Data Persistence
+// ===================================
+
+const STORAGE_KEY = 'easycart_checkout_data';
+
+// Function to save form data to localStorage
+function saveFormData() {
+    const formData = {
+        name: nameInput.value,
+        mobile: mobileInput.value,
+        email: emailInput.value,
+        address: addressInput.value,
+        shipping: document.querySelector('input[name="shipping"]:checked')?.value || '',
+        payment: document.querySelector('input[name="payment"]:checked')?.value || '',
+        upiId: document.getElementById('upi-id')?.value || '',
+        cardNumber: document.getElementById('card-number')?.value || '',
+        cardExpiry: document.getElementById('card-expiry')?.value || '',
+        timestamp: new Date().getTime()
+    };
+
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+        showAutoSaveIndicator();
+    } catch (e) {
+        console.warn('Failed to save form data to localStorage:', e);
+    }
+}
+
+// Function to show auto-save indicator
+let autoSaveTimeout;
+function showAutoSaveIndicator() {
+    const indicator = document.getElementById('auto-save-indicator');
+    if (!indicator) return;
+
+    // Clear any existing timeout
+    if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+
+    // Show indicator
+    indicator.style.display = 'flex';
+
+    // Hide after 2 seconds
+    autoSaveTimeout = setTimeout(() => {
+        indicator.style.display = 'none';
+    }, 2000);
+}
+
+// Function to restore form data from localStorage
+function restoreFormData() {
+    try {
+        const savedData = localStorage.getItem(STORAGE_KEY);
+        if (!savedData) return;
+
+        const formData = JSON.parse(savedData);
+
+        // Check if data is not too old (7 days)
+        const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+        if (new Date().getTime() - formData.timestamp > sevenDaysInMs) {
+            localStorage.removeItem(STORAGE_KEY);
+            return;
+        }
+
+        // Restore personal details
+        if (formData.name) nameInput.value = formData.name;
+        if (formData.mobile) mobileInput.value = formData.mobile;
+        if (formData.email) emailInput.value = formData.email;
+        if (formData.address) addressInput.value = formData.address;
+
+        // Restore shipping selection
+        if (formData.shipping) {
+            const shippingRadio = document.querySelector(`input[name="shipping"][value="${formData.shipping}"]`);
+            if (shippingRadio) {
+                shippingRadio.checked = true;
+                updateShipping(shippingRadio);
+            }
+        }
+
+        // Restore payment selection
+        if (formData.payment) {
+            const paymentRadio = document.querySelector(`input[name="payment"][value="${formData.payment}"]`);
+            if (paymentRadio) {
+                paymentRadio.checked = true;
+                updatePayment(paymentRadio);
+            }
+        }
+
+        // Restore payment details
+        if (formData.upiId) {
+            const upiInput = document.getElementById('upi-id');
+            if (upiInput) upiInput.value = formData.upiId;
+        }
+        if (formData.cardNumber) {
+            const cardNumInput = document.getElementById('card-number');
+            if (cardNumInput) cardNumInput.value = formData.cardNumber;
+        }
+        if (formData.cardExpiry) {
+            const cardExpiryInput = document.getElementById('card-expiry');
+            if (cardExpiryInput) cardExpiryInput.value = formData.cardExpiry;
+        }
+
+    } catch (e) {
+        console.warn('Failed to restore form data from localStorage:', e);
+    }
+}
+
+// Function to clear saved form data
+function clearFormData() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+        console.warn('Failed to clear form data from localStorage:', e);
+    }
+}
+
+// Auto-save form data on input changes
+const formInputs = [nameInput, mobileInput, emailInput, addressInput];
+formInputs.forEach(input => {
+    input.addEventListener('input', saveFormData);
+});
+
+// Save on shipping/payment selection change
+document.addEventListener('change', function (e) {
+    if (e.target.name === 'shipping' || e.target.name === 'payment') {
+        saveFormData();
+    }
+});
+
+// Save payment details on input
+const upiIdInput = document.getElementById('upi-id');
+const cardNumberInput = document.getElementById('card-number');
+const cardExpiryInput = document.getElementById('card-expiry');
+
+if (upiIdInput) upiIdInput.addEventListener('input', saveFormData);
+if (cardNumberInput) cardNumberInput.addEventListener('input', saveFormData);
+if (cardExpiryInput) cardExpiryInput.addEventListener('input', saveFormData);
+
+// Restore form data when page loads
+window.addEventListener('DOMContentLoaded', restoreFormData);
+
+// Clear form data after successful order placement
+checkoutForm.addEventListener('submit', function (e) {
+    // Only clear if form is valid (will be submitted)
+    const isValid = checkoutForm.checkValidity();
+    if (isValid) {
+        // Clear saved data after a short delay to ensure form submits first
+        setTimeout(clearFormData, 100);
+    }
+});
+
 // Name validation
 nameInput.addEventListener('blur', function () {
     if (this.value.trim() === '') {
@@ -229,9 +378,11 @@ checkoutForm.addEventListener('submit', function (e) {
 });
 
 
-//JavaScript for Shipping Option Highlighting
+//JavaScript for Shipping Option Highlighting with AJAX
 
 function updateShipping(radio) {
+    console.log('🚀 updateShipping called with value:', radio.value);
+
     // Remove active class from all shipping options
     document.querySelectorAll('.shipping-option').forEach(option => {
         option.classList.remove('active');
@@ -240,41 +391,96 @@ function updateShipping(radio) {
     // Add active class to selected option
     radio.closest('.shipping-option').classList.add('active');
 
-    // Update shipping cost in summary
+    // Get shipping cost from selected radio button
     const shippingCost = parseFloat(radio.value);
 
-    // Get subtotal safely from data attribute
-    const subtotalElement = document.getElementById('summary-subtotal');
-    let subtotal = 0;
-
-    if (subtotalElement && subtotalElement.dataset.subtotal) {
-        subtotal = parseFloat(subtotalElement.dataset.subtotal);
-    } else {
-        // Fallback to text parsing if needed (cleanup)
-        subtotal = parseFloat(subtotalElement.textContent.replace(/[₹,\s]/g, ''));
-    }
-
-    // Calculate Tax and Total
-    // Tax is 18% of (Subtotal + Shipping)
-    const taxableAmount = subtotal + shippingCost;
-    const taxAmount = taxableAmount * 0.18;
-    const total = taxableAmount + taxAmount;
-
-    // Update displays using IDs
+    // Get summary elements
     const shippingElement = document.getElementById('summary-shipping');
-    if (shippingElement) {
-        shippingElement.textContent = '₹' + shippingCost.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
     const taxElement = document.getElementById('summary-tax');
-    if (taxElement) {
-        taxElement.textContent = '₹' + taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const totalElement = document.getElementById('summary-total');
+    const summarySection = document.querySelector('.cart-summary-section');
+
+    // Add loading state with visual feedback
+    if (summarySection) {
+        summarySection.style.transition = 'opacity 0.3s ease';
+        summarySection.style.opacity = '0.6';
+        summarySection.style.pointerEvents = 'none';
     }
 
-    const totalElement = document.getElementById('summary-total');
-    if (totalElement) {
-        totalElement.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+    // Create FormData for AJAX request
+    const formData = new FormData();
+    formData.append('action', 'update_shipping');
+    formData.append('shipping_cost', shippingCost);
+    formData.append('ajax', 'true');
+
+    // Send AJAX request to server
+    fetch('checkout.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update shipping cost with animation
+                if (shippingElement) {
+                    shippingElement.style.transition = 'all 0.3s ease';
+                    shippingElement.style.transform = 'scale(1.1)';
+                    shippingElement.style.color = '#10b981';
+                    shippingElement.textContent = data.formatted.shipping;
+
+                    setTimeout(() => {
+                        shippingElement.style.transform = 'scale(1)';
+                        shippingElement.style.color = '';
+                    }, 300);
+                }
+
+                // Update tax with animation
+                if (taxElement) {
+                    taxElement.style.transition = 'all 0.3s ease';
+                    taxElement.style.transform = 'scale(1.1)';
+                    taxElement.style.color = '#10b981';
+                    taxElement.textContent = data.formatted.tax;
+
+                    setTimeout(() => {
+                        taxElement.style.transform = 'scale(1)';
+                        taxElement.style.color = '';
+                    }, 300);
+                }
+
+                // Update total with animation
+                if (totalElement) {
+                    totalElement.style.transition = 'all 0.3s ease';
+                    totalElement.style.transform = 'scale(1.1)';
+                    totalElement.style.color = '#10b981';
+                    totalElement.textContent = data.formatted.total;
+
+                    setTimeout(() => {
+                        totalElement.style.transform = 'scale(1)';
+                        totalElement.style.color = '';
+                    }, 300);
+                }
+
+                // Remove loading state
+                if (summarySection) {
+                    summarySection.style.opacity = '1';
+                    summarySection.style.pointerEvents = 'auto';
+                }
+
+                console.log('✅ Shipping updated via AJAX:', data);
+            } else {
+                throw new Error('Server returned error');
+            }
+        })
+        .catch(error => {
+            console.error('❌ AJAX Error:', error);
+            alert('Failed to update shipping. Please try again.');
+
+            // Remove loading state on error
+            if (summarySection) {
+                summarySection.style.opacity = '1';
+                summarySection.style.pointerEvents = 'auto';
+            }
+        });
 }
 
 //JavaScript for Payment Method Highlighting

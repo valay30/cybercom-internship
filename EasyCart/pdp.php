@@ -2,6 +2,10 @@
 require_once 'data.php';
 session_start();
 
+if (!isset($_SESSION['wishlist'])) {
+    $_SESSION['wishlist'] = [];
+}
+
 $id = $_GET['id'] ?? 'p1';
 $product = $products[$id] ?? $products['p1'];
 
@@ -37,6 +41,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
         <nav>
             <a href="index.php">Home</a>
             <a href="plp.php">Products</a>
+            <a href="wishlist.php">Wishlist</a>
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
@@ -88,12 +93,21 @@ if (isset($_SESSION['cart'][$product['id']])) {
                         <li><?php echo $feature; ?></li>
                     <?php endforeach; ?>
                 </ul>
-                <form action="cart.php" method="POST" style="box-shadow:none; padding:0; border:none; max-width:100%;">
+                <form action="cart.php" method="POST"
+                    style="box-shadow:none; padding:0; border:none; max-width:100%; display:inline-block;">
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
                     <button type="submit" class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to
                         Cart</button>
                 </form>
+                <?php
+                $in_wishlist = isset($_SESSION['wishlist']) && in_array($product['id'], $_SESSION['wishlist']);
+                ?>
+                <button class="wishlist-btn" onclick="toggleWishlist('<?php echo $product['id']; ?>', this)"
+                    style="background: white; border: 1px solid #ddd; padding: 12px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-left:10px;">
+                    <i class="<?php echo $in_wishlist ? 'fa-solid' : 'fa-regular'; ?> fa-heart"
+                        style="color: <?php echo $in_wishlist ? '#ef4444' : '#64748b'; ?>; font-size: 1.4rem; vertical-align: middle;"></i>
+                </button>
             </section>
         </div>
         <br>
@@ -161,6 +175,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
     </footer>
 
     <script src="js/pdp.js?v=<?php echo time(); ?>"></script>
+    <script src="js/wishlist.js"></script>
 </body>
 
 </html>

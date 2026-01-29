@@ -2,6 +2,47 @@
 require_once 'data.php';
 session_start();
 
+// AJAX Handler for Shipping Updates
+if (isset($_POST['ajax']) && $_POST['ajax'] === 'true' && isset($_POST['action']) && $_POST['action'] === 'update_shipping') {
+    header('Content-Type: application/json');
+
+    $cart = $_SESSION['cart'] ?? [];
+    $subtotal = 0;
+
+    foreach ($cart as $item) {
+        if (isset($item['qty']) && isset($item['price'])) {
+            $discount_percent = $item['qty'];
+            if ($discount_percent > 50)
+                $discount_percent = 50;
+
+            $discounted_price = $item['price'] * (1 - ($discount_percent / 100));
+            $subtotal += ($discounted_price * $item['qty']);
+        }
+    }
+
+    $shipping_cost = floatval($_POST['shipping_cost'] ?? 0);
+
+    // Calculate tax and total
+    $taxable_amount = $subtotal + $shipping_cost;
+    $tax_amount = $taxable_amount * 0.18;
+    $total_amount = $taxable_amount + $tax_amount;
+
+    echo json_encode([
+        'success' => true,
+        'subtotal' => $subtotal,
+        'shipping' => $shipping_cost,
+        'tax' => $tax_amount,
+        'total' => $total_amount,
+        'formatted' => [
+            'subtotal' => '₹' . number_format($subtotal, 2),
+            'shipping' => '₹' . number_format($shipping_cost, 2),
+            'tax' => '₹' . number_format($tax_amount, 2),
+            'total' => '₹' . number_format($total_amount, 2)
+        ]
+    ]);
+    exit;
+}
+
 $cart = $_SESSION['cart'] ?? [];
 $subtotal = 0;
 foreach ($cart as $item) {
@@ -50,16 +91,17 @@ $shipping_cost = $shipping_std;
         <nav>
             <a href="index.php">Home</a>
             <a href="plp.php">Products</a>
+            <a href="wishlist.php">Wishlist</a>
             <a href="cart.php">Cart</a>
             <a href="orders.php">My Orders</a>
         </nav>
         <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
-            <div class="user-info">
-                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
-                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
-            </div>
+                <div class="user-info">
+                    <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
+                    <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
         <?php else: ?>
-            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
+                <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
         <?php endif; ?>
     </header>
 
@@ -70,7 +112,16 @@ $shipping_cost = $shipping_std;
         <div class="cart-container">
             <!-- Left Side: Shipping Options -->
             <section class="cart-items-section">
-                <h3><i class="fa-solid fa-user-circle"></i> Personal Details</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;"><i
+                            class="fa-solid fa-user-circle"></i> Personal Details</h3>
+                    <div id="auto-save-indicator"
+                        style="display: none; align-items: center; gap: 6px; color: #10b981; font-size: 0.85rem; font-weight: 500;">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Auto-saved</span>
+                    </div>
+                </div>
+                <div style="height: 2px; background: var(--bg-light); margin-bottom: 24px;"></div>
                 <div class="checkout-details-grid">
                     <div class="form-group">
                         <label for="name">Full Name</label>
@@ -256,36 +307,36 @@ $shipping_cost = $shipping_std;
                         <div class="header-item">Subtotal</div>
                     </div>
                     <?php if (empty($cart)): ?>
-                        <div class="table-row empty-cart">
-                            <div class="row-item" colspan="5" style="text-align:center;">Your cart is empty</div>
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($cart as $id => $item): ?>
-                            <div class="table-row">
-                                <div class="row-item">
-                                    <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>"
-                                        class="product-image">
-                                </div>
-                                <div class="row-item product-name"><?php echo $item['name']; ?></div>
-                                <div class="row-item quantity"><?php echo $item['qty']; ?></div>
-                                <?php
-                                $d_percent = $item['qty'];
-                                if ($d_percent > 50)
-                                    $d_percent = 50;
-                                $d_price = $item['price'] * (1 - ($d_percent / 100));
-                                $line_total = $d_price * $item['qty'];
-                                ?>
-                                <div class="row-item unit-price">
-                                    <span
-                                        style="text-decoration: line-through; font-size: 0.8em; color: #999;">₹<?php echo number_format($item['price'], 2); ?></span><br>
-                                    ₹<?php echo number_format($d_price, 2); ?>
-                                </div>
-                                <div class="row-item subtotal">
-                                    ₹<?php echo number_format($line_total, 2); ?>
-                                    <div style="font-size: 0.7em; color: #16a34a;"><?php echo $d_percent; ?>% Off</div>
-                                </div>
+                            <div class="table-row empty-cart">
+                                <div class="row-item" colspan="5" style="text-align:center;">Your cart is empty</div>
                             </div>
-                        <?php endforeach; ?>
+                    <?php else: ?>
+                            <?php foreach ($cart as $id => $item): ?>
+                                    <div class="table-row">
+                                        <div class="row-item">
+                                            <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['name']; ?>"
+                                                class="product-image">
+                                        </div>
+                                        <div class="row-item product-name"><?php echo $item['name']; ?></div>
+                                        <div class="row-item quantity"><?php echo $item['qty']; ?></div>
+                                        <?php
+                                        $d_percent = $item['qty'];
+                                        if ($d_percent > 50)
+                                            $d_percent = 50;
+                                        $d_price = $item['price'] * (1 - ($d_percent / 100));
+                                        $line_total = $d_price * $item['qty'];
+                                        ?>
+                                        <div class="row-item unit-price">
+                                            <span
+                                                style="text-decoration: line-through; font-size: 0.8em; color: #999;">₹<?php echo number_format($item['price'], 2); ?></span><br>
+                                            ₹<?php echo number_format($d_price, 2); ?>
+                                        </div>
+                                        <div class="row-item subtotal">
+                                            ₹<?php echo number_format($line_total, 2); ?>
+                                            <div style="font-size: 0.7em; color: #999;"><?php echo $d_percent; ?>% Off</div>
+                                        </div>
+                                    </div>
+                            <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
             </section>

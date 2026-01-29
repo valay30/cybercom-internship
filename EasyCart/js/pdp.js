@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
+            const productId = this.querySelector('input[name="id"]').value;
 
             // Show loading state
             submitBtn.disabled = true;
@@ -43,6 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log("Data:", data);
                     if (data.success) {
                         showToast('Item added to cart successfully!', 'success');
+
+                        // Update Price Display Dynamically if quantity info is returned
+                        if (data.newQty !== undefined && data.productPrice !== undefined) {
+                            updatePDPPrice(data.productPrice, data.newQty);
+                        }
                     } else {
                         showToast('Failed to add item to cart.', 'error');
                     }
@@ -61,6 +67,31 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Add to Cart form NOT found.");
     }
 });
+
+function updatePDPPrice(originalPrice, qty) {
+    const priceContainer = document.querySelector('.pdp-info-section .product-price');
+    if (!priceContainer) return;
+
+    let discountPercent = qty;
+    if (discountPercent > 50) discountPercent = 50;
+
+    // Only apply discount visuals if qty > 0 (which it should be after add)
+    if (discountPercent > 0) {
+        const discountedPrice = originalPrice * (1 - (discountPercent / 100));
+
+        // Format to Indian Currency
+        const fmtOriginal = '₹' + parseFloat(originalPrice).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtFinal = '₹' + discountedPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        priceContainer.innerHTML = `
+            <span style="text-decoration: line-through; color:var(--primary); font-size: 0.7em;">${fmtOriginal}</span>
+            <span style="color: black;">${fmtFinal}</span>
+            <span style="background: #fee2e2; color: black; padding: 4px 10px; border-radius: 20px; font-size: 0.5em; vertical-align: middle; margin-left: 10px;">
+                ${discountPercent}% OFF
+            </span>
+        `;
+    }
+}
 
 function showToast(message, type = 'success') {
     console.log("Showing toast:", message, type);
