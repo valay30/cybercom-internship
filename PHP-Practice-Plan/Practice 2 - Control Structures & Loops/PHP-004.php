@@ -14,4 +14,15 @@ while ($i <= 10) {
     $i++;
 }
 
+// Use foreach to iterate through a student array and print 'Key: Value'.
+$student = [
+    "Name" => "Valay",
+    "Age" => 23
+];
+
+echo "<h3>Student Details:</h3>";
+foreach ($student as $key => $value) {
+    echo "$key: $value<br>";
+}
+
 ?>
