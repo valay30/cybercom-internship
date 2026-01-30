@@ -67,6 +67,37 @@ if ($current_page > $total_pages && $total_pages > 0)
 
 $offset = ($current_page - 1) * $items_per_page;
 $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
+
+// ==========================================
+// AJAX RESPONSE (Return JSON if AJAX request)
+// ==========================================
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'true') {
+    $response = [
+        'success' => true,
+        'products' => [],
+        'total_items' => $total_items,
+        'total_pages' => $total_pages,
+        'current_page' => $current_page,
+        'showing_from' => $offset + 1,
+        'showing_to' => min($offset + count($paginated_products), $total_items)
+    ];
+
+    // Format products for JSON response
+    foreach ($paginated_products as $product) {
+        $response['products'][] = [
+            'id' => $product['id'],
+            'name' => $product['name'],
+            'price' => $product['price'],
+            'image' => $product['image'],
+            'shipping_type' => $product['shipping_type'],
+            'in_wishlist' => in_array($product['id'], $_SESSION['wishlist'])
+        ];
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit; // Stop here, don't render HTML
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -79,31 +110,14 @@ $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
 </head>
 
 <body>
-    <header>
-        <h1>EasyCart</h1>
-        <nav>
-            <a href="index.php">Home</a>
-            <a href="plp.php">Products</a>
-            <a href="wishlist.php">Wishlist</a>
-            <a href="cart.php">Cart</a>
-            <a href="orders.php">My Orders</a>
-        </nav>
-        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
-            <div class="user-info">
-                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
-                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
-            </div>
-        <?php else: ?>
-            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
-        <?php endif; ?>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <main>
         <div class="plp-container">
             <!-- Sidebar Filters -->
             <aside class="filters-sidebar">
                 <h3><i class="fa-solid fa-filter"></i> Filters</h3>
-                <form action="plp.php" method="GET">
+                <form id="filterForm" action="plp.php" method="GET">
 
                     <!-- Categories -->
                     <div class="filter-group">
@@ -219,10 +233,12 @@ $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
                             }
                         }
                         ?>
-                        <select name="sort" onchange="document.getElementById('sortForm').submit()">
+                        <select name="sort">
                             <option value="">Sort By: Relevance</option>
-                            <option value="price_asc" <?php echo $sort_option === 'price_asc' ? 'selected' : ''; ?>>Price: Low to High</option>
-                            <option value="price_desc" <?php echo $sort_option === 'price_desc' ? 'selected' : ''; ?>>Price: High to Low</option>
+                            <option value="price_asc" <?php echo $sort_option === 'price_asc' ? 'selected' : ''; ?>>Price:
+                                Low to High</option>
+                            <option value="price_desc" <?php echo $sort_option === 'price_desc' ? 'selected' : ''; ?>>
+                                Price: High to Low</option>
                         </select>
                     </form>
                 </div>
@@ -239,6 +255,18 @@ $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
                                 <img src="<?php echo $product['image']; ?>" alt="">
                                 <h3><?php echo $product['name']; ?></h3>
                                 <p>₹<?php echo number_format($product['price']); ?></p>
+                                <!-- Shipping Type Badge -->
+                                <?php if ($product['shipping_type'] === 'express'): ?>
+                                    <span
+                                        style="display: inline-block; padding: 4px 8px; background: #28a745; color: white; border-radius: 4px; font-size: 0.75em; font-weight: 600;">
+                                        Express
+                                    </span>
+                                <?php else: ?>
+                                    <span
+                                        style="display: inline-block; padding: 4px 8px; background: #6c757d; color: white; border-radius: 4px; font-size: 0.75em; font-weight: 600;">
+                                        Freight
+                                    </span>
+                                <?php endif; ?>
                                 <div class="product-actions"
                                     style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
                                     <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
@@ -287,53 +315,7 @@ $paginated_products = array_slice($filtered_products, $offset, $items_per_page);
             </section>
         </div>
     </main>
-    <footer>
-        <div class="footer-content">
-            <div class="footer-column">
-                <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one-stop destination for all your shopping needs. Quality products, fast delivery, and excellent customer service.</p>
-                <div class="social-icons">
-                    <a href="#"><i class="fa-brands fa-facebook"></i></a>
-                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                </div>
-            </div>
-
-            <div class="footer-column">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="index.php"><i class="fa-solid fa-angle-right"></i> Home</a></li>
-                    <li><a href="plp.php"><i class="fa-solid fa-angle-right"></i> Products</a></li>
-                    <li><a href="cart.php"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
-                    <li><a href="orders.php"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Customer Service</h3>
-                <ul>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Help Center</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Track Order</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Returns</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Shipping Info</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Contact Us</h3>
-                <ul class="contact-info">
-                    <li><i class="fa-solid fa-location-dot"></i> 123 Shopping Street, Mumbai, India</li>
-                    <li><i class="fa-solid fa-phone"></i> +91 98765 43210</li>
-                    <li><i class="fa-solid fa-envelope"></i> support@easycart.com</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script>
         const WISHLIST_IDS = <?php echo json_encode(isset($_SESSION['wishlist']) ? array_values($_SESSION['wishlist']) : []); ?>;

@@ -43,6 +43,30 @@ if (isset($_POST['ajax']) && $_POST['ajax'] === 'true' && isset($_POST['action']
     exit;
 }
 
+// AJAX Handler for Coupon Validation
+if (isset($_POST['ajax']) && $_POST['ajax'] === 'true' && isset($_POST['action']) && $_POST['action'] === 'apply_coupon') {
+    header('Content-Type: application/json');
+
+    $coupon_code = strtoupper(trim($_POST['coupon_code'] ?? ''));
+
+    if (empty($coupon_code)) {
+        echo json_encode(['success' => false, 'message' => 'Please enter a coupon code']);
+        exit;
+    }
+
+    if (isset($coupons[$coupon_code])) {
+        echo json_encode([
+            'success' => true,
+            'discount' => $coupons[$coupon_code]['discount'],
+            'description' => $coupons[$coupon_code]['description'],
+            'message' => 'Coupon applied successfully!'
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Invalid coupon code']);
+    }
+    exit;
+}
+
 $cart = $_SESSION['cart'] ?? [];
 $subtotal = 0;
 foreach ($cart as $item) {
@@ -55,6 +79,48 @@ foreach ($cart as $item) {
         $subtotal += ($discounted_price * $item['qty']);
     }
 }
+
+// ==========================================
+// DETERMINE CART SHIPPING TYPE (PHASE 4)
+// ==========================================
+$has_freight_product = false;
+
+// Check for freight products in cart
+if (!empty($cart)) {
+    foreach ($cart as $item) {
+        if (isset($item['shipping_type']) && $item['shipping_type'] === 'freight') {
+            $has_freight_product = true;
+            break;
+        }
+    }
+}
+
+// Determine cart shipping options based on rules
+if ($has_freight_product) {
+    // Rule A: Any freight product -> Enable White Glove + Freight, Disable Standard + Express
+    $cart_type = 'freight';
+    $enable_standard = false;
+    $enable_express = false;
+    $enable_white_glove = true;
+    $enable_freight = true;
+} elseif ($subtotal > 300) {
+    // Rule B: Subtotal > 300 -> Enable White Glove + Freight, Disable Standard + Express
+    $cart_type = 'white_glove_freight';
+    $enable_standard = false;
+    $enable_express = false;
+    $enable_white_glove = true;
+    $enable_freight = true;
+} else {
+    // Rule C: Subtotal < 300 -> Enable Standard + Express, Disable White Glove + Freight
+    $cart_type = 'standard_express';
+    $enable_standard = true;
+    $enable_express = true;
+    $enable_white_glove = false;
+    $enable_freight = false;
+}
+
+// Store in session
+$_SESSION['cart_type'] = $cart_type;
 
 // Calculate Shipping Costs based on Rules
 // Standard: Flat 40
@@ -69,8 +135,12 @@ $shipping_white_glove = min(150, $subtotal * 0.05);
 // Freight: 3% of subtotal, Minimum 200
 $shipping_freight = max(200, $subtotal * 0.03);
 
-// Default shipping cost (Standard)
-$shipping_cost = $shipping_std;
+// Default shipping cost based on cart type
+if ($enable_standard) {
+    $shipping_cost = $shipping_std;
+} else {
+    $shipping_cost = $shipping_white_glove;
+}
 
 ?>
 <!DOCTYPE html>
@@ -82,28 +152,19 @@ $shipping_cost = $shipping_std;
     <title>EasyCart - Checkout</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Disabled shipping option styling */
+        .shipping-option:has(input:disabled) {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    </style>
 </head>
 
 <body>
     <!-- Header Section -->
-    <header>
-        <h1>EasyCart</h1>
-        <nav>
-            <a href="index.php">Home</a>
-            <a href="plp.php">Products</a>
-            <a href="wishlist.php">Wishlist</a>
-            <a href="cart.php">Cart</a>
-            <a href="orders.php">My Orders</a>
-        </nav>
-        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
-            <div class="user-info">
-                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
-                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
-            </div>
-        <?php else: ?>
-            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
-        <?php endif; ?>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <!-- Main Content -->
     <main>
@@ -151,9 +212,9 @@ $shipping_cost = $shipping_std;
                 <h3><i class="fa-solid fa-truck"></i> Shipping Options</h3>
                 <div class="shipping-options">
                     <!-- Standard Shipping -->
-                    <label class="shipping-option active" for="standard">
-                        <input type="radio" id="standard" name="shipping" value="<?php echo $shipping_std; ?>" checked
-                            form="checkoutForm" onchange="updateShipping(this)">
+                    <label class="shipping-option <?php echo $enable_standard ? 'active' : ''; ?>" for="standard">
+                        <input type="radio" id="standard" name="shipping" value="<?php echo $shipping_std; ?>" <?php echo $enable_standard ? 'checked' : ''; ?> form="checkoutForm"
+                            onchange="updateShipping(this)" <?php echo !$enable_standard ? 'disabled' : ''; ?>>
                         <div class="shipping-details">
                             <div class="shipping-name">
                                 <i class="fa-solid fa-truck"></i>
@@ -167,7 +228,7 @@ $shipping_cost = $shipping_std;
                     <!-- Express Shipping -->
                     <label class="shipping-option" for="express">
                         <input type="radio" id="express" name="shipping" value="<?php echo $shipping_express; ?>"
-                            form="checkoutForm" onchange="updateShipping(this)">
+                            form="checkoutForm" onchange="updateShipping(this)" <?php echo !$enable_express ? 'disabled' : ''; ?>>
                         <div class="shipping-details">
                             <div class="shipping-name">
                                 <i class="fa-solid fa-rocket"></i>
@@ -180,10 +241,12 @@ $shipping_cost = $shipping_std;
                     </label>
 
                     <!-- White Glove Delivery -->
-                    <label class="shipping-option" for="white-glove">
+                    <label
+                        class="shipping-option <?php echo ($enable_white_glove && !$enable_standard) ? 'active' : ''; ?>"
+                        for="white-glove">
                         <input type="radio" id="white-glove" name="shipping"
                             value="<?php echo $shipping_white_glove; ?>" form="checkoutForm"
-                            onchange="updateShipping(this)">
+                            onchange="updateShipping(this)" <?php echo !$enable_white_glove ? 'disabled' : ''; ?> <?php echo ($enable_white_glove && !$enable_standard) ? 'checked' : ''; ?>>
                         <div class="shipping-details">
                             <div class="shipping-name">
                                 <i class="fa-solid fa-hands-holding-circle"></i>
@@ -198,7 +261,7 @@ $shipping_cost = $shipping_std;
                     <!-- Freight Shipping -->
                     <label class="shipping-option" for="freight">
                         <input type="radio" id="freight" name="shipping" value="<?php echo $shipping_freight; ?>"
-                            form="checkoutForm" onchange="updateShipping(this)">
+                            form="checkoutForm" onchange="updateShipping(this)" <?php echo !$enable_freight ? 'disabled' : ''; ?>>
                         <div class="shipping-details">
                             <div class="shipping-name">
                                 <i class="fa-solid fa-truck-moving"></i>
@@ -341,9 +404,29 @@ $shipping_cost = $shipping_std;
                 </div>
             </section>
 
-            <!-- Right Side: Order Summary -->
             <section class="cart-summary-section">
                 <h3><i class="fa-solid fa-receipt"></i> Payment Summary</h3>
+
+                <!-- Coupon Code Section -->
+                <div class="coupon-section"
+                    style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <label for="coupon-input"
+                        style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;"> Have a Coupon Code?
+                    </label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="coupon-input" placeholder="Enter coupon code"
+                            style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-transform: uppercase;">
+                        <button id="apply-coupon-btn" onclick="applyCoupon()"
+                            style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s;">
+                            Apply
+                        </button>
+                    </div>
+                    <div id="coupon-message" style="margin-top: 10px; font-size: 0.9em; display: none;"></div>
+                    <div id="coupon-success"
+                        style="margin-top: 10px; padding: 8px; background: #d4edda; color: #155724; border-radius: 4px; display: none;">
+                        <i class="fa-solid fa-check-circle"></i> <span id="coupon-success-text"></span>
+                    </div>
+                </div>
 
                 <div class="summary-row">
                     <span>Subtotal</span>
@@ -354,6 +437,13 @@ $shipping_cost = $shipping_std;
                     <span>Shipping Charges</span>
                     <span id="summary-shipping">₹<?php echo number_format($shipping_cost, 2); ?></span>
                 </div>
+
+                <!-- Coupon Discount Row (Hidden by default) -->
+                <div class="summary-row" id="coupon-discount-row" style="display: none; color: #999;">
+                    <span>Coupon Discount (<span id="coupon-percent"></span>%)</span>
+                    <span id="coupon-discount-amount">-₹0.00</span>
+                </div>
+
                 <?php
                 $tax_amount = ($subtotal + $shipping_cost) * 0.18;
                 $total_amount = $subtotal + $shipping_cost + $tax_amount;
@@ -384,55 +474,9 @@ $shipping_cost = $shipping_std;
         </div>
     </main>
 
-    <footer>
-        <div class="footer-content">
-            <div class="footer-column">
-                <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one stop destination for all your shopping needs. Quality products, fast delivery, and excellent customer service.</p>
-                <div class="social-icons">
-                    <a href="#"><i class="fa-brands fa-facebook"></i></a>
-                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                </div>
-            </div>
+    <?php include 'includes/footer.php'; ?>
 
-            <div class="footer-column">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="index.php"><i class="fa-solid fa-angle-right"></i> Home</a></li>
-                    <li><a href="plp.php"><i class="fa-solid fa-angle-right"></i> Products</a></li>
-                    <li><a href="cart.php"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
-                    <li><a href="orders.php"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Customer Service</h3>
-                <ul>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Help Center</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Track Order</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Returns</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Shipping Info</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Contact Us</h3>
-                <ul class="contact-info">
-                    <li><i class="fa-solid fa-location-dot"></i> 123 Shopping Street, Mumbai, India</li>
-                    <li><i class="fa-solid fa-phone"></i> +91 98765 43210</li>
-                    <li><i class="fa-solid fa-envelope"></i> support@easycart.com</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></p>
-        </div>
-    </footer>
-
-    <script src="js/checkout.js"></script>
+    <script src="js/checkout.js?v=<?php echo time(); ?>"></script>
 </body>
 
 

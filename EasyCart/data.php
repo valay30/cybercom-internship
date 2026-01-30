@@ -28,12 +28,13 @@ $products = [
         'category' => 'electronics',
         'brand' => 'apple',
         'description' => 'Experience premium sound quality with our Wireless Headphones. Featuring advanced noise-cancellation technology, these headphones deliver crystal-clear audio.',
-        'features' => ['Active Noise Cancellation', '30 Hours Battery Life', 'Bluetooth 5.0']
+        'features' => ['Active Noise Cancellation', '30 Hours Battery Life', 'Bluetooth 5.0'],
+        'shipping_type' => 'freight'
     ],
     'p2' => [
         'id' => 'p2',
         'name' => 'Smart Watch',
-        'price' => 1999,
+        'price' => 100,
         'image' => 'images/Smart Watch.png',
         'images' => [
             'images/Smart Watch.png',
@@ -43,7 +44,8 @@ $products = [
         'category' => 'electronics',
         'brand' => 'apple',
         'description' => 'Stay connected and track your fitness goals with this stylish Smart Watch.',
-        'features' => ['Heart Rate Monitor', 'Sleep Tracking', 'Water Resistant']
+        'features' => ['Heart Rate Monitor', 'Sleep Tracking', 'Water Resistant'],
+        'shipping_type' => 'express'
     ],
     'p3' => [
         'id' => 'p3',
@@ -58,12 +60,13 @@ $products = [
         'category' => 'fashion',
         'brand' => 'nike',
         'description' => 'Lightweight and breathable running shoes designed for ultimate comfort.',
-        'features' => ['Breathable Mesh', 'Cushioned Sole', 'Durable Grip']
+        'features' => ['Breathable Mesh', 'Cushioned Sole', 'Durable Grip'],
+        'shipping_type' => 'freight'
     ],
     'p4' => [
         'id' => 'p4',
         'name' => 'Laptop Bag',
-        'price' => 4999,
+        'price' => 250,
         'image' => 'images/Laptop Bag.png',
         'images' => [
             'images/Laptop Bag.png',
@@ -73,7 +76,8 @@ $products = [
         'category' => 'fashion',
         'brand' => 'adidas',
         'description' => 'Sleek and professional laptop bag with multiple compartments for organization.',
-        'features' => ['Waterproof Material', 'Padded Sleeve', 'Adjustable Straps']
+        'features' => ['Waterproof Material', 'Padded Sleeve', 'Adjustable Straps'],
+        'shipping_type' => 'express'
     ],
     'p5' => [
         'id' => 'p5',
@@ -88,12 +92,13 @@ $products = [
         'category' => 'electronics',
         'brand' => 'samsung',
         'description' => 'Compact and powerful, this Bluetooth speaker delivers rich audio and deep bass for an immersive listening experience.',
-        'features' => ['Portable Design', '12 Hours Playtime', 'Deep Bass']
+        'features' => ['Portable Design', '12 Hours Playtime', 'Deep Bass'],
+        'shipping_type' => 'freight'
     ],
     'p6' => [
         'id' => 'p6',
         'name' => 'Gaming Mouse',
-        'price' => 999,
+        'price' => 280,
         'image' => 'images/Gaming Mouse.png',
         'images' => [
             'images/Gaming Mouse.png',
@@ -103,7 +108,8 @@ $products = [
         'category' => 'electronics',
         'brand' => 'logitech',
         'description' => 'High-precision gaming mouse with customizable DPI settings and ergonomic design for long gaming sessions.',
-        'features' => ['Customizable DPI', 'Ergonomic Design', 'RGB Lighting']
+        'features' => ['Customizable DPI', 'Ergonomic Design', 'RGB Lighting'],
+        'shipping_type' => 'express'
     ],
     'p7' => [
         'id' => 'p7',
@@ -118,12 +124,13 @@ $products = [
         'category' => 'electronics',
         'brand' => 'asus',
         'description' => 'Durable mechanical keyboard with tactile switches and customizable RGB backlighting for an enhanced typing experience.',
-        'features' => ['Breathable Mesh', 'Cushioned Sole', 'Durable Grip']
+        'features' => ['Breathable Mesh', 'Cushioned Sole', 'Durable Grip'],
+        'shipping_type' => 'freight'
     ],
     'p8' => [
         'id' => 'p8',
         'name' => 'USB-C Hub',
-        'price' => 1500,
+        'price' => 200,
         'image' => 'images/USB-C Hub.png',
         'images' => [
             'images/USB-C Hub.png',
@@ -133,7 +140,8 @@ $products = [
         'category' => 'electronics',
         'brand' => 'trip',
         'description' => 'Expand your connectivity with this versatile USB-C hub, featuring multiple ports for high-speed data transfer and 4K HDMI output.',
-        'features' => ['4K HDMI Output', 'High-Speed Data Transfer', 'Multiple USB Ports']
+        'features' => ['4K HDMI Output', 'High-Speed Data Transfer', 'Multiple USB Ports'],
+        'shipping_type' => 'express'
     ],
     'p9' => [
         'id' => 'p9',
@@ -148,12 +156,13 @@ $products = [
         'category' => 'electronics',
         'brand' => 'logitech',
         'description' => 'High-definition webcam with a wide-angle lens and built-in microphone for clear video calls and streaming.',
-        'features' => ['1080p Full HD', 'Wide-Angle Lens', 'Built-in Microphone']
+        'features' => ['1080p Full HD', 'Wide-Angle Lens', 'Built-in Microphone'],
+        'shipping_type' => 'freight'
     ],
     'p10' => [
         'id' => 'p10',
         'name' => 'Designer Sunglasses',
-        'price' => 2499,
+        'price' => 100,
         'image' => 'images/Designer Sunglasses.png',
         'images' => [
             'images/Designer Sunglasses.png',
@@ -163,7 +172,8 @@ $products = [
         'category' => 'fashion',
         'brand' => 'rayban',
         'description' => 'Stylish and protective sunglasses with UV400 lenses. Perfect for any sunny day.',
-        'features' => ['UV Protection', 'Scratch Resistant', 'Lightweight Frame']
+        'features' => ['UV Protection', 'Scratch Resistant', 'Lightweight Frame'],
+        'shipping_type' => 'express'
     ],
     'p11' => [
         'id' => 'p11',
@@ -178,12 +188,13 @@ $products = [
         'category' => 'home',
         'brand' => 'philips',
         'description' => 'Brew cafe-quality coffee at home with this easy-to-use drip coffee maker. Features a programmable timer.',
-        'features' => ['Programmable Timer', 'Keep Warm Function', 'Reusable Filter']
+        'features' => ['Programmable Timer', 'Keep Warm Function', 'Reusable Filter'],
+        'shipping_type' => 'freight'
     ],
     'p12' => [
         'id' => 'p12',
         'name' => 'Face Serum',
-        'price' => 899,
+        'price' => 150,
         'image' => 'images/Face Serum.png',
         'images' => [
             'images/Face Serum.png',
@@ -193,7 +204,8 @@ $products = [
         'category' => 'beauty',
         'brand' => 'loreal',
         'description' => 'Revitalize your skin with this hydrating face serum. Rich in Vitamin C and Hyaluronic Acid.',
-        'features' => ['Hydrating', 'Vitamin C Enriched', 'For All Skin Types']
+        'features' => ['Hydrating', 'Vitamin C Enriched', 'For All Skin Types'],
+        'shipping_type' => 'express'
     ],
     'p13' => [
         'id' => 'p13',
@@ -208,12 +220,13 @@ $products = [
         'category' => 'electronics',
         'brand' => 'logitech',
         'description' => 'Immersive surround sound gaming headset with a noise-cancelling microphone for clear communication.',
-        'features' => ['7.1 Surround Sound', 'Noise Cancelling Mic', 'Memory Foam Earcups']
+        'features' => ['7.1 Surround Sound', 'Noise Cancelling Mic', 'Memory Foam Earcups'],
+        'shipping_type' => 'freight'
     ],
     'p14' => [
         'id' => 'p14',
         'name' => 'Cotton T-Shirt',
-        'price' => 499,
+        'price' => 289,
         'image' => 'images/Cotton T-Shirt.png',
         'images' => [
             'images/Cotton T-Shirt.png',
@@ -223,7 +236,8 @@ $products = [
         'category' => 'fashion',
         'brand' => 'nike',
         'description' => 'Soft and breathable 100% cotton t-shirt. Essential casual wear for everyday comfort.',
-        'features' => ['100% Cotton', 'Regular Fit', 'Machine Washable']
+        'features' => ['100% Cotton', 'Regular Fit', 'Machine Washable'],
+        'shipping_type' => 'express'
     ],
     'p15' => [
         'id' => 'p15',
@@ -238,12 +252,13 @@ $products = [
         'category' => 'home',
         'brand' => 'philips',
         'description' => 'Cook healthy and delicious meals with up to 90% less fat. Versatile cooking functions for frying, baking, and roasting.',
-        'features' => ['Rapid Air Technology', 'Digital Touchscreen', 'Easy to Clean']
+        'features' => ['Rapid Air Technology', 'Digital Touchscreen', 'Easy to Clean'],
+        'shipping_type' => 'freight'
     ],
     'p16' => [
         'id' => 'p16',
         'name' => 'Matte Lipstick',
-        'price' => 599,
+        'price' => 200,
         'image' => 'images/Matte Lipstick.png',
         'images' => [
             'images/Matte Lipstick.png',
@@ -253,12 +268,13 @@ $products = [
         'category' => 'beauty',
         'brand' => 'lakme',
         'description' => 'Long-lasting matte lipstick with intense color payoff. Enriched with moisturizing ingredients to keep lips soft.',
-        'features' => ['Long Lasting', 'Intense Color', 'Moisturizing']
+        'features' => ['Long Lasting', 'Intense Color', 'Moisturizing'],
+        'shipping_type' => 'express'
     ],
     'p17' => [
         'id' => 'p17',
         'name' => 'Yoga Mat',
-        'price' => 799,
+        'price' => 299,
         'image' => 'images/Yoga Mat.png',
         'images' => [
             'images/Yoga Mat.png',
@@ -268,7 +284,8 @@ $products = [
         'category' => 'fashion',
         'brand' => 'adidas',
         'description' => 'Non-slip yoga mat providing excellent cushioning and support for your practice. Lightweight and portable.',
-        'features' => ['Non-Slip Surface', 'Eco-Friendly Material', 'Carrying Strap Included']
+        'features' => ['Non-Slip Surface', 'Eco-Friendly Material', 'Carrying Strap Included'],
+        'shipping_type' => 'express'
     ],
     'p18' => [
         'id' => 'p18',
@@ -283,8 +300,17 @@ $products = [
         'category' => 'electronics',
         'brand' => 'samsung',
         'description' => 'High-capacity 10000mAh power bank with fast charging support. Keep your devices charged on the go.',
-        'features' => ['10000mAh Capacity', 'Fast Charging', 'Dual USB Output']
+        'features' => ['10000mAh Capacity', 'Fast Charging', 'Dual USB Output'],
+        'shipping_type' => 'freight'
     ],
+];
+
+// Coupon Codes
+$coupons = [
+    'SAVE5' => ['discount' => 5, 'description' => '5% off on total'],
+    'SAVE10' => ['discount' => 10, 'description' => '10% off on total'],
+    'SAVE15' => ['discount' => 15, 'description' => '15% off on total'],
+    'SAVE20' => ['discount' => 20, 'description' => '20% off on total']
 ];
 
 $orders = [

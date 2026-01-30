@@ -1,4 +1,5 @@
 // JavaScript for Checkout Form Validation
+console.log('✅ Checkout.js loaded with coupon functionality');
 
 // Validation Helper Functions
 function showError(input, message) {
@@ -448,6 +449,11 @@ function updateShipping(radio) {
                 }
 
                 console.log('✅ Shipping updated via AJAX:', data);
+
+                // Reapply coupon if one was applied
+                if (appliedCouponDiscount > 0) {
+                    updatePricingWithCoupon(appliedCouponDiscount);
+                }
             } else {
                 throw new Error('Server returned error');
             }
@@ -500,3 +506,181 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// ==========================================
+// COUPON CODE APPLICATION
+// ==========================================
+let appliedCouponDiscount = 0; // Global variable to track applied discount
+
+function applyCoupon() {
+    const couponInput = document.getElementById('coupon-input');
+    const couponCode = couponInput.value.trim().toUpperCase();
+    const applyBtn = document.getElementById('apply-coupon-btn');
+    const couponMessage = document.getElementById('coupon-message');
+    const couponSuccess = document.getElementById('coupon-success');
+    const couponSuccessText = document.getElementById('coupon-success-text');
+
+    // Reset messages
+    couponMessage.style.display = 'none';
+    couponSuccess.style.display = 'none';
+
+    if (!couponCode) {
+        couponMessage.textContent = 'Please enter a coupon code';
+        couponMessage.style.color = '#dc3545';
+        couponMessage.style.display = 'block';
+        return;
+    }
+
+    // Show loading state
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Applying...';
+
+    // Send AJAX request
+    const formData = new FormData();
+    formData.append('action', 'apply_coupon');
+    formData.append('coupon_code', couponCode);
+    formData.append('ajax', 'true');
+
+    fetch('checkout.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Store the discount percentage
+                appliedCouponDiscount = data.discount;
+
+                // Show success message with remove button
+                couponSuccessText.innerHTML = `${data.message} (${data.discount}% off) 
+                    <button onclick="removeCoupon()" style="margin-left: 10px; padding: 4px 12px; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
+                        <i class="fa-solid fa-times"></i> Remove
+                    </button>`;
+                couponSuccess.style.display = 'block';
+
+                // Update the pricing
+                updatePricingWithCoupon(data.discount);
+
+                // Disable input and button (keep them visible)
+                couponInput.disabled = true;
+                applyBtn.disabled = true;
+                applyBtn.textContent = 'Applied';
+                applyBtn.style.background = '#28a745';
+            } else {
+                // Show error message
+                couponMessage.textContent = data.message;
+                couponMessage.style.color = '#dc3545';
+                couponMessage.style.display = 'block';
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Apply';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            couponMessage.textContent = 'An error occurred. Please try again.';
+            couponMessage.style.color = '#dc3545';
+            couponMessage.style.display = 'block';
+            applyBtn.disabled = false;
+            applyBtn.textContent = 'Apply';
+        });
+}
+
+function updatePricingWithCoupon(discountPercent) {
+    // Get current values
+    const subtotalElement = document.getElementById('summary-subtotal');
+    const shippingElement = document.getElementById('summary-shipping');
+    const taxElement = document.getElementById('summary-tax');
+    const totalElement = document.getElementById('summary-total');
+    const couponDiscountRow = document.getElementById('coupon-discount-row');
+    const couponDiscountAmount = document.getElementById('coupon-discount-amount');
+    const couponPercentSpan = document.getElementById('coupon-percent');
+
+    // Parse current values (remove ₹ and commas)
+    const subtotal = parseFloat(subtotalElement.dataset.subtotal);
+    const shipping = parseFloat(shippingElement.textContent.replace('₹', '').replace(/,/g, ''));
+
+    // Calculate discount on (Subtotal + Shipping)
+    const baseAmount = subtotal + shipping;
+    const discountAmount = baseAmount * (discountPercent / 100);
+    const amountAfterDiscount = baseAmount - discountAmount;
+
+    // Calculate tax on discounted amount
+    const tax = amountAfterDiscount * 0.18;
+
+    // Calculate final total
+    const total = amountAfterDiscount + tax;
+
+    // Update coupon discount row
+    couponPercentSpan.textContent = discountPercent;
+    couponDiscountAmount.textContent = '-₹' + discountAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    couponDiscountRow.style.display = 'flex';
+
+    // Update tax and total
+    taxElement.textContent = '₹' + tax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Add animation
+    [couponDiscountRow, taxElement, totalElement].forEach(el => {
+        el.style.transform = 'scale(1.05)';
+        el.style.transition = 'transform 0.3s ease';
+        setTimeout(() => {
+            el.style.transform = 'scale(1)';
+        }, 300);
+    });
+}
+
+// ==========================================
+// REMOVE COUPON
+// ==========================================
+function removeCoupon() {
+    console.log('Removing coupon...');
+
+    // Reset the discount
+    appliedCouponDiscount = 0;
+
+    // Get elements
+    const couponInput = document.getElementById('coupon-input');
+    const applyBtn = document.getElementById('apply-coupon-btn');
+    const couponSuccess = document.getElementById('coupon-success');
+    const couponDiscountRow = document.getElementById('coupon-discount-row');
+    const subtotalElement = document.getElementById('summary-subtotal');
+    const shippingElement = document.getElementById('summary-shipping');
+    const taxElement = document.getElementById('summary-tax');
+    const totalElement = document.getElementById('summary-total');
+
+    // Hide success message and discount row
+    couponSuccess.style.display = 'none';
+    couponDiscountRow.style.display = 'none';
+
+    // Re-enable input and button
+    couponInput.value = '';
+    couponInput.disabled = false;
+    applyBtn.disabled = false;
+    applyBtn.textContent = 'Apply';
+    applyBtn.style.background = '';
+
+    // Recalculate totals without discount
+    const subtotal = parseFloat(subtotalElement.dataset.subtotal);
+    const shipping = parseFloat(shippingElement.textContent.replace('₹', '').replace(/,/g, ''));
+
+    // Calculate tax on full amount (without discount)
+    const baseAmount = subtotal + shipping;
+    const tax = baseAmount * 0.18;
+    const total = baseAmount + tax;
+
+    // Update display
+    taxElement.textContent = '₹' + tax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalElement.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Add animation
+    [taxElement, totalElement].forEach(el => {
+        el.style.transform = 'scale(1.05)';
+        el.style.transition = 'transform 0.3s ease';
+        setTimeout(() => {
+            el.style.transform = 'scale(1)';
+        }, 300);
+    });
+
+    console.log('Coupon removed successfully');
+}
+

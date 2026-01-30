@@ -68,26 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-    <header>
-        <h1>EasyCart</h1>
-        <nav>
-            <a href="index.php">Home</a>
-            <a href="plp.php">Products</a>
-            <a href="wishlist.php" class="active">Wishlist</a>
-            <a href="cart.php">Cart</a>
-            <a href="orders.php">My Orders</a>
-        </nav>
-        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
-            <div class="user-info">
-                <span><i class="fa-solid fa-user"></i>
-                    <?php echo htmlspecialchars($_COOKIE['user_name']); ?>
-                </span>
-                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
-            </div>
-        <?php else: ?>
-            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
-        <?php endif; ?>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <main>
         <h2><i class="fa-solid fa-heart" style="color: #ef4444;"></i> My Wishlist</h2>
@@ -129,18 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 
-    <footer>
-        <div class="footer-content">
-            <div class="footer-column">
-                <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one-stop destination for all your shopping needs.</p>
-            </div>
-            <!-- Standard Footer Columns -->
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved.</p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script>
         function toggleWishlist(pid, btn) {

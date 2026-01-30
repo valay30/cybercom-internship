@@ -23,6 +23,12 @@ if (isset($_SESSION['cart'][$product['id']])) {
     $final_price = $product['price'] * (1 - ($discount_percent / 100));
     $discount_applied = true;
 }
+
+$randomProducts = $products;
+//Shuffle the array to get random products
+shuffle($randomProducts);
+//Get first 4 products
+$featuredProducts = array_slice($randomProducts, 0, 4);
 ?>
 
 <!DOCTYPE html>
@@ -36,24 +42,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
 </head>
 
 <body>
-    <header>
-        <h1>EasyCart</h1>
-        <nav>
-            <a href="index.php">Home</a>
-            <a href="plp.php">Products</a>
-            <a href="wishlist.php">Wishlist</a>
-            <a href="cart.php">Cart</a>
-            <a href="orders.php">My Orders</a>
-        </nav>
-        <?php if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true'): ?>
-            <div class="user-info">
-                <span><i class="fa-solid fa-user"></i> <?php echo htmlspecialchars($_COOKIE['user_name']); ?></span>
-                <a href="logout.php" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
-            </div>
-        <?php else: ?>
-            <a href="login.php" class="user-icon"><i class="fa-solid fa-user"></i></a>
-        <?php endif; ?>
-    </header>
+    <?php include 'includes/header.php'; ?>
 
     <main>
         <div class="product-details-container">
@@ -93,12 +82,51 @@ if (isset($_SESSION['cart'][$product['id']])) {
                         <li><?php echo $feature; ?></li>
                     <?php endforeach; ?>
                 </ul>
-                <form action="cart.php" method="POST"
-                    style="box-shadow:none; padding:0; border:none; max-width:100%; display:inline-block;">
-                    <input type="hidden" name="action" value="add">
-                    <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
-                    <button type="submit" class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
-                </form>
+
+                <!-- Shipping Type Badge -->
+                <div style="margin: 15px 0;">
+                    <?php if ($product['shipping_type'] === 'express'): ?>
+                        <span
+                            style="display: inline-block; padding: 6px 12px; background: #28a745; color: white; border-radius: 4px; font-size: 0.9em; font-weight: 600;">
+                            Express Delivery
+                        </span>
+                    <?php else: ?>
+                        <span
+                            style="display: inline-block; padding: 6px 12px; background: #6c757d; color: white; border-radius: 4px; font-size: 0.9em; font-weight: 600;">
+                            Freight Delivery
+                        </span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($is_in_cart && $qty > 0): ?>
+                    <!-- Quantity Controls (when item is in cart) -->
+                    <div class="quantity-controls-pdp"
+                        style="display: inline-flex; align-items: center; gap: 15px; background: white; border: 2px solid var(--primary); border-radius: 8px; padding: 8px 16px;">
+                        <button onclick="updateQuantity('<?php echo $product['id']; ?>', -1)" class="qty-btn"
+                            style="background: none; border: none; color: var(--primary); font-size: 1.5rem; cursor: pointer; padding: 0 8px; transition: all 0.2s;"
+                            onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <span id="qty-display-<?php echo $product['id']; ?>"
+                            style="font-weight: 600; font-size: 1.2rem; min-width: 30px; text-align: center;">
+                            <?php echo $qty; ?>
+                        </span>
+                        <button onclick="updateQuantity('<?php echo $product['id']; ?>', 1)" class="qty-btn"
+                            style="background: none; border: none; color: var(--primary); font-size: 1.5rem; cursor: pointer; padding: 0 8px; transition: all 0.2s;"
+                            onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                <?php else: ?>
+                    <!-- Add to Cart Button (when item is NOT in cart) -->
+                    <form id="add-to-cart-form" action="cart.php" method="POST"
+                        style="box-shadow:none; padding:0; border:none; max-width:100%; display:inline-block;">
+                        <input type="hidden" name="action" value="add">
+                        <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
+                        <button type="submit" class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to
+                            Cart</button>
+                    </form>
+                <?php endif; ?>
                 <?php
                 $in_wishlist = isset($_SESSION['wishlist']) && in_array($product['id'], $_SESSION['wishlist']);
                 ?>
@@ -112,7 +140,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
         <br>
         <br>
         <div class="product-grid">
-            <?php foreach (array_slice($products, 0, 4) as $product): ?>
+            <?php foreach ($featuredProducts as $product): ?>
                 <div class="product-card">
                     <img src="<?php echo $product['image']; ?>" alt="<?php echo $product['name']; ?>">
                     <h3><?php echo $product['name']; ?></h3>
@@ -122,53 +150,7 @@ if (isset($_SESSION['cart'][$product['id']])) {
             <?php endforeach; ?>
         </div>
     </main>
-    <footer>
-        <div class="footer-content">
-            <div class="footer-column">
-                <h3><i class="fa-solid fa-cart-shopping"></i> EasyCart</h3>
-                <p>Your one stop destination for all your shopping needs. Quality products, fast delivery, and excellent customer service.</p>
-                <div class="social-icons">
-                    <a href="#"><i class="fa-brands fa-facebook"></i></a>
-                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                </div>
-            </div>
-
-            <div class="footer-column">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="index.php"><i class="fa-solid fa-angle-right"></i> Home</a></li>
-                    <li><a href="plp.php"><i class="fa-solid fa-angle-right"></i> Products</a></li>
-                    <li><a href="cart.php"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
-                    <li><a href="orders.php"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Customer Service</h3>
-                <ul>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Help Center</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Track Order</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Returns</a></li>
-                    <li><a href="#"><i class="fa-solid fa-angle-right"></i> Shipping Info</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h3>Contact Us</h3>
-                <ul class="contact-info">
-                    <li><i class="fa-solid fa-location-dot"></i> 123 Shopping Street, Mumbai, India</li>
-                    <li><i class="fa-solid fa-phone"></i> +91 98765 43210</li>
-                    <li><i class="fa-solid fa-envelope"></i> support@easycart.com</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>&copy; 2026 EasyCart. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms & Conditions</a></p>
-        </div>
-    </footer>
+    <?php include 'includes/footer.php'; ?>
 
     <script src="js/pdp.js?v=<?php echo time(); ?>"></script>
     <script src="js/wishlist.js"></script>
