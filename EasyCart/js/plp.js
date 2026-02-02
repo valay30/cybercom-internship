@@ -158,8 +158,10 @@ function loadProducts(page = 1) {
                 updateProductCount(data.showing_from, data.showing_to, data.total_items);
                 updatePagination(data.current_page, data.total_pages);
 
-                // Update URL without reloading
-                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                // Update URL without reloading (exclude ajax param)
+                const urlParams = new URLSearchParams(params);
+                urlParams.delete('ajax');
+                const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
                 window.history.replaceState({}, '', newUrl);
             }
         })
