@@ -5,13 +5,12 @@
  * Routes to OrdersController and renders orders view
  */
 
-require_once 'data.php';
 require_once 'app/controllers/OrdersController.php';
 
 session_start();
 
 // Initialize controller
-$ordersController = new OrdersController($orders);
+$ordersController = new OrdersController();
 
 // Handle order placement from checkout
 $ordersController->handleOrderPlacement();

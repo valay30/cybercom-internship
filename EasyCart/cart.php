@@ -5,13 +5,12 @@
  * Routes to CartController and renders cart view
  */
 
-require_once 'data.php';
 require_once 'app/controllers/CartController.php';
 
 session_start();
 
 // Initialize controller
-$cartController = new CartController($products);
+$cartController = new CartController();
 
 // Handle POST actions (add, update, remove)
 $cartController->handleAction();

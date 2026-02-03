@@ -5,13 +5,12 @@
  * Routes to CheckoutController and renders checkout view
  */
 
-require_once 'data.php';
 require_once 'app/controllers/CheckoutController.php';
 
 session_start();
 
 // Initialize controller
-$checkoutController = new CheckoutController($products, $coupons);
+$checkoutController = new CheckoutController();
 
 // Handle AJAX requests (shipping updates, coupon validation)
 $checkoutController->handleAjax();

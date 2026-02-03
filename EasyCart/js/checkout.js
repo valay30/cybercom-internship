@@ -353,8 +353,40 @@ checkoutForm.addEventListener('submit', function (e) {
     }
 
     if (isValid) {
-        // In production, submit the form
-        this.submit();
+        // Submit via AJAX
+        const formData = new FormData(this);
+        formData.append('action', 'place_order');
+        formData.append('ajax', 'true');
+
+        // Add loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+
+        fetch('checkout.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear local storage
+                    clearFormData();
+                    // Redirect
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.message || 'Order placement failed');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Order Error:', error);
+                alert('An error occurred. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
     } else {
         // Scroll to first error
         const firstError = document.querySelector('.error');
@@ -394,6 +426,13 @@ function updateShipping(radio) {
 
     // Get shipping cost from selected radio button
     const shippingCost = parseFloat(radio.value);
+
+    // Update hidden shipping_type input
+    const typeInput = document.getElementById('shipping_type_input');
+    if (typeInput && radio.dataset.type) {
+        typeInput.value = radio.dataset.type;
+        console.log('📦 Shipping Type Set:', typeInput.value);
+    }
 
     // Get summary elements
     const shippingElement = document.getElementById('summary-shipping');

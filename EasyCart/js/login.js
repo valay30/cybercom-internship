@@ -55,7 +55,7 @@ function validateEmail(email) {
 
 function validatePassword(password) {
     // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-    const minLength = password.length >= 8;
+    const minLength = password.length >= 6;
     const hasUpper = /[A-Z]/.test(password);
     const hasLower = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
@@ -127,22 +127,8 @@ loginForm.addEventListener('submit', function (e) {
     }
 
     if (isValid) {
-        // LOGIN LOGIC
-        const users = JSON.parse(localStorage.getItem('easycart_users')) || [];
-        const user = users.find(u => u.email === loginEmail.value && u.password === loginPassword.value);
-
-        if (user) {
-            // Set Cookie for PHP to access
-            document.cookie = "user_logged_in=true; path=/";
-            document.cookie = "user_name=" + encodeURIComponent(user.fullname) + "; path=/";
-
-            // Check for redirect URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || 'index.php';
-            window.location.href = redirect;
-        } else {
-            showError(loginPassword, 'Invalid email or password');
-        }
+        // Submit form to PHP backend for authentication
+        this.submit();
     }
 });
 
@@ -166,12 +152,33 @@ signupFullname.addEventListener('blur', function () {
 });
 
 signupEmail.addEventListener('blur', function () {
-    if (this.value.trim() === '') {
+    const email = this.value.trim();
+    if (email === '') {
         showError(this, 'Email is required');
-    } else if (!validateEmail(this.value)) {
+    } else if (!validateEmail(email)) {
         showError(this, 'Please enter a valid email address');
     } else {
-        showSuccess(this);
+        // Check if email exists via AJAX
+        const formData = new FormData();
+        formData.append('action', 'check_email');
+        formData.append('email', email);
+
+        fetch('login.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists) {
+                    showError(this, 'This email is already registered. Please login.');
+                } else {
+                    showSuccess(this);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking email:', error);
+                showSuccess(this); // Fallback to success on error
+            });
     }
 });
 
@@ -267,32 +274,15 @@ signupForm.addEventListener('submit', function (e) {
     }
 
     if (isValid) {
-        // SIGNUP LOGIC
-        const users = JSON.parse(localStorage.getItem('easycart_users')) || [];
+        console.log('Form validation passed');
+        console.log('Submitting signup form to PHP backend...');
+        console.log('Form action:', this.action);
+        console.log('Form method:', this.method);
 
-        // Check if email exists
-        if (users.find(u => u.email === signupEmail.value)) {
-            showError(signupEmail, 'Email already registered');
-            return;
-        }
-
-        // Add user
-        users.push({
-            fullname: signupFullname.value,
-            email: signupEmail.value,
-            password: signupPassword.value
-        });
-
-        localStorage.setItem('easycart_users', JSON.stringify(users));
-
-        // Auto Login (Set Cookie)
-        document.cookie = "user_logged_in=true; path=/";
-        document.cookie = "user_name=" + encodeURIComponent(signupFullname.value) + "; path=/";
-
-        // Check for redirect URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect') || 'index.php';
-        window.location.href = redirect;
+        // Submit form to PHP backend (which will save to database)
+        this.submit();
+    } else {
+        console.log('Form validation failed');
     }
 });
 
@@ -307,4 +297,19 @@ document.querySelectorAll('input').forEach(input => {
             }
         }
     });
+});
+
+
+// Auto-hide alert messages after 3 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const alert = document.querySelector('.alert');
+    if (alert) {
+        setTimeout(function() {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(function() {
+                alert.remove();
+            }, 500); // Wait for fade out to finish
+        }, 3000); // 3 seconds delay
+    }
 });

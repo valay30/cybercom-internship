@@ -22,6 +22,27 @@
                 <button class="tab-btn" onclick="showTab('signup')">Sign Up</button>
             </div>
 
+            <!-- Error Messages -->
+            <?php if (isset($_GET['error'])): ?>
+                <div class="alert alert-danger" style="color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; padding: 12px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; text-align: center;">
+                    <?php
+                    $error = $_GET['error'];
+                    if ($error === 'invalid_credentials') echo 'Invalid email or password.';
+                    elseif ($error === 'email_exists') echo '<strong>Error:</strong> This email is already registered. Please <a href="#" onclick="showTab(\'login\')">login</a> instead.';
+                    else echo 'An error occurred. Please try again.';
+                    ?>
+                </div>
+
+                <!-- Open Signup Tab if error is email_exists -->
+                <?php if ($error === 'email_exists'): ?>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            showTab('signup');
+                        });
+                    </script>
+                <?php endif; ?>
+            <?php endif; ?>
+
             <!-- Login Form -->
             <div id="login-tab" class="tab-content active">
                 <form action="login.php<?php echo $redirectUrl !== 'index.php' ? '?redirect=' . urlencode($redirectUrl) : ''; ?>" method="POST">
@@ -83,7 +104,7 @@
     <!-- Footer -->
     <?php include 'includes/footer.php'; ?>
 
-    <script src="js/login.js"></script>
+    <script src="js/login.js?v=<?php echo time(); ?>"></script>
 </body>
 
 </html>

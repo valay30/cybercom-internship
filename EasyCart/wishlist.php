@@ -5,13 +5,12 @@
  * Routes to WishlistController and renders wishlist view
  */
 
-require_once 'data.php';
 require_once 'app/controllers/WishlistController.php';
 
 session_start();
 
 // Initialize controller
-$wishlistController = new WishlistController($products);
+$wishlistController = new WishlistController();
 
 // Handle POST actions (toggle wishlist)
 $wishlistController->handleAction();

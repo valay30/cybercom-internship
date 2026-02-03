@@ -5,14 +5,16 @@
  * Handles all cart-related business logic
  */
 
+require_once __DIR__ . '/../models/ProductModel.php';
+
 class CartController
 {
-    private $products;
+    private $productModel;
     private $cart;
 
-    public function __construct($products)
+    public function __construct()
     {
-        $this->products = $products;
+        $this->productModel = new ProductModel();
 
         // Initialize cart session
         if (!isset($_SESSION['cart'])) {
@@ -62,7 +64,9 @@ class CartController
      */
     private function addToCart($pid)
     {
-        if (!isset($this->products[$pid])) {
+        $product = $this->productModel->getProductBySku($pid);
+
+        if (!$product) {
             return;
         }
 
@@ -70,10 +74,10 @@ class CartController
             $this->cart[$pid]['qty']++;
         } else {
             $this->cart[$pid] = [
-                'name' => $this->products[$pid]['name'],
-                'price' => $this->products[$pid]['price'],
-                'image' => $this->products[$pid]['image'],
-                'shipping_type' => $this->products[$pid]['shipping_type'],
+                'name' => $product['name'],
+                'price' => $product['price'],
+                'image' => $product['image'],
+                'shipping_type' => $product['shipping_type'],
                 'qty' => 1
             ];
         }
@@ -135,8 +139,9 @@ class CartController
         $productPrice = 0;
 
         // Get the original product price
-        if (isset($this->products[$pid])) {
-            $productPrice = $this->products[$pid]['price'];
+        $product = $this->productModel->getProductBySku($pid);
+        if ($product) {
+            $productPrice = $product['price'];
         }
 
         // Calculate item total

@@ -1,4 +1,4 @@
-<?php
+<!-- <?php
 // Static Data for EasyCart
 $categories = [
     ['id' => 'electronics', 'name' => 'Electronics', 'icon' => 'fa-solid fa-laptop'],
@@ -344,4 +344,4 @@ $orders = [
         ]
     ]
 ];
-?>
+?> -->

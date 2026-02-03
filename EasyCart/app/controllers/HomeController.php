@@ -5,35 +5,38 @@
  * Handles home page logic
  */
 
+require_once __DIR__ . '/../models/ProductModel.php';
+require_once __DIR__ . '/../models/CategoryModel.php';
+require_once __DIR__ . '/../models/BrandModel.php';
+
 class HomeController
 {
-    private $products;
+    private $productModel;
+    private $categoryModel;
+    private $brandModel;
     private $categories;
     private $brands;
     private $featuredProducts;
 
-    public function __construct($products, $categories, $brands)
+    public function __construct()
     {
-        $this->products = $products;
-        $this->categories = $categories;
-        $this->brands = $brands;
+        $this->productModel = new ProductModel();
+        $this->categoryModel = new CategoryModel();
+        $this->brandModel = new BrandModel();
 
         // Initialize wishlist
         if (!isset($_SESSION['wishlist'])) {
             $_SESSION['wishlist'] = [];
         }
 
-        $this->loadFeaturedProducts();
+        $this->loadData();
     }
 
-    /**
-     * Load random featured products
-     */
-    private function loadFeaturedProducts()
+    private function loadData()
     {
-        $randomProducts = $this->products;
-        shuffle($randomProducts);
-        $this->featuredProducts = array_slice($randomProducts, 0, 4);
+        $this->categories = $this->categoryModel->getAllCategories();
+        $this->brands = $this->brandModel->getAllBrands();
+        $this->featuredProducts = $this->productModel->getFeaturedProducts(4);
     }
 
     /**

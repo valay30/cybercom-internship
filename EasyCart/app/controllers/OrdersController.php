@@ -7,11 +7,23 @@
 
 class OrdersController
 {
+    private $orderModel;
     private $orders;
 
-    public function __construct($orders)
+    public function __construct()
     {
-        $this->orders = $orders;
+        // 1. Check Login
+        if (!isset($_SESSION['user_id'])) {
+            header('Location: login.php?redirect=orders.php');
+            exit;
+        }
+
+        // 2. Initialize Model
+        require_once __DIR__ . '/../models/OrderModel.php';
+        $this->orderModel = new OrderModel();
+
+        // 3. Fetch Orders
+        $this->orders = $this->orderModel->getUserOrders($_SESSION['user_id']);
     }
 
     /**

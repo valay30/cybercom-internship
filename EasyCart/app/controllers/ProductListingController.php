@@ -5,6 +5,10 @@
  * Handles product filtering, sorting, searching, and pagination
  */
 
+require_once __DIR__ . '/../models/ProductModel.php';
+require_once __DIR__ . '/../models/CategoryModel.php';
+require_once __DIR__ . '/../models/BrandModel.php';
+
 class ProductListingController
 {
     private $products;
@@ -24,11 +28,17 @@ class ProductListingController
     private $itemsPerPage = 9;
     private $offset;
 
-    public function __construct($products, $categories, $brands)
+    public function __construct()
     {
-        $this->products = $products;
-        $this->categories = $categories;
-        $this->brands = $brands;
+        // Initialize models
+        $productModel = new ProductModel();
+        $categoryModel = new CategoryModel();
+        $brandModel = new BrandModel();
+
+        // Fetch data from database
+        $this->products = $productModel->getAllProducts();
+        $this->categories = $categoryModel->getAllCategories();
+        $this->brands = $brandModel->getAllBrands();
 
         // Initialize wishlist
         if (!isset($_SESSION['wishlist'])) {

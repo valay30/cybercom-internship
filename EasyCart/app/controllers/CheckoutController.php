@@ -25,10 +25,15 @@ class CheckoutController
     private $shippingFreight;
 
 
-    public function __construct($products, $coupons)
+    public function __construct()
     {
-        $this->products = $products;
-        $this->coupons = $coupons;
+        $this->coupons = [
+            'SAVE5' => ['discount' => 5, 'description' => '5% off on total'],
+            'SAVE10' => ['discount' => 10, 'description' => '10% off on total'],
+            'SAVE15' => ['discount' => 15, 'description' => '15% off on total'],
+            'SAVE20' => ['discount' => 20, 'description' => '20% off on total']
+        ];
+
         $this->cart = $_SESSION['cart'] ?? [];
 
         $this->calculateSubtotal();
@@ -55,9 +60,50 @@ class CheckoutController
             case 'apply_coupon':
                 $this->handleCouponValidation();
                 break;
+            case 'place_order':
+                $this->handleOrderPlacement();
+                break;
         }
 
         exit;
+    }
+
+    /**
+     * Handle order placement
+     */
+    private function handleOrderPlacement()
+    {
+        // 1. Verify User Login
+        if (!isset($_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Please login to place an order']);
+            return;
+        }
+
+        // 2. Prepare Order Data
+        $orderData = [
+            'shipping_type' => $_POST['shipping_type'] ?? 'standard',
+            'shipping_cost' => $this->shippingCost,
+            'subtotal' => $this->subtotal,
+            'tax_amount' => $this->taxAmount,
+            'grand_total' => $this->totalAmount,
+            'address' => $_POST['address'] ?? []
+        ];
+
+        // 3. Save to Database
+        require_once __DIR__ . '/../models/OrderModel.php';
+        $orderModel = new OrderModel();
+
+        $orderId = $orderModel->createOrder($_SESSION['user_id'], $orderData, $this->cart);
+
+        if ($orderId) {
+            // Clear cart
+            unset($_SESSION['cart']);
+            $this->cart = [];
+
+            echo json_encode(['success' => true, 'redirect' => 'orders.php?success=1']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Failed to create order. Please try again.']);
+        }
     }
 
     /**

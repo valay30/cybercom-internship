@@ -5,11 +5,12 @@
  * Handles product detail page logic
  */
 
+require_once __DIR__ . '/../models/ProductModel.php';
+
 class ProductDetailsController
 {
-    private $products;
+    private $productModel;
     private $product;
-    private $productId;
     private $isInCart;
     private $discountApplied;
     private $finalPrice;
@@ -17,9 +18,9 @@ class ProductDetailsController
     private $featuredProducts;
     private $inWishlist;
 
-    public function __construct($products)
+    public function __construct()
     {
-        $this->products = $products;
+        $this->productModel = new ProductModel();
 
         // Initialize wishlist
         if (!isset($_SESSION['wishlist'])) {
@@ -36,8 +37,13 @@ class ProductDetailsController
      */
     private function loadProduct()
     {
-        $this->productId = $_GET['id'] ?? 'p1';
-        $this->product = $this->products[$this->productId] ?? $this->products['p1'];
+        $id = $_GET['id'] ?? 'p1';
+        $this->product = $this->productModel->getProductBySku($id);
+
+        if (!$this->product) {
+            // Fallback to p1 if not found
+            $this->product = $this->productModel->getProductBySku('p1');
+        }
     }
 
     /**
@@ -68,9 +74,7 @@ class ProductDetailsController
      */
     private function loadFeaturedProducts()
     {
-        $randomProducts = $this->products;
-        shuffle($randomProducts);
-        $this->featuredProducts = array_slice($randomProducts, 0, 4);
+        $this->featuredProducts = $this->productModel->getFeaturedProducts(4);
     }
 
     /**

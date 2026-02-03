@@ -5,13 +5,12 @@
  * Routes to ProductListingController and renders product listing view
  */
 
-require_once 'data.php';
 require_once 'app/controllers/ProductListingController.php';
 
 session_start();
 
 // Initialize controller
-$plpController = new ProductListingController($products, $categories, $brands);
+$plpController = new ProductListingController();
 
 // Handle AJAX requests
 $plpController->handleAjax();

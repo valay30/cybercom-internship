@@ -5,13 +5,12 @@
  * Routes to ProductDetailsController and renders product details view
  */
 
-require_once 'data.php';
 require_once 'app/controllers/ProductDetailsController.php';
 
 session_start();
 
 // Initialize controller
-$pdpController = new ProductDetailsController($products);
+$pdpController = new ProductDetailsController();
 
 // Get data for view
 $viewData = $pdpController->getViewData();

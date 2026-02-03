@@ -1,8 +1,9 @@
 <h3><i class="fa-solid fa-truck"></i> Shipping Options</h3>
+<input type="hidden" name="shipping_type" id="shipping_type_input" value="<?php echo $enableStandard ? 'standard' : 'white_glove'; ?>" form="checkoutForm">
 <div class="shipping-options">
     <!-- Standard Shipping -->
     <label class="shipping-option <?php echo $enableStandard ? 'active' : ''; ?>" for="standard">
-        <input type="radio" id="standard" name="shipping" value="<?php echo $shippingStd; ?>" <?php echo $enableStandard ? 'checked' : ''; ?> form="checkoutForm"
+        <input type="radio" id="standard" name="shipping" value="<?php echo $shippingStd; ?>" data-type="standard" <?php echo $enableStandard ? 'checked' : ''; ?> form="checkoutForm"
             onchange="updateShipping(this)" <?php echo !$enableStandard ? 'disabled' : ''; ?>>
         <div class="shipping-details">
             <div class="shipping-name">
@@ -16,7 +17,7 @@
 
     <!-- Express Shipping -->
     <label class="shipping-option" for="express">
-        <input type="radio" id="express" name="shipping" value="<?php echo $shippingExpress; ?>"
+        <input type="radio" id="express" name="shipping" value="<?php echo $shippingExpress; ?>" data-type="express"
             form="checkoutForm" onchange="updateShipping(this)" <?php echo !$enableExpress ? 'disabled' : ''; ?>>
         <div class="shipping-details">
             <div class="shipping-name">
@@ -33,7 +34,7 @@
     <label
         class="shipping-option <?php echo ($enableWhiteGlove && !$enableStandard) ? 'active' : ''; ?>"
         for="white-glove">
-        <input type="radio" id="white-glove" name="shipping"
+        <input type="radio" id="white-glove" name="shipping" data-type="white_glove"
             value="<?php echo $shippingWhiteGlove; ?>" form="checkoutForm"
             onchange="updateShipping(this)" <?php echo !$enableWhiteGlove ? 'disabled' : ''; ?> <?php echo ($enableWhiteGlove && !$enableStandard) ? 'checked' : ''; ?>>
         <div class="shipping-details">
@@ -49,7 +50,7 @@
 
     <!-- Freight Shipping -->
     <label class="shipping-option" for="freight">
-        <input type="radio" id="freight" name="shipping" value="<?php echo $shippingFreight; ?>"
+        <input type="radio" id="freight" name="shipping" value="<?php echo $shippingFreight; ?>" data-type="freight"
             form="checkoutForm" onchange="updateShipping(this)" <?php echo !$enableFreight ? 'disabled' : ''; ?>>
         <div class="shipping-details">
             <div class="shipping-name">

@@ -5,14 +5,16 @@
  * Handles all wishlist-related business logic
  */
 
+require_once __DIR__ . '/../models/ProductModel.php';
+
 class WishlistController
 {
-    private $products;
+    private $productModel;
     private $wishlist;
 
-    public function __construct($products)
+    public function __construct()
     {
-        $this->products = $products;
+        $this->productModel = new ProductModel();
 
         // Initialize wishlist session
         if (!isset($_SESSION['wishlist'])) {
@@ -34,17 +36,22 @@ class WishlistController
         $action = $_POST['action'] ?? '';
         $pid = $_POST['id'] ?? '';
 
-        if ($action === 'toggle' && isset($this->products[$pid])) {
-            $status = $this->toggleWishlist($pid);
+        if ($action === 'toggle') {
+            // Verify product exists
+            $product = $this->productModel->getProductBySku($pid);
 
-            // Handle AJAX requests
-            if (isset($_POST['ajax'])) {
-                echo json_encode([
-                    'success' => true,
-                    'status' => $status,
-                    'count' => count($this->wishlist)
-                ]);
-                exit;
+            if ($product) {
+                $status = $this->toggleWishlist($pid);
+
+                // Handle AJAX requests
+                if (isset($_POST['ajax'])) {
+                    echo json_encode([
+                        'success' => true,
+                        'status' => $status,
+                        'count' => count($this->wishlist)
+                    ]);
+                    exit;
+                }
             }
         }
 
@@ -84,8 +91,9 @@ class WishlistController
         $wishlistProducts = [];
 
         foreach ($this->wishlist as $pid) {
-            if (isset($this->products[$pid])) {
-                $wishlistProducts[$pid] = $this->products[$pid];
+            $product = $this->productModel->getProductBySku($pid);
+            if ($product) {
+                $wishlistProducts[$pid] = $product;
             }
         }
 
