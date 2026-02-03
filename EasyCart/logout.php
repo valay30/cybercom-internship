@@ -10,4 +10,3 @@ setcookie("user_name", "", time() - 3600, "/");
 // Redirect
 header("Location: index.php");
 exit();
-?>

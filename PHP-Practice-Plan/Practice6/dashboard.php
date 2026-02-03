@@ -17,7 +17,7 @@ if (!isset($_SESSION['username'])) {
 <h2>Session Management</h2>
 
 <p>
-    Welcome <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+    Welcome <strong><?php echo $_SESSION['username']; ?></strong>
 </p>
 
 <p>

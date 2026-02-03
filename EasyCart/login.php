@@ -1,85 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyCart - Login / Signup</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
+/**
+ * Login Page - Entry Point
+ * Routes to AuthController and renders login view
+ */
 
-<body>
-    <!-- Header Section -->
-    <?php include 'includes/header.php'; ?>
+require_once 'app/controllers/AuthController.php';
 
-    <!-- Main Content -->
-    <main>
-        <section class="auth-container">
-            <!-- Tab Navigation -->
-            <div class="auth-tabs">
-                <button class="tab-btn active" onclick="showTab('login')">Login</button>
-                <button class="tab-btn" onclick="showTab('signup')">Sign Up</button>
-            </div>
+session_start();
 
-            <!-- Login Form -->
-            <div id="login-tab" class="tab-content active">
-                <form>
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" name="email" placeholder="Enter your email" required>
-                    </div>
+// Initialize controller
+$authController = new AuthController();
 
-                    <div class="form-group">
-                        <label for="login-password">Password</label>
-                        <input type="password" id="login-password" name="password" placeholder="Enter your password"
-                            required>
-                    </div>
+// Handle form submissions (login/signup)
+$authController->handleAction();
 
-                    <div class="form-group">
-                        <button type="submit">Login</button>
-                    </div>
-                </form>
-            </div>
+// Get data for view
+$viewData = $authController->getViewData();
+extract($viewData);
 
-            <!-- Signup Form -->
-            <div id="signup-tab" class="tab-content">
-                <form>
-                    <div class="form-group">
-                        <label for="signup-fullname">Full Name</label>
-                        <input type="text" id="signup-fullname" name="fullname" placeholder="Enter your full name"
-                            required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="signup-email">Email</label>
-                        <input type="email" id="signup-email" name="email" placeholder="Enter your email" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="signup-password">Password</label>
-                        <input type="password" id="signup-password" name="password" placeholder="Create a password"
-                            required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="signup-confirm-password">Confirm Password</label>
-                        <input type="password" id="signup-confirm-password" name="confirm-password"
-                            placeholder="Confirm your password" required>
-                    </div>
-
-                    <div class="form-group">
-                        <button type="submit">Sign Up</button>
-                    </div>
-                </form>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <?php include 'includes/footer.php'; ?>
-
-    <script src="js/login.js"></script>
-</body>
-
-</html>
+// Render view
+require_once 'app/views/auth/login.php';

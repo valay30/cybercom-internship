@@ -552,11 +552,21 @@ function applyCoupon() {
                 appliedCouponDiscount = data.discount;
 
                 // Show success message with remove button
-                couponSuccessText.innerHTML = `${data.message} (${data.discount}% off) 
-                    <button onclick="removeCoupon()" style="margin-left: 10px; padding: 4px 12px; color: black; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
-                        <i class="fa-solid fa-times"></i> Remove
-                    </button>`;
-                couponSuccess.style.display = 'block';
+                couponSuccess.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div style="background: #ffffff; width:32px; height:32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <i class="fa-solid fa-check" style="color: #10b981; font-size: 1rem;"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight: 700; color: #064e3b; font-size: 0.95rem;">Coupon Applied!</div>
+                            <div style="font-size: 0.85rem; color: #065f46; margin-top:2px;">You saved <span style="font-weight:700; color: #059669;">${data.discount}%</span> on your order</div>
+                        </div>
+                    </div>
+                    <button onclick="removeCoupon()" title="Remove Coupon" style="background: none; border: none; color: #9ca3af; cursor: pointer; padding: 6px; border-radius:50%; transition: all 0.2s; display:flex; align-items:center; justify-content:center;" onmouseover="this.style.backgroundColor='#fee2e2'; this.style.color='#ef4444'" onmouseout="this.style.backgroundColor='transparent'; this.style.color='#9ca3af'">
+                        <i class="fa-solid fa-xmark" style="font-size: 1.1rem;"></i>
+                    </button>
+                `;
+                couponSuccess.style.display = 'flex';
 
                 // Update the pricing
                 updatePricingWithCoupon(data.discount);
@@ -657,7 +667,7 @@ function removeCoupon() {
     couponInput.disabled = false;
     applyBtn.disabled = false;
     applyBtn.textContent = 'Apply';
-    applyBtn.style.background = '';
+    applyBtn.style.background = 'var(--primary)';
 
     // Recalculate totals without discount
     const subtotal = parseFloat(subtotalElement.dataset.subtotal);

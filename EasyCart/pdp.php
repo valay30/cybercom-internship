@@ -1,159 +1,21 @@
 <?php
+
+/**
+ * Product Details Page - Entry Point
+ * Routes to ProductDetailsController and renders product details view
+ */
+
 require_once 'data.php';
+require_once 'app/controllers/ProductDetailsController.php';
+
 session_start();
 
-if (!isset($_SESSION['wishlist'])) {
-    $_SESSION['wishlist'] = [];
-}
+// Initialize controller
+$pdpController = new ProductDetailsController($products);
 
-$id = $_GET['id'] ?? 'p1';
-$product = $products[$id] ?? $products['p1'];
+// Get data for view
+$viewData = $pdpController->getViewData();
+extract($viewData);
 
-// Check if product is in cart
-$is_in_cart = false;
-$discount_applied = false;
-$final_price = $product['price'];
-
-if (isset($_SESSION['cart'][$product['id']])) {
-    $is_in_cart = true;
-    $qty = $_SESSION['cart'][$product['id']]['qty'];
-
-    $discount_percent = $qty;
-
-    $final_price = $product['price'] * (1 - ($discount_percent / 100));
-    $discount_applied = true;
-}
-
-$randomProducts = $products;
-//Shuffle the array to get random products
-shuffle($randomProducts);
-//Get first 4 products
-$featuredProducts = array_slice($randomProducts, 0, 4);
-?>
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title><?php echo $product['name']; ?> - EasyCart</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-
-<body>
-    <?php include 'includes/header.php'; ?>
-
-    <main>
-        <div class="product-details-container">
-            <section class="pdp-image-section">
-                <div class="pdp-image-container">
-                    <img id="mainImage" src="<?php echo $product['image']; ?>" alt="<?php echo $product['name']; ?>">
-                    <?php if (isset($product['images']) && count($product['images']) > 1): ?>
-                        <div class="image-thumbnails">
-                            <?php foreach ($product['images'] as $index => $img): ?>
-                                <img src="<?php echo $img; ?>" alt="View <?php echo $index + 1; ?>"
-                                    class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>"
-                                    onclick="switchImage('<?php echo $img; ?>', this)">
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </section>
-            <section class="pdp-info-section">
-                <h3><?php echo $product['name']; ?></h3>
-                <?php if ($discount_applied): ?>
-                    <p class="product-price">
-                        <span
-                            style="text-decoration: line-through; color:var(--primary); font-size: 0.7em;">₹<?php echo number_format($product['price'], 2); ?></span>
-                        <span style="color: black;">₹<?php echo number_format($final_price, 2); ?></span>
-                        <span
-                            style="background: #fee2e2; color: black; padding: 4px 10px; border-radius: 20px; font-size: 0.5em; vertical-align: middle; margin-left: 10px;">
-                            <?php echo $discount_percent; ?>% OFF
-                        </span>
-                    </p>
-                <?php else: ?>
-                    <p class="product-price">₹<?php echo number_format($product['price'], 2); ?></p>
-                <?php endif; ?>
-                <p><?php echo $product['description']; ?></p>
-                <h4 style="margin-top:20px">Features:</h4>
-                <ul class="feature-list">
-                    <?php foreach ($product['features'] as $feature): ?>
-                        <li><?php echo $feature; ?></li>
-                    <?php endforeach; ?>
-                </ul>
-
-                <!-- Shipping Type Badge -->
-                <div style="margin: 15px 0;">
-                    <?php if ($product['shipping_type'] === 'express'): ?>
-                        <span
-                            style="display: inline-block; padding: 6px 12px; background: #28a745; color: white; border-radius: 4px; font-size: 0.9em; font-weight: 600;">
-                            Express Delivery
-                        </span>
-                    <?php else: ?>
-                        <span
-                            style="display: inline-block; padding: 6px 12px; background: #6c757d; color: white; border-radius: 4px; font-size: 0.9em; font-weight: 600;">
-                            Freight Delivery
-                        </span>
-                    <?php endif; ?>
-                </div>
-
-                <?php if ($is_in_cart && $qty > 0): ?>
-                    <!-- Quantity Controls (when item is in cart) -->
-                    <div class="quantity-controls-pdp"
-                        style="display: inline-flex; align-items: center; gap: 15px; background: white; border: 2px solid var(--primary); border-radius: 8px; padding: 8px 16px;">
-                        <button onclick="updateQuantity('<?php echo $product['id']; ?>', -1)" class="qty-btn"
-                            style="background: none; border: none; color: var(--primary); font-size: 1.5rem; cursor: pointer; padding: 0 8px; transition: all 0.2s;"
-                            onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                            <i class="fa-solid fa-minus"></i>
-                        </button>
-                        <span id="qty-display-<?php echo $product['id']; ?>"
-                            style="font-weight: 600; font-size: 1.2rem; min-width: 30px; text-align: center;">
-                            <?php echo $qty; ?>
-                        </span>
-                        <button onclick="updateQuantity('<?php echo $product['id']; ?>', 1)" class="qty-btn"
-                            style="background: none; border: none; color: var(--primary); font-size: 1.5rem; cursor: pointer; padding: 0 8px; transition: all 0.2s;"
-                            onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                <?php else: ?>
-                    <!-- Add to Cart Button (when item is NOT in cart) -->
-                    <form id="add-to-cart-form" action="cart.php" method="POST"
-                        style="box-shadow:none; padding:0; border:none; max-width:100%; display:inline-block;">
-                        <input type="hidden" name="action" value="add">
-                        <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
-                        <button type="submit" class="add-to-cart-btn"><i class="fa-solid fa-cart-plus"></i> Add to
-                            Cart</button>
-                    </form>
-                <?php endif; ?>
-                <?php
-                $in_wishlist = isset($_SESSION['wishlist']) && in_array($product['id'], $_SESSION['wishlist']);
-                ?>
-                <button class="wishlist-btn" onclick="toggleWishlist('<?php echo $product['id']; ?>', this)"
-                    style="background: white; border: 1px solid #ddd; padding: 12px 16px; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-left:10px;">
-                    <i class="<?php echo $in_wishlist ? 'fa-solid' : 'fa-regular'; ?> fa-heart"
-                        style="color: <?php echo $in_wishlist ? '#ef4444' : '#64748b'; ?>; font-size: 1.4rem; vertical-align: middle;"></i>
-                </button>
-            </section>
-        </div>
-        <br>
-        <br>
-        <div class="product-grid">
-            <?php foreach ($featuredProducts as $product): ?>
-                <div class="product-card">
-                    <img src="<?php echo $product['image']; ?>" alt="<?php echo $product['name']; ?>">
-                    <h3><?php echo $product['name']; ?></h3>
-                    <p>₹<?php echo number_format($product['price'], 2); ?></p>
-                    <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View Details</button></a>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </main>
-    <?php include 'includes/footer.php'; ?>
-
-    <script src="js/pdp.js?v=<?php echo time(); ?>"></script>
-    <script src="js/wishlist.js"></script>
-</body>
-
-</html>
+// Render view
+require_once 'app/views/products/details.php';
