@@ -91,4 +91,20 @@ class CustomerModel
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    /**
+     * Get customer address
+     */
+    public function getAddress($userId)
+    {
+        // Try to get default address first, then most recent
+        $query = "SELECT * FROM customer_address 
+                  WHERE customer_id = ? 
+                  ORDER BY is_default DESC, entity_id DESC 
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([$userId]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }

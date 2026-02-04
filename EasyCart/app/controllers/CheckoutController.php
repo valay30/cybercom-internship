@@ -23,6 +23,7 @@ class CheckoutController
     private $shippingExpress;
     private $shippingWhiteGlove;
     private $shippingFreight;
+    private $savedAddress;
 
 
     public function __construct()
@@ -34,10 +35,58 @@ class CheckoutController
             'SAVE20' => ['discount' => 20, 'description' => '20% off on total']
         ];
 
-        $this->cart = $_SESSION['cart'] ?? [];
+        // Enrich cart with DB data
+        $sessionCart = $_SESSION['cart'] ?? [];
+        $this->cart = [];
+
+        if (!empty($sessionCart)) {
+            require_once __DIR__ . '/../models/ProductModel.php';
+            $productModel = new ProductModel();
+
+            foreach ($sessionCart as $sku => $item) {
+                $productId = $item['product_id'] ?? null;
+                if ($productId) {
+                    $product = $productModel->getProductById($productId);
+                    if ($product) {
+                        // Merge DB details with Session data (qty)
+                        $enrichedItem = $product;
+                        $enrichedItem['qty'] = $item['qty'];
+                        $enrichedItem['product_id'] = $productId; // Ensure ID is present
+
+                        $this->cart[$sku] = $enrichedItem;
+                    }
+                }
+            }
+        }
 
         $this->calculateSubtotal();
         $this->determineShippingOptions();
+
+        // New: Pre-fill address if user is logged in
+        $this->savedAddress = null;
+        if (isset($_SESSION['user_id'])) {
+            require_once __DIR__ . '/../models/CustomerModel.php';
+            $customerModel = new CustomerModel();
+
+            // Get base customer info (Name, Email from profile)
+            $customer = $customerModel->getCustomerById($_SESSION['user_id']);
+
+            // Get address book info (Street, City, etc from customer_address table)
+            $address = $customerModel->getAddress($_SESSION['user_id']);
+
+            if ($customer) {
+                $this->savedAddress = [
+                    'full_name' => $customer['full_name'],
+                    'email' => $customer['email'],
+                    'telephone' => $address['telephone'] ?? '',
+                    'street' => $address['street'] ?? '',
+                    'city' => $address['city'] ?? '',
+                    'state' => $address['state'] ?? '',
+                    'postcode' => $address['postcode'] ?? '',
+                    'country' => $address['country'] ?? ''
+                ];
+            }
+        }
     }
 
     /**
@@ -80,13 +129,46 @@ class CheckoutController
         }
 
         // 2. Prepare Order Data
+        // 2. Prepare Order Data
+        // Calculate Discount logic
+        $discountAmount = 0.00;
+        $couponCode = null;
+
+        if (!empty($_POST['applied_coupon'])) {
+            $code = strtoupper($_POST['applied_coupon']);
+            if (isset($this->coupons[$code])) {
+                $couponCode = $code;
+                $percent = $this->coupons[$code]['discount'];
+                // Discount on (Subtotal + Shipping) as per JS logic
+                $baseAmount = $this->subtotal + $this->shippingCost;
+                $discountAmount = $baseAmount * ($percent / 100);
+            }
+        }
+
+        // Recalculate Totals based on discount
+        $amountAfterDiscount = ($this->subtotal + $this->shippingCost) - $discountAmount;
+        $this->taxAmount = $amountAfterDiscount * 0.18;
+        $this->totalAmount = $amountAfterDiscount + $this->taxAmount;
+
         $orderData = [
             'shipping_type' => $_POST['shipping_type'] ?? 'standard',
             'shipping_cost' => $this->shippingCost,
             'subtotal' => $this->subtotal,
             'tax_amount' => $this->taxAmount,
+            'discount_amount' => $discountAmount,
+            'coupon_code' => $couponCode,
+            'payment_method' => $_POST['payment'] ?? 'cod',
             'grand_total' => $this->totalAmount,
-            'address' => $_POST['address'] ?? []
+            'address' => [
+                'fullname' => $_POST['name'] ?? '',
+                'phone' => $_POST['mobile'] ?? '',
+                'email' => $_POST['email'] ?? '',
+                'street' => $_POST['street'] ?? '',
+                'city' => $_POST['city'] ?? '',
+                'state' => $_POST['state'] ?? '',
+                'postcode' => $_POST['postcode'] ?? '',
+                'country' => $_POST['country'] ?? ''
+            ]
         ];
 
         // 3. Save to Database
@@ -212,8 +294,7 @@ class CheckoutController
             $this->enableFreight = false;
         }
 
-        // Store in session
-        $_SESSION['cart_type'] = $this->cartType;
+
 
         // Calculate shipping costs
         $this->calculateShippingCosts();
@@ -267,7 +348,8 @@ class CheckoutController
             'shippingStd' => $this->shippingStd,
             'shippingExpress' => $this->shippingExpress,
             'shippingWhiteGlove' => $this->shippingWhiteGlove,
-            'shippingFreight' => $this->shippingFreight
+            'shippingFreight' => $this->shippingFreight,
+            'savedAddress' => $this->savedAddress
         ];
     }
 }

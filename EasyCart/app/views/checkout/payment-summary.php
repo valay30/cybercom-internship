@@ -17,6 +17,7 @@
         </div>
         <div id="coupon-message" style="margin-top: 10px; font-size: 0.9em; display: none;"></div>
         <div id="coupon-success" class="coupon-success-card"></div>
+        <input type="hidden" name="applied_coupon" id="applied_coupon_input" form="checkoutForm">
     </div>
 
     <div class="summary-row">

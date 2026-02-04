@@ -114,6 +114,7 @@ header h1 {
     font-weight: 700;
     background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
 }
@@ -2169,4 +2170,298 @@ textarea.success::after {
 .ec-toast span {
     font-weight: 500;
     color: var(--text-main);
+}
+
+/* ===================================
+   Wishlist Page
+   =================================== */
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.empty-wishlist {
+    text-align: center;
+    padding: 50px;
+    grid-column: 1 / -1;
+}
+
+.empty-wishlist i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+/* ===================================
+   Checkout Page
+   =================================== */
+/* Disabled shipping option styling */
+.shipping-option:has(input:disabled) {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Coupon Success Card Styling */
+.coupon-success-card {
+    margin-top: 15px;
+    padding: 12px 15px;
+    background: linear-gradient(to right, #ecfdf5, #f0fdf4);
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    animation: slideDown 0.3s ease-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===================================
+   Orders Page
+   =================================== */
+.orders-container {
+    display: grid;
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.order-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.order-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Summary Header Grid */
+.order-summary-header {
+    display: grid;
+    grid-template-columns: 1.5fr 1.2fr 1fr 1fr 1fr;
+    gap: 30px;
+    /* 5 cols for ID, Date, Ship, Amt, Status */
+    padding: 20px;
+    background: #fff;
+    align-items: center;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.summary-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-col .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #6b7280;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.summary-col .value {
+    font-size: 0.95rem;
+    color: #111827;
+    font-weight: 500;
+}
+
+.summary-col .order-id {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #4f46e5;
+}
+
+.summary-col .amount {
+    font-weight: 700;
+}
+
+/* Details Toggle (Accordion) */
+details.order-details-toggle {
+    background: #f9fafb;
+    border-top: 1px solid #f3f4f6;
+}
+
+details.order-details-toggle[open] {
+    border-top: 1px solid #e5e7eb;
+}
+
+summary.details-trigger {
+    list-style: none;
+    /* Hide default triangle */
+    padding: 12px 20px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4b5563;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+summary.details-trigger:hover {
+    background: #f3f4f6;
+    color: #111;
+}
+
+summary.details-trigger::-webkit-details-marker {
+    display: none;
+}
+
+details[open] summary.details-trigger {
+    border-bottom: 1px solid #e5e7eb;
+    background: #fff;
+}
+
+details[open] summary.details-trigger i {
+    transform: rotate(180deg);
+}
+
+summary.details-trigger i {
+    transition: transform 0.2s ease;
+}
+
+/* Inner Content Layout */
+.details-content {
+    padding: 25px;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    /* Products take more space than billing */
+    gap: 40px;
+    background: #fff;
+    animation: slideDown 0.3s ease-out;
+}
+
+/* Reusing keyframes slideDown from Checkout CSS above */
+
+.details-content h4 {
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 8px;
+    display: inline-block;
+}
+
+/* Products List in Details */
+.order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #e5e7eb;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.order-item img {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    object-fit: cover;
+}
+
+/* Billing Section */
+.order-summary-details {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.summary-row.total-row {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+    color: #111;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Labels */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.status-badge.pending {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.status-badge.completed {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.status-badge.cancelled {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .order-header-main {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .details-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .order-summary-header {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .summary-col.action {
+        grid-column: span 2;
+        align-items: flex-start;
+    }
 }

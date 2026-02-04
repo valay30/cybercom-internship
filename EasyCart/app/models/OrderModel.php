@@ -29,10 +29,13 @@ class OrderModel
                         shipping_type, 
                         shipping_cost, 
                         tax_amount, 
+                        discount_amount,
+                        coupon_code,
+                        payment_method,
                         grand_total, 
                         order_status,
                         created_at
-                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW()) RETURNING order_id";
+                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()) RETURNING order_id";
 
             $stmt = $this->conn->prepare($query);
             $stmt->execute([
@@ -42,6 +45,9 @@ class OrderModel
                 $orderData['shipping_type'],
                 $orderData['shipping_cost'],
                 $orderData['tax_amount'],
+                $orderData['discount_amount'] ?? 0.00,
+                $orderData['coupon_code'] ?? null,
+                $orderData['payment_method'] ?? null,
                 $orderData['grand_total'],
                 'pending'
             ]);
@@ -55,54 +61,122 @@ class OrderModel
             // 2. Insert into sales_order_address
             $address = $orderData['address'] ?? [];
             $fullName = $address['fullname'] ?? 'Guest';
-            $parts = explode(' ', $fullName, 2);
-            $firstName = $parts[0] ?? '';
-            $lastName = $parts[1] ?? '';
-
             $addrQuery = "INSERT INTO sales_order_address (
                             order_id,
+                            customer_id,
                             address_type,
-                            firstname,
-                            lastname,
+                            full_name,
+                            email,
                             street,
                             city,
+                            state,
                             postcode,
+                            country,
                             telephone
-                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $addrStmt = $this->conn->prepare($addrQuery);
             $addrStmt->execute([
                 $orderId,
+                $userId,
                 'shipping',
-                $firstName,
-                $lastName,
-                $address['address'] ?? '',
+                $fullName,
+                $address['email'] ?? '',
+                $address['street'] ?? '',
                 $address['city'] ?? '',
-                $address['zip'] ?? '',
+                $address['state'] ?? '',
+                $address['postcode'] ?? '',
+                $address['country'] ?? '',
                 $address['phone'] ?? ''
             ]);
 
             // 3. Insert into sales_order_product
             $itemQuery = "INSERT INTO sales_order_product (
-                            order_id, 
+                            order_id,
+                            product_id,
                             product_sku, 
                             product_name, 
                             price, 
                             quantity, 
                             row_total
-                          ) VALUES (?, ?, ?, ?, ?, ?)";
+                          ) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             $itemStmt = $this->conn->prepare($itemQuery);
+            $lookupStmt = $this->conn->prepare("SELECT entity_id FROM catalog_product_entity WHERE sku = ?");
 
             foreach ($cartItems as $sku => $item) {
+                $productId = $item['product_id'] ?? null;
+
+                // Fallback: lookup ID if not in session (e.g. old cart session)
+                if (!$productId) {
+                    $lookupStmt->execute([$sku]);
+                    $productId = $lookupStmt->fetchColumn();
+                }
+
                 $itemStmt->execute([
                     $orderId,
+                    $productId, // Insert Product ID
                     $sku, // SKU is key
                     $item['name'],
                     $item['price'],
                     $item['qty'],
                     $item['price'] * $item['qty']
                 ]);
+            }
+
+            // 4. Deactivate items in DB Cart (if customer logged in)
+            if ($userId) {
+                require_once __DIR__ . '/CartModel.php';
+                $cartModel = new CartModel();
+                $cartModel->deactivateCart($userId);
+            }
+
+            // 5. Save Address to Customer Address Book (if logged in)
+            if ($userId) {
+                // Check if this specific address already exists for the user avoid duplicates
+                $checkAddr = "SELECT entity_id FROM customer_address 
+                              WHERE customer_id = ? 
+                              AND street = ? 
+                              AND city = ? 
+                              AND postcode = ?";
+                $checkStmt = $this->conn->prepare($checkAddr);
+                $checkStmt->execute([
+                    $userId,
+                    $address['street'] ?? '',
+                    $address['city'] ?? '',
+                    $address['postcode'] ?? ''
+                ]);
+
+                if (!$checkStmt->fetch()) {
+                    // Start: Insert new address
+                    $saveAddrSql = "INSERT INTO customer_address (
+                                        customer_id,
+                                        street,
+                                        city,
+                                        state,
+                                        postcode,
+                                        country,
+                                        telephone,
+                                        is_default
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+                    // Check if this is their first address (make it default)
+                    $countStmt = $this->conn->prepare("SELECT COUNT(*) FROM customer_address WHERE customer_id = ?");
+                    $countStmt->execute([$userId]);
+                    $isDefault = ($countStmt->fetchColumn() == 0) ? true : false;
+
+                    $saveStmt = $this->conn->prepare($saveAddrSql);
+                    $saveStmt->execute([
+                        $userId,
+                        $address['street'] ?? '',
+                        $address['city'] ?? '',
+                        $address['state'] ?? '',
+                        $address['postcode'] ?? '',
+                        $address['country'] ?? '',
+                        $address['phone'] ?? '',
+                        $isDefault ? 1 : 0 // Boolean to integer/bit
+                    ]);
+                }
             }
 
             $this->conn->commit();
@@ -159,5 +233,23 @@ class OrderModel
         $stmt = $this->conn->prepare($query);
         $stmt->execute([$orderId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    /**
+     * Get the last shipping address used by this customer
+     */
+    public function getLastOrderAddress($userId)
+    {
+        // Fetch the most recent address based on order date
+        $query = "SELECT sa.* 
+                  FROM sales_order_address sa
+                  JOIN sales_order so ON sa.order_id = so.order_id
+                  WHERE so.customer_id = ? AND sa.address_type = 'shipping'
+                  ORDER BY so.created_at DESC
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([$userId]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

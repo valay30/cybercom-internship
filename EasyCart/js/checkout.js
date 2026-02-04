@@ -55,7 +55,11 @@ const checkoutForm = document.getElementById('checkoutForm');
 const nameInput = document.getElementById('name');
 const mobileInput = document.getElementById('mobile');
 const emailInput = document.getElementById('email');
-const addressInput = document.getElementById('address');
+const streetInput = document.getElementById('street');
+const cityInput = document.getElementById('city');
+const stateInput = document.getElementById('state');
+const postcodeInput = document.getElementById('postcode');
+const countryInput = document.getElementById('country');
 
 // ===================================
 // LocalStorage Form Data Persistence
@@ -69,7 +73,11 @@ function saveFormData() {
         name: nameInput.value,
         mobile: mobileInput.value,
         email: emailInput.value,
-        address: addressInput.value,
+        street: streetInput.value,
+        city: cityInput.value,
+        state: stateInput.value,
+        postcode: postcodeInput.value,
+        country: countryInput.value,
         shipping: document.querySelector('input[name="shipping"]:checked')?.value || '',
         payment: document.querySelector('input[name="payment"]:checked')?.value || '',
         upiId: document.getElementById('upi-id')?.value || '',
@@ -119,11 +127,16 @@ function restoreFormData() {
             return;
         }
 
-        // Restore personal details
-        if (formData.name) nameInput.value = formData.name;
-        if (formData.mobile) mobileInput.value = formData.mobile;
-        if (formData.email) emailInput.value = formData.email;
-        if (formData.address) addressInput.value = formData.address;
+        // Restore personal details ONLY if field is empty (user hasn't typed, and PHP didn't fill it)
+        // If PHP filled it, we prefer the server data (latest saved order) over localStorage (potential half-abandoned session)
+        if (nameInput.value.trim() === '' && formData.name) nameInput.value = formData.name;
+        if (mobileInput.value.trim() === '' && formData.mobile) mobileInput.value = formData.mobile;
+        if (emailInput.value.trim() === '' && formData.email) emailInput.value = formData.email;
+        if (streetInput.value.trim() === '' && formData.street) streetInput.value = formData.street;
+        if (cityInput.value.trim() === '' && formData.city) cityInput.value = formData.city;
+        if (stateInput.value.trim() === '' && formData.state) stateInput.value = formData.state;
+        if (postcodeInput.value.trim() === '' && formData.postcode) postcodeInput.value = formData.postcode;
+        if (countryInput.value.trim() === '' && formData.country) countryInput.value = formData.country;
 
         // Restore shipping selection
         if (formData.shipping) {
@@ -172,9 +185,9 @@ function clearFormData() {
 }
 
 // Auto-save form data on input changes
-const formInputs = [nameInput, mobileInput, emailInput, addressInput];
+const formInputs = [nameInput, mobileInput, emailInput, streetInput, cityInput, stateInput, postcodeInput, countryInput];
 formInputs.forEach(input => {
-    input.addEventListener('input', saveFormData);
+    if (input) input.addEventListener('input', saveFormData);
 });
 
 // Save on shipping/payment selection change
@@ -247,12 +260,36 @@ emailInput.addEventListener('blur', function () {
     }
 });
 
-// Address validation
-addressInput.addEventListener('blur', function () {
+// Address Fields Validation
+streetInput.addEventListener('blur', function () {
     if (this.value.trim() === '') {
-        showError(this, 'Shipping address is required');
-    } else if (!validateAddress(this.value)) {
-        showError(this, 'Please enter a complete address (minimum 10 characters)');
+        showError(this, 'Street address is required');
+    } else {
+        showSuccess(this);
+    }
+});
+
+cityInput.addEventListener('blur', function () {
+    if (this.value.trim() === '') {
+        showError(this, 'City is required');
+    } else {
+        showSuccess(this);
+    }
+});
+
+stateInput.addEventListener('blur', function () {
+    if (this.value.trim() === '') {
+        showError(this, 'State is required');
+    } else {
+        showSuccess(this);
+    }
+});
+
+postcodeInput.addEventListener('blur', function () {
+    if (this.value.trim() === '') {
+        showError(this, 'Postcode is required');
+    } else if (!/^[0-9]{5,6}$/.test(this.value.trim())) {
+        showError(this, 'Invalid postcode (5-6 digits)');
     } else {
         showSuccess(this);
     }
@@ -297,15 +334,36 @@ checkoutForm.addEventListener('submit', function (e) {
         showSuccess(emailInput);
     }
 
-    // Validate address
-    if (addressInput.value.trim() === '') {
-        showError(addressInput, 'Shipping address is required');
-        isValid = false;
-    } else if (!validateAddress(addressInput.value)) {
-        showError(addressInput, 'Please enter a complete address (minimum 10 characters)');
+    // Validate address fields
+    if (streetInput.value.trim() === '') {
+        showError(streetInput, 'Street address is required');
         isValid = false;
     } else {
-        showSuccess(addressInput);
+        showSuccess(streetInput);
+    }
+
+    if (cityInput.value.trim() === '') {
+        showError(cityInput, 'City is required');
+        isValid = false;
+    } else {
+        showSuccess(cityInput);
+    }
+
+    if (stateInput.value.trim() === '') {
+        showError(stateInput, 'State is required');
+        isValid = false;
+    } else {
+        showSuccess(stateInput);
+    }
+
+    if (postcodeInput.value.trim() === '') {
+        showError(postcodeInput, 'Postcode is required');
+        isValid = false;
+    } else if (!/^[0-9]{5,6}$/.test(postcodeInput.value.trim())) {
+        showError(postcodeInput, 'Invalid postcode');
+        isValid = false;
+    } else {
+        showSuccess(postcodeInput);
     }
 
     // Payment Validation
@@ -398,16 +456,18 @@ checkoutForm.addEventListener('submit', function (e) {
 });
 
 // Clear error on input
-[nameInput, mobileInput, emailInput, addressInput].forEach(input => {
-    input.addEventListener('input', function () {
-        if (this.classList.contains('error')) {
-            const formGroup = this.parentElement;
-            const errorDiv = formGroup.querySelector('.error-message');
-            if (errorDiv && this.value.trim() !== '') {
-                errorDiv.style.opacity = '0.5';
+[nameInput, mobileInput, emailInput, streetInput, cityInput, stateInput, postcodeInput].forEach(input => {
+    if (input) {
+        input.addEventListener('input', function () {
+            if (this.classList.contains('error')) {
+                const formGroup = this.parentElement;
+                const errorDiv = formGroup.querySelector('.error-message');
+                if (errorDiv && this.value.trim() !== '') {
+                    errorDiv.style.opacity = '0.5';
+                }
             }
-        }
-    });
+        });
+    }
 });
 
 
@@ -615,6 +675,10 @@ function applyCoupon() {
                 applyBtn.disabled = true;
                 applyBtn.textContent = 'Applied';
                 applyBtn.style.background = '#28a745';
+
+                // Set hidden input
+                const hiddenInput = document.getElementById('applied_coupon_input');
+                if (hiddenInput) hiddenInput.value = couponCode;
             } else {
                 // Show error message
                 couponMessage.textContent = data.message;
@@ -686,6 +750,10 @@ function removeCoupon() {
 
     // Reset the discount
     appliedCouponDiscount = 0;
+
+    // Clear hidden input
+    const hiddenInput = document.getElementById('applied_coupon_input');
+    if (hiddenInput) hiddenInput.value = '';
 
     // Get elements
     const couponInput = document.getElementById('coupon-input');

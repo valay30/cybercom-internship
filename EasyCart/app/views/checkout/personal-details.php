@@ -12,21 +12,49 @@
     <div class="form-group">
         <label for="name">Full Name</label>
         <input type="text" id="name" name="name" required placeholder="Enter your full name"
+            value="<?php echo htmlspecialchars($savedAddress['full_name'] ?? ''); ?>"
             form="checkoutForm">
     </div>
     <div class="form-group">
         <label for="mobile">Mobile Number</label>
         <input type="tel" id="mobile" name="mobile" required placeholder="Enter 10-digit mobile number"
+            value="<?php echo htmlspecialchars($savedAddress['telephone'] ?? ''); ?>"
             form="checkoutForm">
     </div>
     <div class="form-group full-width">
         <label for="email">Email ID</label>
         <input type="email" id="email" name="email" required placeholder="Enter your email address"
+            value="<?php echo htmlspecialchars($savedAddress['email'] ?? ''); ?>"
             form="checkoutForm">
     </div>
     <div class="form-group full-width">
-        <label for="address">Shipping Address</label>
-        <textarea id="address" name="address" required placeholder="Enter complete address with pincode"
-            rows="3" form="checkoutForm"></textarea>
+        <label for="street">Street Address</label>
+        <input type="text" id="street" name="street" required placeholder="House No, Street Name"
+            value="<?php echo htmlspecialchars($savedAddress['street'] ?? ''); ?>"
+            form="checkoutForm">
+    </div>
+    <div class="form-group">
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" required placeholder="Enter City"
+            value="<?php echo htmlspecialchars($savedAddress['city'] ?? ''); ?>"
+            form="checkoutForm">
+    </div>
+    <div class="form-group">
+        <label for="state">State</label>
+        <input type="text" id="state" name="state" required placeholder="Enter State"
+            value="<?php echo htmlspecialchars($savedAddress['state'] ?? ''); ?>"
+            form="checkoutForm">
+    </div>
+    <div class="form-group">
+        <label for="postcode">Zip/Postcode</label>
+        <input type="text" id="postcode" name="postcode" required placeholder="Enter Pincode"
+            value="<?php echo htmlspecialchars($savedAddress['postcode'] ?? ''); ?>"
+            form="checkoutForm">
+    </div>
+    <div class="form-group">
+        <label for="country">Country</label>
+        <input type="text" id="country" name="country" required placeholder="Enter Country"
+            value="<?php echo htmlspecialchars($savedAddress['country'] ?? ''); ?>"
+            form="checkoutForm">
     </div>
 </div>

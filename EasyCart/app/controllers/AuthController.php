@@ -155,16 +155,56 @@ class AuthController
         $fullname = $customer['full_name'];
 
         // Set login cookie
+        // Set login cookie
         setcookie('user_logged_in', 'true', time() + (86400 * 30), '/');
-        setcookie('user_email', $customer['email'], time() + (86400 * 30), '/');
-        setcookie('user_name', $fullname, time() + (86400 * 30), '/');
         setcookie('user_id', $customer['entity_id'], time() + (86400 * 30), '/');
 
         // Set session
-        $_SESSION['user_logged_in'] = true;
-        $_SESSION['user_email'] = $customer['email'];
-        $_SESSION['user_name'] = $fullname;
         $_SESSION['user_id'] = $customer['entity_id'];
+
+        // --- NEW: Sync Cart with Database ---
+        if (!empty($_SESSION['cart'])) {
+            require_once __DIR__ . '/../models/CartModel.php';
+            require_once __DIR__ . '/../models/ProductModel.php'; // Needed if we need to lookup IDs, though cart should have them
+
+            $cartModel = new CartModel();
+
+            foreach ($_SESSION['cart'] as $pid => $item) {
+                // $pid is SKU or ID? In CartController it uses SKU as key, but stores product_id inside
+                $productId = $item['product_id'] ?? null;
+                $qty = $item['qty'];
+
+                if ($productId) {
+                    $cartModel->addItem($customer['entity_id'], $productId, $qty);
+                } else {
+                    // If product_id missing (legacy session), try to find it
+                    // Assuming $pid is SKU (from CartController logic)
+                    $productModel = new ProductModel();
+                    $prod = $productModel->getProductBySku($pid);
+                    if ($prod) {
+                        $cartModel->addItem($customer['entity_id'], $prod['entity_id'], $qty);
+                    }
+                }
+            }
+        }
+
+        // --- Fetch merged cart from DB back to Session ---
+        // This ensures items from previous sessions (on other devices) appear now
+        require_once __DIR__ . '/../models/CartModel.php';
+        $cartModel = new CartModel();
+        $dbItems = $cartModel->getCartItems($customer['entity_id']);
+
+        // Rebuild session cart
+        // We'll keep existing session structure: Key = SKU
+        // Note: getCartItems returns joined product data including SKU
+        foreach ($dbItems as $dbItem) {
+            $sku = $dbItem['sku'];
+            // Simplified Session Cart: Only ID and Qty
+            $_SESSION['cart'][$sku] = [
+                'product_id' => $dbItem['entity_id'],
+                'qty' => $dbItem['qty']
+            ];
+        }
     }
 
     /**
@@ -173,15 +213,11 @@ class AuthController
     private function handleLogout()
     {
         // Clear cookies
+        // Clear cookies
         setcookie('user_logged_in', '', time() - 3600, '/');
-        setcookie('user_email', '', time() - 3600, '/');
-        setcookie('user_name', '', time() - 3600, '/');
         setcookie('user_id', '', time() - 3600, '/');
 
         // Clear session
-        unset($_SESSION['user_logged_in']);
-        unset($_SESSION['user_email']);
-        unset($_SESSION['user_name']);
         unset($_SESSION['user_id']);
 
         // Redirect to home

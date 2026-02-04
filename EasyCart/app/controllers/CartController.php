@@ -6,15 +6,18 @@
  */
 
 require_once __DIR__ . '/../models/ProductModel.php';
+require_once __DIR__ . '/../models/CartModel.php';
 
 class CartController
 {
     private $productModel;
+    private $cartModel;
     private $cart;
 
     public function __construct()
     {
         $this->productModel = new ProductModel();
+        $this->cartModel = new CartModel();
 
         // Initialize cart session
         if (!isset($_SESSION['cart'])) {
@@ -64,22 +67,26 @@ class CartController
      */
     private function addToCart($pid)
     {
+        // $pid IS THE SKU coming from frontend
         $product = $this->productModel->getProductBySku($pid);
 
         if (!$product) {
             return;
         }
 
+        // Update Session Cart - Store ONLY essentials
         if (isset($this->cart[$pid])) {
             $this->cart[$pid]['qty']++;
         } else {
             $this->cart[$pid] = [
-                'name' => $product['name'],
-                'price' => $product['price'],
-                'image' => $product['image'],
-                'shipping_type' => $product['shipping_type'],
+                'product_id' => $product['entity_id'],
                 'qty' => 1
             ];
+        }
+
+        // DB Persistence for Logged In Users
+        if (isset($_SESSION['user_id'])) {
+            $this->cartModel->addItem($_SESSION['user_id'], $product['entity_id'], 1);
         }
     }
 
@@ -88,6 +95,14 @@ class CartController
      */
     private function updateQuantity($pid, $qty)
     {
+        // DB Persistence
+        if (isset($_SESSION['user_id']) && isset($this->cart[$pid])) {
+            $productId = $this->cart[$pid]['product_id'] ?? null;
+            if ($productId) {
+                $this->cartModel->updateQty($_SESSION['user_id'], $productId, $qty);
+            }
+        }
+
         if ($qty > 0) {
             $this->cart[$pid]['qty'] = $qty;
         } else {
@@ -100,17 +115,26 @@ class CartController
      */
     private function removeFromCart($pid)
     {
+        // DB Persistence
+        if (isset($_SESSION['user_id']) && isset($this->cart[$pid])) {
+            $productId = $this->cart[$pid]['product_id'] ?? null;
+            if ($productId) {
+                $this->cartModel->removeItem($_SESSION['user_id'], $productId);
+            }
+        }
+
         unset($this->cart[$pid]);
     }
 
     /**
-     * Calculate subtotal with discounts
+     * Calculate subtotal via enriched data
      */
     public function calculateSubtotal()
     {
         $subtotal = 0;
+        $enrichedCart = $this->getCartData(); // Fetch full details to get prices
 
-        foreach ($this->cart as $item) {
+        foreach ($enrichedCart as $item) {
             if (isset($item['qty']) && isset($item['price'])) {
                 $discount_percent = min($item['qty'], 50); // Max 50% discount
                 $discounted_price = $item['price'] * (1 - ($discount_percent / 100));
@@ -122,11 +146,29 @@ class CartController
     }
 
     /**
-     * Get cart data for display
+     * Get cart data for display (Enriched with DB data)
      */
     public function getCartData()
     {
-        return $this->cart;
+        $enrichedCart = [];
+
+        foreach ($this->cart as $sku => $item) {
+            $productId = $item['product_id'] ?? null;
+            if ($productId) {
+                $product = $this->productModel->getProductById($productId);
+                if ($product) {
+                    // Merge DB details with Session data (qty)
+                    $enrichedItem = $product;
+                    $enrichedItem['qty'] = $item['qty'];
+                    // Ensure product_id is preserved/accessible
+                    $enrichedItem['product_id'] = $productId;
+
+                    $enrichedCart[$sku] = $enrichedItem;
+                }
+            }
+        }
+
+        return $enrichedCart;
     }
 
     /**
@@ -138,15 +180,13 @@ class CartController
         $itemTotal = 0;
         $productPrice = 0;
 
-        // Get the original product price
-        $product = $this->productModel->getProductBySku($pid);
-        if ($product) {
-            $productPrice = $product['price'];
-        }
+        // We need full details to calculate item total
+        $enrichedCart = $this->getCartData();
 
-        // Calculate item total
-        if (isset($this->cart[$pid])) {
-            $item = $this->cart[$pid];
+        if (isset($enrichedCart[$pid])) {
+            $item = $enrichedCart[$pid];
+            $productPrice = $item['price'];
+
             $discount_percent = min($item['qty'], 50);
             $discounted_price = $item['price'] * (1 - ($discount_percent / 100));
             $itemTotal = $discounted_price * $item['qty'];

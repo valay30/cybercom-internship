@@ -190,7 +190,7 @@ signupPassword.addEventListener('input', function () {
     } else if (!validation.valid) {
         let message = 'Password must contain: ';
         const missing = [];
-        if (!validation.minLength) missing.push('8+ characters');
+        if (!validation.minLength) missing.push('6+ characters');
         if (!validation.hasUpper) missing.push('uppercase letter');
         if (!validation.hasLower) missing.push('lowercase letter');
         if (!validation.hasNumber) missing.push('number');
@@ -251,7 +251,7 @@ signupForm.addEventListener('submit', function (e) {
     } else if (!validation.valid) {
         let message = 'Password must contain: ';
         const missing = [];
-        if (!validation.minLength) missing.push('8+ characters');
+        if (!validation.minLength) missing.push('6+ characters');
         if (!validation.hasUpper) missing.push('uppercase letter');
         if (!validation.hasLower) missing.push('lowercase letter');
         if (!validation.hasNumber) missing.push('number');
