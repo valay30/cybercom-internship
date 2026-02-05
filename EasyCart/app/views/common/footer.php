@@ -15,10 +15,10 @@
         <div class="footer-column">
             <h3>Quick Links</h3>
             <ul>
-                <li><a href="index.php"><i class="fa-solid fa-angle-right"></i> Home</a></li>
-                <li><a href="plp.php"><i class="fa-solid fa-angle-right"></i> Products</a></li>
-                <li><a href="cart.php"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
-                <li><a href="orders.php"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
+                <li><a href="index"><i class="fa-solid fa-angle-right"></i> Home</a></li>
+                <li><a href="plp"><i class="fa-solid fa-angle-right"></i> Products</a></li>
+                <li><a href="cart"><i class="fa-solid fa-angle-right"></i> Cart</a></li>
+                <li><a href="orders"><i class="fa-solid fa-angle-right"></i> My Orders</a></li>
             </ul>
         </div>
 

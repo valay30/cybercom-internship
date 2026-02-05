@@ -11,7 +11,7 @@
 
 <body>
     <!-- Header Section -->
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <!-- Main Content -->
     <main>
@@ -45,7 +45,7 @@
 
             <!-- Login Form -->
             <div id="login-tab" class="tab-content active">
-                <form action="login.php<?php echo $redirectUrl !== 'index.php' ? '?redirect=' . urlencode($redirectUrl) : ''; ?>" method="POST">
+                <form action="login<?php echo $redirectUrl !== 'index' ? '?redirect=' . urlencode($redirectUrl) : ''; ?>" method="POST">
                     <input type="hidden" name="action" value="login">
 
                     <div class="form-group">
@@ -67,7 +67,7 @@
 
             <!-- Signup Form -->
             <div id="signup-tab" class="tab-content">
-                <form action="login.php<?php echo $redirectUrl !== 'index.php' ? '?redirect=' . urlencode($redirectUrl) : ''; ?>" method="POST">
+                <form action="login<?php echo $redirectUrl !== 'index' ? '?redirect=' . urlencode($redirectUrl) : ''; ?>" method="POST">
                     <input type="hidden" name="action" value="signup">
 
                     <div class="form-group">
@@ -102,7 +102,7 @@
     </main>
 
     <!-- Footer -->
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 
     <script src="js/login.js?v=<?php echo time(); ?>"></script>
 </body>

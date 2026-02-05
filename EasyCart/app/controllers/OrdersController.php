@@ -14,7 +14,7 @@ class OrdersController
     {
         // 1. Check Login
         if (!isset($_SESSION['user_id'])) {
-            header('Location: login.php?redirect=orders.php');
+            header('Location: login?redirect=orders');
             exit;
         }
 

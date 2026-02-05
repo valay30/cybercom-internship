@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <main>
         <h2><i class="fa-solid fa-box"></i> My Orders</h2>
@@ -19,7 +19,7 @@
                 <i class="fa-solid fa-box-open" style="font-size: 4rem; color: #ddd; margin-bottom: 20px;"></i>
                 <h3>No orders yet</h3>
                 <p>Start shopping to see your orders here!</p>
-                <a href="plp.php"><button class="hero-btn" style="margin-top: 20px; background: var(--primary); color: white;">Browse Products</button></a>
+                <a href="plp"><button class="hero-btn" style="margin-top: 20px; background: var(--primary); color: white;">Browse Products</button></a>
             </div>
         <?php else: ?>
             <div class="orders-container">
@@ -65,13 +65,13 @@
                                     <h4>Products Included</h4>
                                     <div class="order-items">
                                         <?php foreach ($order['items'] as $item): ?>
-                                            <div class="order-item">
-                                                <img src="<?php echo $item['image']; ?>" alt="">
-                                                <div class="item-details">
-                                                    <span class="item-name"><?php echo $item['product_name'] ?? $item['name']; ?></span>
-                                                    <span class="item-qty">Qty: <?php echo $item['quantity'] ?? $item['qty']; ?></span>
+                                            <div class="order-item" style="display: flex; align-items: center; gap: 20px; padding: 16px; background: #f8f9fa; border-radius: 8px; margin-bottom: 12px;">
+                                                <img src="<?php echo $item['image']; ?>" alt="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #e0e0e0;">
+                                                <div class="item-details" style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                                                    <span class="item-name" style="font-weight: 600; font-size: 1rem; color: #1e293b;"><?php echo $item['product_name'] ?? $item['name']; ?></span>
+                                                    <span class="item-qty" style="font-size: 0.9rem; color: #64748b; background: white; padding: 4px 12px; border-radius: 4px; display: inline-block; width: fit-content;">Qty: <strong><?php echo $item['quantity'] ?? $item['qty']; ?></strong></span>
                                                 </div>
-                                                <span class="item-price">₹<?php echo number_format($item['price']); ?></span>
+                                                <span class="item-price" style="font-weight: 700; font-size: 1.1rem; color: var(--primary); min-width: 100px; text-align: right;">₹<?php echo number_format($item['price']); ?></span>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -115,7 +115,7 @@
         <?php endif; ?>
     </main>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 </body>
 
 </html>

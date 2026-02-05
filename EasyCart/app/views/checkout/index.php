@@ -11,7 +11,7 @@
 </head>
 
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <main>
         <h2><i class="fa-solid fa-credit-card"></i> Checkout</h2>
@@ -39,7 +39,7 @@
         </div>
     </main>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 
     <script src="js/checkout.js?v=<?php echo time(); ?>"></script>
 </body>

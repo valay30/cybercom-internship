@@ -150,6 +150,36 @@ class CheckoutController
         $this->taxAmount = $amountAfterDiscount * 0.18;
         $this->totalAmount = $amountAfterDiscount + $this->taxAmount;
 
+
+        // Prepare Shipping Address (Primary Fields)
+        $shippingAddress = [
+            'fullname' => $_POST['name'] ?? '',
+            'phone' => $_POST['mobile'] ?? '',
+            'email' => $_POST['email'] ?? '',
+            'street' => $_POST['street'] ?? '',
+            'city' => $_POST['city'] ?? '',
+            'state' => $_POST['state'] ?? '',
+            'postcode' => $_POST['postcode'] ?? '',
+            'country' => $_POST['country'] ?? ''
+        ];
+
+        // Prepare Billing Address (Secondary Fields or Copy)
+        $billingAddress = [];
+        if (isset($_POST['same_as_shipping']) && $_POST['same_as_shipping'] == '1') {
+            $billingAddress = $shippingAddress;
+        } else {
+            $billingAddress = [
+                'fullname' => $_POST['name'] ?? '',   // Use primary/shipping name
+                'phone' => $_POST['mobile'] ?? '',    // Use primary/shipping mobile
+                'email' => $_POST['email'] ?? '',
+                'street' => $_POST['billing_street'] ?? '',
+                'city' => $_POST['billing_city'] ?? '',
+                'state' => $_POST['billing_state'] ?? '',
+                'postcode' => $_POST['billing_postcode'] ?? '',
+                'country' => $_POST['billing_country'] ?? ''
+            ];
+        }
+
         $orderData = [
             'shipping_type' => $_POST['shipping_type'] ?? 'standard',
             'shipping_cost' => $this->shippingCost,
@@ -159,16 +189,8 @@ class CheckoutController
             'coupon_code' => $couponCode,
             'payment_method' => $_POST['payment'] ?? 'cod',
             'grand_total' => $this->totalAmount,
-            'address' => [
-                'fullname' => $_POST['name'] ?? '',
-                'phone' => $_POST['mobile'] ?? '',
-                'email' => $_POST['email'] ?? '',
-                'street' => $_POST['street'] ?? '',
-                'city' => $_POST['city'] ?? '',
-                'state' => $_POST['state'] ?? '',
-                'postcode' => $_POST['postcode'] ?? '',
-                'country' => $_POST['country'] ?? ''
-            ]
+            'billing_address' => $billingAddress,
+            'shipping_address' => $shippingAddress
         ];
 
         // 3. Save to Database
@@ -178,11 +200,29 @@ class CheckoutController
         $orderId = $orderModel->createOrder($_SESSION['user_id'], $orderData, $this->cart);
 
         if ($orderId) {
+            // 4. Update Customer Address (Save for future use)
+            require_once __DIR__ . '/../models/CustomerModel.php';
+            $customerModel = new CustomerModel();
+
+            // Save Shipping Address
+            try {
+                $customerModel->saveAddress($_SESSION['user_id'], $shippingAddress, 'shipping');
+            } catch (Exception $e) {
+                file_put_contents(__DIR__ . '/../../address_error.log', date('Y-m-d H:i:s') . " - Shipping Save Failed: " . $e->getMessage() . "\n", FILE_APPEND);
+            }
+
+            // Save Billing Address
+            try {
+                $customerModel->saveAddress($_SESSION['user_id'], $billingAddress, 'billing');
+            } catch (Exception $e) {
+                file_put_contents(__DIR__ . '/../../address_error.log', date('Y-m-d H:i:s') . " - Billing Save Failed: " . $e->getMessage() . "\n", FILE_APPEND);
+            }
+
             // Clear cart
             unset($_SESSION['cart']);
             $this->cart = [];
 
-            echo json_encode(['success' => true, 'redirect' => 'orders.php?success=1']);
+            echo json_encode(['success' => true, 'redirect' => 'orders?success=1']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to create order. Please try again.']);
         }

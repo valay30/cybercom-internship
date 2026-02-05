@@ -8,5 +8,5 @@ setcookie("user_logged_in", "", time() - 3600, "/");
 setcookie("user_name", "", time() - 3600, "/");
 
 // Redirect
-header("Location: index.php");
+header("Location: index");
 exit();

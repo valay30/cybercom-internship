@@ -1,7 +1,7 @@
 <section class="products-display products-section">
     <div class="sort-bar">
         <!-- Quick Search -->
-        <form action="plp.php" method="GET" class="quick-search-form">
+        <form action="plp" method="GET" class="quick-search-form">
             <!-- Preserve existing filters -->
             <?php
             foreach ($_GET as $key => $val) {
@@ -21,7 +21,7 @@
                 <input type="text" name="search" placeholder="Search products..."
                     value="<?php echo htmlspecialchars($searchQuery); ?>">
                 <?php if ($searchQuery): ?>
-                    <a href="plp.php" class="clear-search" title="Clear search">
+                    <a href="plp" class="clear-search" title="Clear search">
                         <i class="fa-solid fa-xmark"></i>
                     </a>
                 <?php endif; ?>
@@ -34,7 +34,7 @@
             of <strong><?php echo $totalItems; ?></strong> items</span>
 
         <!-- Sort Dropdown -->
-        <form id="sortForm" action="plp.php" method="GET"
+        <form id="sortForm" action="plp" method="GET"
             style="box-shadow:none; padding:0; border:none; margin:0; background:none; max-width: 250px;">
             <!-- Preserve other filters -->
             <?php
@@ -86,7 +86,7 @@
                     <?php endif; ?>
                     <div class="product-actions"
                         style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                        <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View
+                        <a href="pdp?id=<?php echo $product['id']; ?>"><button class="product-btn">View
                                 Details</button></a>
                         <?php
                         $in_wishlist = in_array($product['id'], $wishlistIds);

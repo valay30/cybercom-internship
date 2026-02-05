@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <main>
         <div class="plp-container">
@@ -21,7 +21,7 @@
         </div>
     </main>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 
     <script>
         const WISHLIST_IDS = <?php echo json_encode($wishlistIds); ?>;

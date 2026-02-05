@@ -1,6 +1,6 @@
 <aside class="filters-sidebar">
     <h3><i class="fa-solid fa-filter"></i> Filters</h3>
-    <form id="filterForm" action="plp.php" method="GET">
+    <form id="filterForm" action="plp" method="GET">
 
         <!-- Categories -->
         <div class="filter-group">
@@ -57,7 +57,7 @@
 
         <button type="submit" class="apply-filters-btn">Apply Filters</button>
         <?php if (!empty($_GET)): ?>
-            <a href="plp.php" style="display:block; text-align:center; margin-top:10px; font-size:0.9rem;">Clear
+            <a href="plp" style="display:block; text-align:center; margin-top:10px; font-size:0.9rem;">Clear
                 All</a>
         <?php endif; ?>
     </form>

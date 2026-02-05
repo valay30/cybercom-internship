@@ -14,7 +14,7 @@ class AuthController
     public function __construct()
     {
         // Get redirect URL from query parameter
-        $this->redirectUrl = $_GET['redirect'] ?? 'index.php';
+        $this->redirectUrl = $_GET['redirect'] ?? 'index';
         $this->customerModel = new CustomerModel();
     }
 
@@ -88,7 +88,7 @@ class AuthController
                 header('Location: ' . $this->redirectUrl);
                 exit;
             } else {
-                header('Location: login.php?error=invalid_credentials');
+                header('Location: login?error=invalid_credentials');
                 exit;
             }
         }
@@ -135,7 +135,7 @@ class AuthController
             } else {
                 // Signup failed (e.g. email exists)
                 error_log("Signup failed - email may already exist");
-                header('Location: login.php?error=email_exists');
+                header('Location: login?error=email_exists');
                 exit;
             }
         } else {
@@ -162,7 +162,7 @@ class AuthController
         // Set session
         $_SESSION['user_id'] = $customer['entity_id'];
 
-        // --- NEW: Sync Cart with Database ---
+        // --- Merged Cart Logic (Existing) ---
         if (!empty($_SESSION['cart'])) {
             require_once __DIR__ . '/../models/CartModel.php';
             require_once __DIR__ . '/../models/ProductModel.php'; // Needed if we need to lookup IDs, though cart should have them
@@ -189,22 +189,42 @@ class AuthController
         }
 
         // --- Fetch merged cart from DB back to Session ---
-        // This ensures items from previous sessions (on other devices) appear now
         require_once __DIR__ . '/../models/CartModel.php';
         $cartModel = new CartModel();
         $dbItems = $cartModel->getCartItems($customer['entity_id']);
 
         // Rebuild session cart
-        // We'll keep existing session structure: Key = SKU
-        // Note: getCartItems returns joined product data including SKU
         foreach ($dbItems as $dbItem) {
             $sku = $dbItem['sku'];
-            // Simplified Session Cart: Only ID and Qty
             $_SESSION['cart'][$sku] = [
                 'product_id' => $dbItem['entity_id'],
                 'qty' => $dbItem['qty']
             ];
         }
+
+        // --- NEW: Sync Wishlist with Database ---
+        require_once __DIR__ . '/../models/WishlistModel.php';
+        $wishlistModel = new WishlistModel();
+
+        // Merge guest wishlist (session_id) into customer wishlist (customer_id)
+        $sessionId = session_id();
+        $wishlistModel->mergeGuestWishlist($customer['entity_id'], $sessionId);
+
+        // Refresh session wishlist
+        require_once __DIR__ . '/../models/ProductModel.php'; // Ensure ProductModel is loaded
+        // We use WishlistController logic manually here to avoid instantiating the whole controller which might start session again
+
+        $dbIds = $wishlistModel->getWishlistProductIds($customer['entity_id'], null);
+        $productModel = new ProductModel();
+
+        $skus = [];
+        foreach ($dbIds as $eid) {
+            $product = $productModel->getProductById($eid);
+            if ($product) {
+                $skus[] = $product['id'];
+            }
+        }
+        $_SESSION['wishlist'] = $skus;
     }
 
     /**
@@ -221,7 +241,7 @@ class AuthController
         unset($_SESSION['user_id']);
 
         // Redirect to home
-        header('Location: index.php');
+        header('Location: index');
         exit;
     }
 

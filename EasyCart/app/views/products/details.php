@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <main>
         <div class="product-details-container">
@@ -86,7 +86,7 @@
                     </div>
                 <?php else: ?>
                     <!-- Add to Cart Button (when item is NOT in cart) -->
-                    <form id="add-to-cart-form" action="cart.php" method="POST"
+                    <form id="add-to-cart-form" action="cart" method="POST"
                         style="box-shadow:none; padding:0; border:none; max-width:100%; display:inline-block;">
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="id" value="<?php echo $product['id']; ?>">
@@ -109,12 +109,12 @@
                     <img src="<?php echo $featuredProduct['image']; ?>" alt="<?php echo $featuredProduct['name']; ?>">
                     <h3><?php echo $featuredProduct['name']; ?></h3>
                     <p>₹<?php echo number_format($featuredProduct['price'], 2); ?></p>
-                    <a href="pdp.php?id=<?php echo $featuredProduct['id']; ?>"><button class="product-btn">View Details</button></a>
+                    <a href="pdp?id=<?php echo $featuredProduct['id']; ?>"><button class="product-btn">View Details</button></a>
                 </div>
             <?php endforeach; ?>
         </div>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 
     <script src="js/pdp.js?v=<?php echo time(); ?>"></script>
     <script src="js/wishlist.js"></script>

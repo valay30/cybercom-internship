@@ -99,7 +99,7 @@ function attachAddToCartListener(form) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const addToCartForm = document.querySelector('form[action="cart.php"]');
+    const addToCartForm = document.querySelector('form[action="cart"]');
 
     if (addToCartForm) {
         console.log("Add to Cart form found on page load.");
@@ -196,7 +196,7 @@ function updateQuantity(productId, change) {
                     const quantityControls = document.querySelector('.quantity-controls-pdp');
                     if (quantityControls) {
                         const addToCartHTML = `
-                            <form id="add-to-cart-form" action="cart.php" method="POST"
+                            <form id="add-to-cart-form" action="cart" method="POST"
                                 style="box-shadow:none; padding:0; border:none; max-width:100%; display:inline-block;">
                                 <input type="hidden" name="action" value="add">
                                 <input type="hidden" name="id" value="${productId}">

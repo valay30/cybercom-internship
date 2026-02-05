@@ -10,14 +10,14 @@
 </head>
 
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <main>
         <section class="hero-section">
             <div class="hero-content">
                 <h2><i class="fa-solid fa-cart-shopping"></i> Shop Smart with EasyCart</h2>
                 <p>Discover quality products at unbeatable prices , shop with confidence!</p>
-                <a href="plp.php"><button class="hero-btn">Browse Products</button></a>
+                <a href="plp"><button class="hero-btn">Browse Products</button></a>
             </div>
         </section>
 
@@ -30,7 +30,7 @@
                         <h3><?php echo $product['name']; ?></h3>
                         <p>₹<?php echo number_format($product['price']); ?></p>
                         <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
-                            <a href="pdp.php?id=<?php echo $product['id']; ?>"><button class="product-btn">View Details</button></a>
+                            <a href="pdp?id=<?php echo $product['id']; ?>"><button class="product-btn">View Details</button></a>
                             <?php
                             $in_wishlist = in_array($product['id'], $wishlistIds);
                             ?>
@@ -50,7 +50,7 @@
                 <h2>Popular Categories</h2>
                 <ul class="category-list">
                     <?php foreach ($categories as $cat): ?>
-                        <li><a href="plp.php?category[]=<?php echo $cat['id']; ?>"><i
+                        <li><a href="plp?category[]=<?php echo $cat['id']; ?>"><i
                                     class="<?php echo $cat['icon']; ?>"></i>
                                 <?php echo $cat['name']; ?></a></li>
                     <?php endforeach; ?>
@@ -60,7 +60,7 @@
                 <h2>Popular Brands</h2>
                 <ul class="brand-list">
                     <?php foreach ($brands as $brand): ?>
-                        <li><a href="plp.php?brand[]=<?php echo $brand['id']; ?>"><i
+                        <li><a href="plp?brand[]=<?php echo $brand['id']; ?>"><i
                                     class="<?php echo $brand['icon']; ?>"></i> <?php echo $brand['name']; ?></a></li>
                     <?php endforeach; ?>
                 </ul>
@@ -68,7 +68,7 @@
         </div>
     </main>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 
     <script src="js/wishlist.js"></script>
 

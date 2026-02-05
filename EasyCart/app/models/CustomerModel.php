@@ -107,4 +107,73 @@ class CustomerModel
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    /**
+     * Save or Update customer address
+     */
+    /**
+     * Save or Update customer address
+     */
+    public function saveAddress($customerId, $addressData, $type = 'shipping')
+    {
+        // Try to SELECT by type. If column missing, add it.
+        $street = $addressData['street'] ?? '';
+        $city = $addressData['city'] ?? '';
+        $state = $addressData['state'] ?? '';
+        $postcode = $addressData['postcode'] ?? '';
+        $country = $addressData['country'] ?? '';
+        $telephone = $addressData['phone'] ?? $addressData['telephone'] ?? '';
+
+        try {
+            $query = "SELECT entity_id FROM customer_address WHERE customer_id = ? AND address_type = ? LIMIT 1";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([$customerId, $type]);
+            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Check for missing column error
+            if (strpos($e->getMessage(), 'address_type') !== false) {
+                // Add column
+                $this->conn->exec("ALTER TABLE customer_address ADD COLUMN IF NOT EXISTS address_type VARCHAR(20) DEFAULT 'shipping'");
+
+                // Retry Select
+                $query = "SELECT entity_id FROM customer_address WHERE customer_id = ? AND address_type = ? LIMIT 1";
+                $stmt = $this->conn->prepare($query);
+                $stmt->execute([$customerId, $type]);
+                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                throw $e;
+            }
+        }
+
+        if ($existing) {
+            // Update
+            $updateQuery = "UPDATE customer_address 
+                            SET street = ?, city = ?, state = ?, postcode = ?, country = ?, telephone = ?
+                            WHERE entity_id = ?";
+            $updateStmt = $this->conn->prepare($updateQuery);
+            return $updateStmt->execute([
+                $street,
+                $city,
+                $state,
+                $postcode,
+                $country,
+                $telephone,
+                $existing['entity_id']
+            ]);
+        } else {
+            // Insert
+            $insertQuery = "INSERT INTO customer_address (customer_id, address_type, street, city, state, postcode, country, telephone)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $insertStmt = $this->conn->prepare($insertQuery);
+            return $insertStmt->execute([
+                $customerId,
+                $type,
+                $street,
+                $city,
+                $state,
+                $postcode,
+                $country,
+                $telephone
+            ]);
+        }
+    }
 }

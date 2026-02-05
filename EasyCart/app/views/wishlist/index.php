@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <main>
         <h2><i class="fa-solid fa-heart" style="color: #ef4444;"></i> My Wishlist</h2>
@@ -21,7 +21,7 @@
                     <i class="fa-regular fa-heart"></i>
                     <h3>Your wishlist is empty</h3>
                     <p>Save items you love for later!</p>
-                    <a href="plp.php"><button class="hero-btn"
+                    <a href="plp"><button class="hero-btn"
                             style="margin-top:20px; background:var(--primary); color:white;">Start Shopping</button></a>
                 </div>
             <?php else: ?>
@@ -47,7 +47,7 @@
         </div>
     </main>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 
     <script>
         function toggleWishlist(pid, btn) {

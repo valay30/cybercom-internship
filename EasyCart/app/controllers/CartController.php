@@ -58,7 +58,7 @@ class CartController
         }
 
         // Redirect for non-AJAX requests
-        header("Location: cart.php");
+        header("Location: cart");
         exit;
     }
 
@@ -207,8 +207,8 @@ class CartController
     public function getCheckoutLink()
     {
         if (isset($_COOKIE['user_logged_in']) && $_COOKIE['user_logged_in'] === 'true') {
-            return "checkout.php";
+            return "checkout";
         }
-        return "login.php?redirect=checkout.php";
+        return "login?redirect=checkout";
     }
 }

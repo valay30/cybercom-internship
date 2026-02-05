@@ -1,0 +1,38 @@
+# Enable URL Rewriting
+RewriteEngine On
+
+# Set the base directory for rewriting
+RewriteBase /cybercom-internship/EasyCart/
+
+# ============================================
+# SECURITY: Prevent direct browser access to .php files
+# ============================================
+# Block GET requests to .php files (browser navigation)
+# Allow POST requests (AJAX/form submissions)
+RewriteCond %{THE_REQUEST} ^GET.*\.php [NC]
+RewriteRule ^ - [F,L]
+
+# ============================================
+# URL REWRITING: Remove .php extension
+# ============================================
+
+# If the request is for a directory, don't do anything
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# If the request is for an existing file (like images, CSS, JS), don't do anything
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{REQUEST_FILENAME} !\.(php)$ [NC]
+RewriteRule ^ - [L]
+
+# For all other requests, check if a .php file exists and serve it
+# Example: /cart will serve cart.php
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+)$ $1.php [L,QSA]
+
+# ============================================
+# ERROR HANDLING
+# ============================================
+# Custom error pages (optional)
+# ErrorDocument 403 /error/403.html
+# ErrorDocument 404 /error/404.html

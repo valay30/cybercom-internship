@@ -3,6 +3,8 @@
 /**
  * WishlistController
  * Handles all wishlist-related business logic
+ * 
+ * Updated: Now works with consolidated wishlist table
  */
 
 require_once __DIR__ . '/../models/ProductModel.php';
@@ -11,7 +13,8 @@ class WishlistController
 {
     private $productModel;
     private $wishlistModel;
-    private $wishlistId;
+    private $customerId;
+    private $sessionId;
 
     public function __construct()
     {
@@ -26,22 +29,19 @@ class WishlistController
         }
 
         // Get User/Session Info
-        $userId = $_SESSION['user_id'] ?? null;
-        $sessionId = session_id();
+        $this->customerId = $_SESSION['user_id'] ?? null;
+        $this->sessionId = session_id();
 
-        // Get or Create Wishlist ID from DB
-        $this->wishlistId = $this->wishlistModel->getWishlistId($userId, $sessionId);
-
-        // Populate $_SESSION['wishlist'] for legacy compatibility (optional, but good for frontend checks that might rely on it)
+        // Populate $_SESSION['wishlist'] for frontend compatibility
         $this->refreshSessionWishlist();
     }
 
     private function refreshSessionWishlist()
     {
         // Get product IDs (entity_ids) from DB
-        $dbIds = $this->wishlistModel->getWishlistProductIds($this->wishlistId);
+        $dbIds = $this->wishlistModel->getWishlistProductIds($this->customerId, $this->sessionId);
 
-        // Convert to SKUs for session (since frontend uses SKU as ID apparently)
+        // Convert to SKUs for session (since frontend uses SKU as ID)
         $skus = [];
         foreach ($dbIds as $eid) {
             $product = $this->productModel->getProductById($eid);
@@ -87,7 +87,7 @@ class WishlistController
         }
 
         // Fallback for non-AJAX
-        header('Location: wishlist.php');
+        header('Location: wishlist');
         exit;
     }
 
@@ -97,20 +97,15 @@ class WishlistController
     private function toggleWishlist($entityId)
     {
         // Check if exists in DB
-        // For efficiency, we can check session, but DB is safer source of truth.
-        // Or simply try to remove. If row deleted, it was there.
-        // But we need to toggle.
+        $isInWishlist = $this->wishlistModel->isInWishlist($this->customerId, $entityId, $this->sessionId);
 
-        // Let's check current state
-        $existingIds = $this->wishlistModel->getWishlistProductIds($this->wishlistId);
-
-        if (in_array($entityId, $existingIds)) {
+        if ($isInWishlist) {
             // Remove
-            $this->wishlistModel->removeItem($this->wishlistId, $entityId);
+            $this->wishlistModel->removeItem($this->customerId, $entityId, $this->sessionId);
             return 'removed';
         } else {
             // Add
-            $this->wishlistModel->addItem($this->wishlistId, $entityId);
+            $this->wishlistModel->addItem($this->customerId, $entityId, $this->sessionId);
             return 'added';
         }
     }
@@ -120,15 +115,24 @@ class WishlistController
      */
     public function getWishlistProducts()
     {
-        $wishlistProducts = [];
-        $entityIds = $this->wishlistModel->getWishlistProductIds($this->wishlistId);
+        // Use the new method that returns full product details
+        $items = $this->wishlistModel->getWishlistItems($this->customerId, $this->sessionId);
 
-        foreach ($entityIds as $eid) {
-            $product = $this->productModel->getProductById($eid);
-            if ($product) {
-                // Key by SKU ($product['id']) to match previous behavior
-                $wishlistProducts[$product['id']] = $product;
-            }
+        $wishlistProducts = [];
+        foreach ($items as $item) {
+            // Format product data
+            $product = [
+                'id' => $item['sku'],
+                'entity_id' => $item['product_id'],
+                'name' => $item['name'],
+                'price' => (float)$item['price'],
+                'description' => $item['description'],
+                'image' => $item['image_path'] ?? 'images/placeholder.png',
+                'added_at' => $item['added_at']
+            ];
+
+            // Key by SKU to match previous behavior
+            $wishlistProducts[$item['sku']] = $product;
         }
 
         return $wishlistProducts;
@@ -139,7 +143,25 @@ class WishlistController
      */
     public function isEmpty()
     {
-        $ids = $this->wishlistModel->getWishlistProductIds($this->wishlistId);
-        return empty($ids);
+        $count = $this->wishlistModel->getWishlistCount($this->customerId, $this->sessionId);
+        return $count === 0;
+    }
+
+    /**
+     * Get wishlist count
+     */
+    public function getCount()
+    {
+        return $this->wishlistModel->getWishlistCount($this->customerId, $this->sessionId);
+    }
+
+    /**
+     * Clear entire wishlist
+     */
+    public function clearWishlist()
+    {
+        $result = $this->wishlistModel->clearWishlist($this->customerId, $this->sessionId);
+        $this->refreshSessionWishlist();
+        return $result;
     }
 }

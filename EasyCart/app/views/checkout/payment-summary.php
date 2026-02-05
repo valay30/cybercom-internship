@@ -48,14 +48,14 @@
         <span id="summary-total">₹<?php echo number_format($totalAmount, 2); ?></span>
     </div>
 
-    <form id="checkoutForm" action="orders.php" method="POST"
+    <form id="checkoutForm" action="orders" method="POST"
         style="border:none; box-shadow:none; padding:0; margin-top:20px; margin-bottom:20px;">
         <button type="submit" class="checkout-btn">
             <i class="fa-solid fa-bag-shopping"></i> Place Order
         </button>
     </form>
 
-    <a href="cart.php" class="continue-shopping">
+    <a href="cart" class="continue-shopping">
         <i class="fa-solid fa-arrow-left"></i> Edit Cart
     </a>
 </section>

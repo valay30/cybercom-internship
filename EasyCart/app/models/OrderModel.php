@@ -59,8 +59,6 @@ class OrderModel
             $orderId = $result['order_id'];
 
             // 2. Insert into sales_order_address
-            $address = $orderData['address'] ?? [];
-            $fullName = $address['fullname'] ?? 'Guest';
             $addrQuery = "INSERT INTO sales_order_address (
                             order_id,
                             customer_id,
@@ -76,19 +74,42 @@ class OrderModel
                           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $addrStmt = $this->conn->prepare($addrQuery);
-            $addrStmt->execute([
-                $orderId,
-                $userId,
-                'shipping',
-                $fullName,
-                $address['email'] ?? '',
-                $address['street'] ?? '',
-                $address['city'] ?? '',
-                $address['state'] ?? '',
-                $address['postcode'] ?? '',
-                $address['country'] ?? '',
-                $address['phone'] ?? ''
-            ]);
+
+            $addressesToSave = [];
+
+            // Prepare Billing Address
+            if (isset($orderData['billing_address'])) {
+                $addressesToSave['billing'] = $orderData['billing_address'];
+            }
+
+            // Prepare Shipping Address
+            if (isset($orderData['shipping_address'])) {
+                $addressesToSave['shipping'] = $orderData['shipping_address'];
+            } elseif (isset($orderData['address'])) {
+                // Fallback for backward compatibility
+                $addressesToSave['shipping'] = $orderData['address'];
+                // If billing not set, use this for billing too? 
+                // Let's assume controller handles duplication if user said "Same as billing"
+                if (!isset($addressesToSave['billing'])) {
+                    $addressesToSave['billing'] = $orderData['address'];
+                }
+            }
+
+            foreach ($addressesToSave as $type => $addr) {
+                $addrStmt->execute([
+                    $orderId,
+                    $userId,
+                    $type,
+                    $addr['fullname'] ?? '',
+                    $addr['email'] ?? '',
+                    $addr['street'] ?? '',
+                    $addr['city'] ?? '',
+                    $addr['state'] ?? '',
+                    $addr['postcode'] ?? '',
+                    $addr['country'] ?? '',
+                    $addr['phone'] ?? ''
+                ]);
+            }
 
             // 3. Insert into sales_order_product
             $itemQuery = "INSERT INTO sales_order_product (
@@ -201,6 +222,13 @@ class OrderModel
         // Fetch items for each order
         foreach ($orders as &$order) {
             $order['items'] = $this->getOrderItems($order['order_id']);
+
+            // Calculate total item count (sum of quantities)
+            $itemCount = 0;
+            foreach ($order['items'] as $item) {
+                $itemCount += intval($item['quantity']);
+            }
+            $order['item_count'] = $itemCount;
 
             // Format ID for display
             $order['id'] = $order['order_number']; // Use order_number as ID

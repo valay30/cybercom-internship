@@ -9,7 +9,7 @@
 </head>
 
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php include __DIR__ . '/../common/header.php'; ?>
 
     <main>
         <h2>My Cart</h2>
@@ -52,12 +52,12 @@
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                             <!-- Hidden form for server-side updates -->
-                            <form action="cart.php" method="POST" class="hidden-update-form" style="display:none;">
+                            <form action="cart" method="POST" class="hidden-update-form" style="display:none;">
                                 <input type="hidden" name="action" value="update">
                                 <input type="hidden" name="id" value="<?php echo $id; ?>">
                                 <input type="hidden" name="qty" class="hidden-qty" value="<?php echo $item['qty']; ?>">
                             </form>
-                            <form action="cart.php" method="POST" class="hidden-remove-form" style="display:none;">
+                            <form action="cart" method="POST" class="hidden-remove-form" style="display:none;">
                                 <input type="hidden" name="action" value="remove">
                                 <input type="hidden" name="id" value="<?php echo $id; ?>">
                             </form>
@@ -77,7 +77,7 @@
             </section>
         </div>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php include __DIR__ . '/../common/footer.php'; ?>
 
     <script src="js/cart.js"></script>
 </body>

@@ -410,6 +410,11 @@ checkoutForm.addEventListener('submit', function (e) {
         }
     }
 
+    // Validate Billing Section
+    if (!validateBillingSection()) {
+        isValid = false;
+    }
+
     if (isValid) {
         // Submit via AJAX
         const formData = new FormData(this);
@@ -604,7 +609,79 @@ document.addEventListener('DOMContentLoaded', function () {
             updatePayment(this);
         });
     });
+
+    // New: Shipping Checkbox Listener for Validation state clearing
+    const shippingCheckbox = document.getElementById('same_as_shipping');
+    if (shippingCheckbox) {
+        shippingCheckbox.addEventListener('change', function () {
+            // Clear errors when toggling
+            document.querySelectorAll('.error-message').forEach(e => e.remove());
+            document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
+        });
+    }
+
+    // New: Validation listeners for Billing fields
+    const billingInputs = [
+        document.getElementById('billing_street'),
+        document.getElementById('billing_city'),
+        document.getElementById('billing_state'),
+        document.getElementById('billing_postcode'),
+        document.getElementById('billing_country')
+    ];
+
+    billingInputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', function () {
+                if (this.classList.contains('error') && this.value.trim() !== '') {
+                    showSuccess(this);
+                }
+            });
+            input.addEventListener('blur', function () {
+                validateBillingField(this);
+            });
+        }
+    });
 });
+
+function validateBillingField(input) {
+    if (!input) return true;
+
+    // Removed sameAsBilling skip logic because fields are now visible
+
+    const val = input.value.trim();
+    if (val === '') {
+        showError(input, input.previousElementSibling.innerText + ' is required');
+        return false;
+    }
+
+    if (input.id === 'billing_postcode' && !/^[0-9]{5,6}$/.test(val)) {
+        showError(input, 'Invalid postcode');
+        return false;
+    }
+
+    showSuccess(input);
+    return true;
+}
+
+// Update validateBilling logic in main submit handler
+function validateBillingSection() {
+    // Removed sameAsBilling skip logic because validation is always needed now
+
+    let isValid = true;
+    const fields = [
+        'billing_street',
+        'billing_city', 'billing_state', 'billing_postcode', 'billing_country'
+    ];
+
+    fields.forEach(id => {
+        const input = document.getElementById(id);
+        if (!validateBillingField(input)) {
+            isValid = false;
+        }
+    });
+
+    return isValid;
+}
 
 // ==========================================
 // COUPON CODE APPLICATION
