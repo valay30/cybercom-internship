@@ -1,0 +1,21 @@
+/* ===================================
+   Wishlist Page Styles
+   =================================== */
+
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.empty-wishlist {
+    text-align: center;
+    padding: 50px;
+    grid-column: 1 / -1;
+}
+
+.empty-wishlist i {
+    font-size: 3rem;
+    color: #ddd;
+    margin-bottom: 20px;
+}

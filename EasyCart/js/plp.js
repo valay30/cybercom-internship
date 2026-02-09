@@ -229,25 +229,34 @@ function updatePagination(currentPage, totalPages) {
         return;
     }
 
+    // specific helper to build URL with current params + new page
+    const buildUrl = (page) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('page', page);
+        // Ensure ajax param is not included in the href (for cleaner URLs and because our click handler parses it)
+        urlParams.delete('ajax');
+        return '?' + urlParams.toString();
+    };
+
     let html = '';
 
     // Previous button
     if (currentPage > 1) {
-        html += `<button onclick="loadProducts(${currentPage - 1})" class="page-btn"><i class="fa-solid fa-angle-left"></i></button>`;
+        html += `<a href="${buildUrl(currentPage - 1)}" class="pagination-btn"><i class="fa-solid fa-angle-left"></i></a>`;
     }
 
     // Page numbers
     for (let i = 1; i <= totalPages; i++) {
         if (i === currentPage) {
-            html += `<button class="page-btn active">${i}</button>`;
+            html += `<a href="${buildUrl(i)}" class="pagination-btn active">${i}</a>`;
         } else {
-            html += `<button onclick="loadProducts(${i})" class="page-btn">${i}</button>`;
+            html += `<a href="${buildUrl(i)}" class="pagination-btn">${i}</a>`;
         }
     }
 
     // Next button
     if (currentPage < totalPages) {
-        html += `<button onclick="loadProducts(${currentPage + 1})" class="page-btn"><i class="fa-solid fa-angle-right"></i></button>`;
+        html += `<a href="${buildUrl(currentPage + 1)}" class="pagination-btn"><i class="fa-solid fa-angle-right"></i></a>`;
     }
 
     paginationContainer.innerHTML = html;

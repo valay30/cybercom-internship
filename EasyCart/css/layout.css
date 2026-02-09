@@ -1,0 +1,228 @@
+/* ===================================
+   Header & Navigation
+   =================================== */
+
+header {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 15px 5%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+
+header nav {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+header nav a {
+    color: var(--text-main);
+    font-weight: 500;
+    font-size: 1.05rem;
+    padding: 8px 0;
+    position: relative;
+}
+
+header nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--primary);
+    transition: width 0.3s;
+}
+
+header nav a:hover::after {
+    width: 100%;
+}
+
+.user-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-main);
+    transition: all 0.3s;
+}
+
+.user-icon:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* User Info Styling */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--bg-light);
+    padding: 8px 16px;
+    border-radius: 50px;
+    transition: all 0.3s;
+}
+
+.user-info span {
+    color: var(--text-main);
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-info span i {
+    color: var(--primary);
+}
+
+.logout-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.logout-btn:hover {
+    background: #dc2626;
+    transform: translateY(-2px) rotate(10deg);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.admin-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.admin-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px) rotate(90deg);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+/* ===================================
+   Footer
+   =================================== */
+
+footer {
+    background: var(--text-main);
+    /* Dark Slate 800 */
+    color: #e2e8f0;
+    padding: 60px 5% 20px;
+    margin-top: auto;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.footer-column h3 {
+    color: white;
+    font-size: 1.1rem;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary);
+    display: inline-block;
+}
+
+.footer-column p {
+    color: #94a3b8;
+    line-height: 1.6;
+}
+
+.footer-column ul {
+    list-style: none;
+}
+
+.footer-column ul li {
+    margin-bottom: 12px;
+}
+
+.footer-column ul li a {
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.footer-column ul li a:hover {
+    color: var(--primary);
+    transform: translateX(5px);
+}
+
+.social-icons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.social-icons a {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.3s;
+}
+
+.social-icons a:hover {
+    background: var(--primary);
+    transform: translateY(-3px);
+}
+
+.footer-bottom {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.footer-bottom a {
+    color: #94a3b8;
+    margin: 0 10px;
+}
