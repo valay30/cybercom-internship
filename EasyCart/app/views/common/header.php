@@ -11,6 +11,7 @@
     </nav>
     <?php
     $headerUserName = 'My Account';
+    $headerIsAdmin = false;
     $userId = $_SESSION['user_id'] ?? $_COOKIE['user_id'] ?? null;
 
     if ($userId) {
@@ -22,6 +23,8 @@
                 if ($headerUser) {
                     $headerUserName = htmlspecialchars($headerUser['full_name']);
                 }
+                // Check if user is admin
+                $headerIsAdmin = $headerCustomerModel->isAdmin($userId);
             }
         }
     }
@@ -32,7 +35,9 @@
             <span><i class="fa-solid fa-user"></i>
                 <?php echo $headerUserName; ?>
             </span>
-            <a href="admin" class="admin-btn" title="Admin Panel"><i class="fa-solid fa-gear"></i></a>
+            <?php if ($headerIsAdmin): ?>
+                <a href="admin" class="admin-btn" title="Admin Panel"><i class="fa-solid fa-gear"></i></a>
+            <?php endif; ?>
             <a href="logout" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
     <?php else: ?>

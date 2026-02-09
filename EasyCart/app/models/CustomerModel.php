@@ -48,7 +48,7 @@ class CustomerModel
      */
     public function authenticate($email, $password)
     {
-        $query = "SELECT entity_id, email, password_hash, full_name, is_active
+        $query = "SELECT entity_id, email, password_hash, full_name, is_active, is_admin
                   FROM customer_entity
                   WHERE email = ?";
 
@@ -90,6 +90,19 @@ class CustomerModel
         $stmt->execute([$id]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public function isAdmin($userId)
+    {
+        $query = "SELECT is_admin FROM customer_entity WHERE entity_id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute([$userId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result && $result['is_admin'] === true;
     }
     /**
      * Get customer address
