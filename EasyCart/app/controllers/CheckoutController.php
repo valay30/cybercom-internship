@@ -128,6 +128,11 @@ class CheckoutController
             return;
         }
 
+        if (empty($this->cart)) {
+            echo json_encode(['success' => false, 'message' => 'Your cart is empty']);
+            return;
+        }
+
         // 2. Prepare Order Data
         // 2. Prepare Order Data
         // Calculate Discount logic

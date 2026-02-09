@@ -72,10 +72,10 @@
             <p>Download all products from the database as a CSV file.</p>
 
             <div class="btn-group">
-                <a href="admin?action=export" class="btn btn-primary">
-                    <i class="fa-solid fa-file-export"></i>
-                    Download CSV
-                </a>
+                <button type="button" id="exportBtn" class="btn btn-primary" onclick="downloadCSV()">
+                    <i class="fa-solid fa-file-export" id="exportIcon"></i>
+                    <span id="exportText">Download CSV</span>
+                </button>
             </div>
 
             <div class="info-box">
@@ -142,56 +142,7 @@
 
     <?php include __DIR__ . '/../common/footer.php'; ?>
 
-    <script>
-        const fileInput = document.getElementById('csv_file');
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-
-        // File input change
-        fileInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                fileName.textContent = this.files[0].name;
-                fileInfo.classList.add('show');
-            }
-        });
-
-        // Clear file
-        function clearFile() {
-            fileInput.value = '';
-            fileInfo.classList.remove('show');
-        }
-
-        // Drag and drop
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.style.borderColor = '#6366f1';
-            this.style.background = '#eef2ff';
-        });
-
-        uploadArea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            this.style.borderColor = '#cbd5e1';
-            this.style.background = '#f8fafc';
-        });
-
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.style.borderColor = '#cbd5e1';
-            this.style.background = '#f8fafc';
-
-            if (e.dataTransfer.files.length > 0) {
-                const file = e.dataTransfer.files[0];
-                if (file.name.endsWith('.csv')) {
-                    fileInput.files = e.dataTransfer.files;
-                    fileName.textContent = file.name;
-                    fileInfo.classList.add('show');
-                } else {
-                    alert('Please upload a CSV file');
-                }
-            }
-        });
-    </script>
+    <script src="js/admin.js"></script>
 </body>
 
 </html>

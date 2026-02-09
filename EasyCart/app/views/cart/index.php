@@ -38,19 +38,19 @@
                                 </p>
                             </div>
                             <div class="quantity-controls">
-                                <button class="qty-btn qty-decrease" onclick="updateQuantity('<?php echo $id; ?>', -1)">
+                                <button type="button" class="qty-btn qty-decrease" onclick="updateQuantity('<?php echo $id; ?>', -1)">
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
                                 <input type="number" class="qty-input" value="<?php echo $item['qty']; ?>"
                                     data-product-id="<?php echo $id; ?>" readonly>
-                                <button class="qty-btn qty-increase" onclick="updateQuantity('<?php echo $id; ?>', 1)">
+                                <button type="button" class="qty-btn qty-increase" onclick="updateQuantity('<?php echo $id; ?>', 1)">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
                             <div class="cart-item-total" data-product-id="<?php echo $id; ?>">
                                 ₹<?php echo number_format($line_total, 2); ?>
                             </div>
-                            <button class="remove-btn" onclick="removeItem('<?php echo $id; ?>')">
+                            <button type="button" class="remove-btn" onclick="removeItem('<?php echo $id; ?>')">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                             <!-- Hidden form for server-side updates -->
@@ -75,7 +75,16 @@
                 <div class="summary-row total">
                     <span>Total</span><span>₹<?php echo number_format($subtotal, 2); ?></span>
                 </div>
-                <a href="<?php echo $checkoutLink; ?>"><button class="checkout-btn">Proceed to Checkout</button></a>
+                <?php
+                $isEmpty = empty($cartData);
+                $btnClass = $isEmpty ? 'checkout-btn disabled' : 'checkout-btn';
+                $btnAttr = $isEmpty ? 'disabled' : '';
+                $linkHref = $isEmpty ? 'javascript:void(0)' : $checkoutLink;
+                $linkStyle = $isEmpty ? 'pointer-events: none; cursor: default;' : '';
+                ?>
+                <a href="<?php echo $linkHref; ?>" style="<?php echo $linkStyle; ?>">
+                    <button class="<?php echo $btnClass; ?>" <?php echo $btnAttr; ?>>Proceed to Checkout</button>
+                </a>
             </section>
         </div>
     </main>

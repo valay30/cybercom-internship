@@ -62,6 +62,28 @@
     box-shadow: var(--shadow-lg);
 }
 
+/* Disabled State */
+.checkout-btn:disabled,
+.checkout-btn.disabled {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    pointer-events: none !important;
+    opacity: 0.7;
+}
+
+.checkout-btn:disabled:hover,
+.checkout-btn.disabled:hover {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+}
+
 /* Cart Item Layout Updates */
 .cart-item {
     display: grid;
