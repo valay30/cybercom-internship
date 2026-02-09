@@ -76,6 +76,7 @@ class AuthController
     {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+        $isAjax = isset($_POST['ajax']);
 
         if (!empty($email) && !empty($password)) {
             $customer = $this->customerModel->authenticate($email, $password);
@@ -90,10 +91,27 @@ class AuthController
 
                 $this->createSession($customer);
 
+                if ($isAjax) {
+                    echo json_encode([
+                        'success' => true,
+                        'redirect' => $this->redirectUrl,
+                        'message' => 'Login successful! Redirecting...'
+                    ]);
+                    exit;
+                }
+
                 // Redirect to intended page
                 header('Location: ' . $this->redirectUrl);
                 exit;
             } else {
+                if ($isAjax) {
+                    echo json_encode([
+                        'success' => false,
+                        'error' => 'Invalid email or password'
+                    ]);
+                    exit;
+                }
+
                 header('Location: login?error=invalid_credentials');
                 exit;
             }
@@ -111,45 +129,41 @@ class AuthController
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
-
-        error_log("Fullname: $fullname");
-        error_log("Email: $email");
-        error_log("Password length: " . strlen($password));
+        $isAjax = isset($_POST['ajax']);
 
         if (!empty($fullname) && !empty($email) && !empty($password) && $password === $confirmPassword) {
-            error_log("Validation passed, attempting to create customer...");
 
-            // Create customer in DB (pass fullname directly)
+            // Create customer in DB
             $customerId = $this->customerModel->createCustomer($email, $password, $fullname);
 
-            error_log("Customer ID returned: " . ($customerId ? $customerId : 'FALSE'));
-
             if ($customerId) {
-                error_log("Customer created successfully with ID: $customerId");
-
                 // Auto-login after signup
                 $customer = $this->customerModel->getCustomerById($customerId);
                 if ($customer) {
-                    error_log("Customer fetched, creating session...");
                     $this->createSession($customer);
                 }
 
+                if ($isAjax) {
+                    echo json_encode(['success' => true, 'redirect' => $this->redirectUrl, 'message' => 'Account created successfully!']);
+                    exit;
+                }
+
                 // Redirect to intended page
-                error_log("Redirecting to: " . $this->redirectUrl);
                 header('Location: ' . $this->redirectUrl);
                 exit;
             } else {
-                // Signup failed (e.g. email exists)
-                error_log("Signup failed - email may already exist");
+                if ($isAjax) {
+                    echo json_encode(['success' => false, 'error' => 'Email already registered. Please login.']);
+                    exit;
+                }
                 header('Location: login?error=email_exists');
                 exit;
             }
         } else {
-            error_log("Validation failed");
-            error_log("Empty fullname: " . (empty($fullname) ? 'YES' : 'NO'));
-            error_log("Empty email: " . (empty($email) ? 'YES' : 'NO'));
-            error_log("Empty password: " . (empty($password) ? 'YES' : 'NO'));
-            error_log("Passwords match: " . ($password === $confirmPassword ? 'YES' : 'NO'));
+            if ($isAjax) {
+                echo json_encode(['success' => false, 'error' => 'Please check all fields.']);
+                exit;
+            }
         }
     }
 

@@ -127,8 +127,39 @@ loginForm.addEventListener('submit', function (e) {
     }
 
     if (isValid) {
-        // Submit form to PHP backend for authentication
-        this.submit();
+        // Show loading state
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Logging in...';
+
+        // Prepare data
+        const formData = new FormData(this);
+        formData.append('ajax', 'true');
+
+        fetch(this.getAttribute('action'), {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Login successful!', 'success');
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 500);
+                } else {
+                    showToast(data.error || 'Login failed', 'error');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred. Please try again.', 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
     }
 });
 
@@ -274,17 +305,90 @@ signupForm.addEventListener('submit', function (e) {
     }
 
     if (isValid) {
-        console.log('Form validation passed');
-        console.log('Submitting signup form to PHP backend...');
-        console.log('Form action:', this.action);
-        console.log('Form method:', this.method);
+        // Show loading state
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
 
-        // Submit form to PHP backend (which will save to database)
-        this.submit();
+        // Prepare data
+        const formData = new FormData(this);
+        formData.append('ajax', 'true');
+
+        fetch(this.getAttribute('action'), {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message || 'Signup successful!', 'success');
+                    setTimeout(() => {
+                        window.location.href = data.redirect;
+                    }, 1500);
+                } else {
+                    showToast(data.error || 'Signup failed', 'error');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('An error occurred. Please try again.', 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
+            });
     } else {
         console.log('Form validation failed');
     }
 });
+
+// Toast Notification
+function showToast(message, type = 'success') {
+    // Remove existing
+    const existing = document.querySelector('.login-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'login-toast';
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 1000;
+        transform: translateY(100px);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border-left: 4px solid ${type === 'success' ? '#10b981' : '#ef4444'};
+    `;
+
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+    const color = type === 'success' ? '#10b981' : '#ef4444';
+
+    toast.innerHTML = `
+        <i class="fa-solid ${icon}" style="color: ${color}; font-size: 1.2rem;"></i>
+        <span style="color: #334155; font-weight: 500;">${message}</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        toast.style.transform = 'translateY(0)';
+    });
+
+    // Auto dismiss
+    setTimeout(() => {
+        toast.style.transform = 'translateY(100px)';
+        setTimeout(() => toast.remove(), 300);
+    }, type === 'success' ? 1500 : 4000);
+}
 
 // Clear error on input
 document.querySelectorAll('input').forEach(input => {
@@ -301,13 +405,13 @@ document.querySelectorAll('input').forEach(input => {
 
 
 // Auto-hide alert messages after 3 seconds
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const alert = document.querySelector('.alert');
     if (alert) {
-        setTimeout(function() {
+        setTimeout(function () {
             alert.style.transition = 'opacity 0.5s ease';
             alert.style.opacity = '0';
-            setTimeout(function() {
+            setTimeout(function () {
                 alert.remove();
             }, 500); // Wait for fade out to finish
         }, 3000); // 3 seconds delay
