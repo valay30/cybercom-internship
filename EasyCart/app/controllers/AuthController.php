@@ -82,6 +82,12 @@ class AuthController
 
             if ($customer) {
                 // Login successful
+
+                // Clear any pre-existing errors (e.g. from forced redirects)
+                if (isset($_SESSION['error'])) {
+                    unset($_SESSION['error']);
+                }
+
                 $this->createSession($customer);
 
                 // Redirect to intended page
@@ -162,35 +168,15 @@ class AuthController
         // Set session
         $_SESSION['user_id'] = $customer['entity_id'];
 
-        // --- Merged Cart Logic (Existing) ---
-        if (!empty($_SESSION['cart'])) {
-            require_once __DIR__ . '/../models/CartModel.php';
-            require_once __DIR__ . '/../models/ProductModel.php'; // Needed if we need to lookup IDs, though cart should have them
-
-            $cartModel = new CartModel();
-
-            foreach ($_SESSION['cart'] as $pid => $item) {
-                // $pid is SKU or ID? In CartController it uses SKU as key, but stores product_id inside
-                $productId = $item['product_id'] ?? null;
-                $qty = $item['qty'];
-
-                if ($productId) {
-                    $cartModel->addItem($customer['entity_id'], $productId, $qty);
-                } else {
-                    // If product_id missing (legacy session), try to find it
-                    // Assuming $pid is SKU (from CartController logic)
-                    $productModel = new ProductModel();
-                    $prod = $productModel->getProductBySku($pid);
-                    if ($prod) {
-                        $cartModel->addItem($customer['entity_id'], $prod['entity_id'], $qty);
-                    }
-                }
-            }
-        }
-
-        // --- Fetch merged cart from DB back to Session ---
+        // --- NEW: Merge Guest Cart from Database ---
         require_once __DIR__ . '/../models/CartModel.php';
         $cartModel = new CartModel();
+        $sessionId = session_id();
+
+        // Merge guest cart (by session_id) into user cart
+        $cartModel->mergeGuestCart($customer['entity_id'], $sessionId);
+
+        // --- Fetch merged cart from DB back to Session ---
         $dbItems = $cartModel->getCartItems($customer['entity_id']);
 
         // Rebuild session cart

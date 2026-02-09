@@ -1,0 +1,192 @@
+/* ===================================
+   Admin - Import/Export Page
+   =================================== */
+
+.admin-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.page-header p {
+    color: #64748b;
+}
+
+.section-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section-card h2 {
+    color: #1e293b;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-card p {
+    color: #64748b;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.file-upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 40px 30px;
+    text-align: center;
+    background: #f8fafc;
+    margin: 20px 0;
+    transition: all 0.3s;
+}
+
+.file-upload-area:hover {
+    border-color: #6366f1;
+    background: #eef2ff;
+}
+
+.file-upload-area input[type="file"] {
+    display: none;
+}
+
+.file-upload-area label {
+    cursor: pointer;
+    color: #6366f1;
+    font-weight: 600;
+}
+
+.file-upload-area label:hover {
+    color: #4f46e5;
+}
+
+.file-icon {
+    font-size: 48px;
+    color: #cbd5e1;
+    margin-bottom: 15px;
+}
+
+.selected-file-info {
+    margin-top: 15px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+}
+
+.selected-file-info.show {
+    display: flex;
+}
+
+.selected-file-info i {
+    color: #10b981;
+    font-size: 20px;
+}
+
+.selected-file-info .file-name {
+    flex: 1;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.selected-file-info button {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.alert {
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.alert i {
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+.alert-success {
+    background: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid #10b981;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #ef4444;
+}
+
+.error-list {
+    margin-top: 12px;
+    padding-left: 20px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.error-list li {
+    margin: 6px 0;
+    font-size: 14px;
+}
+
+.info-box {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.info-box h4 {
+    color: #1e293b;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.info-box code {
+    background: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #6366f1;
+    font-family: 'Courier New', monospace;
+}
+
+.info-box ul {
+    margin: 12px 0;
+    padding-left: 20px;
+}
+
+.info-box li {
+    margin: 8px 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}

@@ -87,6 +87,10 @@ class CartController
         // DB Persistence for Logged In Users
         if (isset($_SESSION['user_id'])) {
             $this->cartModel->addItem($_SESSION['user_id'], $product['entity_id'], 1);
+        } else {
+            // DB Persistence for Guest Users using session_id
+            $sessionId = session_id();
+            $this->cartModel->addItem(null, $product['entity_id'], 1, $sessionId);
         }
     }
 
@@ -100,6 +104,13 @@ class CartController
             $productId = $this->cart[$pid]['product_id'] ?? null;
             if ($productId) {
                 $this->cartModel->updateQty($_SESSION['user_id'], $productId, $qty);
+            }
+        } elseif (isset($this->cart[$pid])) {
+            // Guest user - persist to DB
+            $productId = $this->cart[$pid]['product_id'] ?? null;
+            if ($productId) {
+                $sessionId = session_id();
+                $this->cartModel->updateQty(null, $productId, $qty, $sessionId);
             }
         }
 
@@ -120,6 +131,13 @@ class CartController
             $productId = $this->cart[$pid]['product_id'] ?? null;
             if ($productId) {
                 $this->cartModel->removeItem($_SESSION['user_id'], $productId);
+            }
+        } elseif (isset($this->cart[$pid])) {
+            // Guest user - persist to DB
+            $productId = $this->cart[$pid]['product_id'] ?? null;
+            if ($productId) {
+                $sessionId = session_id();
+                $this->cartModel->removeItem(null, $productId, $sessionId);
             }
         }
 

@@ -32,6 +32,7 @@
             <span><i class="fa-solid fa-user"></i>
                 <?php echo $headerUserName; ?>
             </span>
+            <a href="admin" class="admin-btn" title="Admin Panel"><i class="fa-solid fa-gear"></i></a>
             <a href="logout" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
     <?php else: ?>
