@@ -46,6 +46,11 @@ switch ($action) {
         $controller->importProducts();
         break;
 
+    case 'delete_user':
+        $userId = $_POST['user_id'] ?? $_GET['user_id'] ?? null;
+        $controller->deleteUser($userId);
+        break;
+
     default:
         $controller->showImportExport();
         break;

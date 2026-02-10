@@ -8,13 +8,12 @@ require_once __DIR__ . '/../../config/database.php';
  */
 class CustomerModel
 {
-    private $db;
-    private $conn;
+    private $qb;
 
-    public function __construct()
+    public function __construct($pdo = null)
     {
-        $this->db = new Database();
-        $this->conn = $this->db->getConnection();
+        require_once __DIR__ . '/../core/QueryBuilder.php';
+        $this->qb = new QueryBuilder($pdo);
     }
 
     /**
@@ -29,18 +28,11 @@ class CustomerModel
         // Hash password
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-        $query = "INSERT INTO customer_entity (email, password_hash, full_name)
-                  VALUES (?, ?, ?) RETURNING entity_id";
-
-        try {
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute([$email, $passwordHash, $fullName]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $row['entity_id'] ?? false;
-        } catch (PDOException $e) {
-            error_log("Database Error in createCustomer: " . $e->getMessage());
-            return false;
-        }
+        return $this->qb->table('customer_entity')->insertGetId([
+            'email' => $email,
+            'password_hash' => $passwordHash,
+            'full_name' => $fullName
+        ], 'entity_id');
     }
 
     /**
@@ -48,13 +40,10 @@ class CustomerModel
      */
     public function authenticate($email, $password)
     {
-        $query = "SELECT entity_id, email, password_hash, full_name, is_active, is_admin
-                  FROM customer_entity
-                  WHERE email = ?";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$email]);
-        $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+        $customer = $this->qb->table('customer_entity')
+            ->select(['entity_id', 'email', 'password_hash', 'full_name', 'is_active', 'is_admin'])
+            ->where('email', $email)
+            ->first();
 
         if ($customer && password_verify($password, $customer['password_hash'])) {
             unset($customer['password_hash']); // Remove hash before returning
@@ -69,12 +58,9 @@ class CustomerModel
      */
     public function emailExists($email)
     {
-        $query = "SELECT count(*) as count FROM customer_entity WHERE email = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$email]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result['count'] > 0;
+        return $this->qb->table('customer_entity')
+            ->where('email', $email)
+            ->count() > 0;
     }
 
     /**
@@ -82,14 +68,10 @@ class CustomerModel
      */
     public function getCustomerById($id)
     {
-        $query = "SELECT entity_id, email, full_name, is_active
-                  FROM customer_entity
-                  WHERE entity_id = ?";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$id]);
-
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->qb->table('customer_entity')
+            ->select(['entity_id', 'email', 'full_name', 'is_active'])
+            ->where('entity_id', $id)
+            ->first();
     }
 
     /**
@@ -97,38 +79,32 @@ class CustomerModel
      */
     public function isAdmin($userId)
     {
-        $query = "SELECT is_admin FROM customer_entity WHERE entity_id = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$userId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $isAdmin = $this->qb->table('customer_entity')
+            ->where('entity_id', $userId)
+            ->value('is_admin');
 
-        return $result && $result['is_admin'] === true;
+        return $isAdmin === true;
     }
+
     /**
      * Get customer address
      */
     public function getAddress($userId)
     {
-        // Try to get default address first, then most recent
-        $query = "SELECT * FROM customer_address 
-                  WHERE customer_id = ? 
-                  ORDER BY is_default DESC, entity_id DESC 
-                  LIMIT 1";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$userId]);
-
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        // Try to get default address first, then most recent (highest ID)
+        // using orderBy clause logic
+        return $this->qb->table('customer_address')
+            ->where('customer_id', $userId)
+            ->orderBy('is_default', 'DESC')
+            ->orderBy('entity_id', 'DESC')
+            ->first();
     }
-    /**
-     * Save or Update customer address
-     */
+
     /**
      * Save or Update customer address
      */
     public function saveAddress($customerId, $addressData, $type = 'shipping')
     {
-        // Try to SELECT by type. If column missing, add it.
         $street = $addressData['street'] ?? '';
         $city = $addressData['city'] ?? '';
         $state = $addressData['state'] ?? '';
@@ -136,57 +112,100 @@ class CustomerModel
         $country = $addressData['country'] ?? '';
         $telephone = $addressData['phone'] ?? $addressData['telephone'] ?? '';
 
+        $pdo = $this->qb->getPdo();
+        $inTransaction = $pdo->inTransaction();
+
         try {
-            $query = "SELECT entity_id FROM customer_address WHERE customer_id = ? AND address_type = ? LIMIT 1";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute([$customerId, $type]);
-            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            // Check for missing column error
-            if (strpos($e->getMessage(), 'address_type') !== false) {
-                // Add column
-                $this->conn->exec("ALTER TABLE customer_address ADD COLUMN IF NOT EXISTS address_type VARCHAR(20) DEFAULT 'shipping'");
+            if ($inTransaction) {
+                // Use SAVEPOINT to handle potential schema error without aborting main transaction
+                $pdo->exec("SAVEPOINT check_address_col");
+            }
+
+            // Check if address exists
+            $existing = $this->qb->table('customer_address')
+                ->where('customer_id', $customerId)
+                ->where('address_type', $type)
+                ->first();
+        } catch (Exception $e) {
+            if ($inTransaction) {
+                $pdo->exec("ROLLBACK TO SAVEPOINT check_address_col");
+            }
+
+            // Check for missing column error (PostgreSQL/Generic)
+            $msg = $e->getMessage();
+            if (strpos($msg, 'address_type') !== false || strpos($msg, 'column') !== false) {
+                $pdo->exec("ALTER TABLE customer_address ADD COLUMN IF NOT EXISTS address_type VARCHAR(20) DEFAULT 'shipping'");
 
                 // Retry Select
-                $query = "SELECT entity_id FROM customer_address WHERE customer_id = ? AND address_type = ? LIMIT 1";
-                $stmt = $this->conn->prepare($query);
-                $stmt->execute([$customerId, $type]);
-                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                $existing = $this->qb->table('customer_address')
+                    ->where('customer_id', $customerId)
+                    ->where('address_type', $type)
+                    ->first();
             } else {
                 throw $e;
             }
         }
 
-        if ($existing) {
+        $data = [
+            'street' => $street,
+            'city' => $city,
+            'state' => $state,
+            'postcode' => $postcode,
+            'country' => $country,
+            'telephone' => $telephone
+        ];
+
+        if (!empty($existing)) {
             // Update
-            $updateQuery = "UPDATE customer_address 
-                            SET street = ?, city = ?, state = ?, postcode = ?, country = ?, telephone = ?
-                            WHERE entity_id = ?";
-            $updateStmt = $this->conn->prepare($updateQuery);
-            return $updateStmt->execute([
-                $street,
-                $city,
-                $state,
-                $postcode,
-                $country,
-                $telephone,
-                $existing['entity_id']
-            ]);
+            return $this->qb->table('customer_address')
+                ->where('entity_id', $existing['entity_id'])
+                ->update($data);
         } else {
             // Insert
-            $insertQuery = "INSERT INTO customer_address (customer_id, address_type, street, city, state, postcode, country, telephone)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            $insertStmt = $this->conn->prepare($insertQuery);
-            return $insertStmt->execute([
-                $customerId,
-                $type,
-                $street,
-                $city,
-                $state,
-                $postcode,
-                $country,
-                $telephone
-            ]);
+            $data['customer_id'] = $customerId;
+            $data['address_type'] = $type;
+            return $this->qb->table('customer_address')->insert($data);
+        }
+    }
+
+    /**
+     * Delete customer and all related data
+     */
+    public function deleteCustomer($customerId)
+    {
+        try {
+            $this->qb->beginTransaction();
+
+            // 1. Delete Wishlist Items
+            $this->qb->table('customer_wishlist')->where('customer_id', $customerId)->delete();
+
+            // 2. Delete Cart Items
+            $this->qb->table('sales_cart')->where('customer_id', $customerId)->delete();
+
+            // 3. Delete Address Book
+            $this->qb->table('customer_address')->where('customer_id', $customerId)->delete();
+
+            // 4. Delete Orders (and related items/addresses)
+            // Get Order IDs first
+            $orderIds = $this->qb->table('sales_order')
+                ->where('customer_id', $customerId)
+                ->pluck('order_id');
+
+            if (!empty($orderIds)) {
+                $this->qb->table('sales_order_product')->whereIn('order_id', $orderIds)->delete();
+                $this->qb->table('sales_order_address')->whereIn('order_id', $orderIds)->delete();
+                $this->qb->table('sales_order')->where('customer_id', $customerId)->delete();
+            }
+
+            // 5. Delete Customer Entity
+            $result = $this->qb->table('customer_entity')->where('entity_id', $customerId)->delete();
+
+            $this->qb->commit();
+            return $result;
+        } catch (Exception $e) {
+            $this->qb->rollBack();
+            error_log("Error deleting customer: " . $e->getMessage());
+            return false;
         }
     }
 }

@@ -15,7 +15,8 @@ class AdminController
     private $productModel;
     private $categoryModel;
     private $brandModel;
-    private $conn;
+    private $customerModel;
+    private $qb;
 
     public function __construct()
     {
@@ -38,8 +39,11 @@ class AdminController
         $this->categoryModel = new CategoryModel();
         $this->brandModel = new BrandModel();
 
-        $db = new Database();
-        $this->conn = $db->getConnection();
+        require_once __DIR__ . '/../models/CustomerModel.php';
+        $this->customerModel = new CustomerModel();
+
+        require_once __DIR__ . '/../core/QueryBuilder.php';
+        $this->qb = new QueryBuilder();
     }
 
     /**
@@ -104,6 +108,34 @@ class AdminController
             header('Location: admin');
             exit;
         }
+    }
+
+    /**
+     * Delete user
+     */
+    public function deleteUser($userId)
+    {
+        if (!$userId) {
+            $_SESSION['admin_error'] = "User ID required.";
+            header('Location: admin');
+            exit;
+        }
+
+        // Prevent self-deletion
+        if ($userId == $_SESSION['user_id']) {
+            $_SESSION['admin_error'] = "Cannot delete logged-in admin user.";
+            header('Location: admin');
+            exit;
+        }
+
+        if ($this->customerModel->deleteCustomer($userId)) {
+            $_SESSION['admin_success'] = "User deleted successfully.";
+        } else {
+            $_SESSION['admin_error'] = "Failed to delete user.";
+        }
+
+        header('Location: admin');
+        exit;
     }
 
     /**
@@ -180,7 +212,7 @@ class AdminController
         }
 
         $lineNumber = 1;
-        $this->conn->beginTransaction();
+        $this->qb->beginTransaction();
 
         try {
             while (($row = fgetcsv($handle)) !== false) {
@@ -205,9 +237,9 @@ class AdminController
                 }
             }
 
-            $this->conn->commit();
+            $this->qb->commit();
         } catch (Exception $e) {
-            $this->conn->rollBack();
+            $this->qb->rollBack();
             fclose($handle);
             throw $e;
         }
@@ -270,10 +302,9 @@ class AdminController
      */
     private function getProductBySku($sku)
     {
-        $sql = "SELECT entity_id FROM catalog_product_entity WHERE sku = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([$sku]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->qb->table('catalog_product_entity')
+            ->where('sku', $sku)
+            ->first();
     }
 
     /**
@@ -281,11 +312,9 @@ class AdminController
      */
     private function getCategoryIdByCode($code)
     {
-        $sql = "SELECT entity_id FROM catalog_category_entity WHERE category_code = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([$code]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ? $result['entity_id'] : null;
+        return $this->qb->table('catalog_category_entity')
+            ->where('category_code', $code)
+            ->value('entity_id');
     }
 
     /**
@@ -293,11 +322,9 @@ class AdminController
      */
     private function getBrandIdByCode($code)
     {
-        $sql = "SELECT entity_id FROM catalog_brand_entity WHERE brand_code = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([$code]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ? $result['entity_id'] : null;
+        return $this->qb->table('catalog_brand_entity')
+            ->where('brand_code', $code)
+            ->value('entity_id');
     }
 
     /**
@@ -306,39 +333,39 @@ class AdminController
     private function insertProduct($data, $categoryId, $brandId)
     {
         // Insert product
-        $sql = "INSERT INTO catalog_product_entity (sku, name, description, price, shipping_type) 
-                VALUES (?, ?, ?, ?, ?) RETURNING entity_id";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([
-            $data['sku'],
-            $data['name'],
-            $data['description'],
-            $data['price'],
-            $data['shipping_type'] ?? 'standard'
-        ]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $productId = $result['entity_id'];
+        $productId = $this->qb->table('catalog_product_entity')->insertGetId([
+            'sku' => $data['sku'],
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'price' => $data['price'],
+            'shipping_type' => $data['shipping_type'] ?? 'standard'
+        ], 'entity_id');
 
         // Link category
         if ($categoryId) {
-            $sql = "INSERT INTO catalog_category_product (category_id, product_id, position) VALUES (?, ?, 0)";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$categoryId, $productId]);
+            $this->qb->table('catalog_category_product')->insert([
+                'category_id' => $categoryId,
+                'product_id' => $productId,
+                'position' => 0
+            ]);
         }
 
         // Link brand
         if ($brandId) {
-            $sql = "INSERT INTO catalog_product_brand (product_id, brand_id) VALUES (?, ?)";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$productId, $brandId]);
+            $this->qb->table('catalog_product_brand')->insert([
+                'product_id' => $productId,
+                'brand_id' => $brandId
+            ]);
         }
 
         // Insert image
         if (!empty($data['image_path'])) {
-            $sql = "INSERT INTO catalog_product_image (product_id, image_path, is_primary, sort_order) 
-                    VALUES (?, ?, true, 0)";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$productId, $data['image_path']]);
+            $this->qb->table('catalog_product_image')->insert([
+                'product_id' => $productId,
+                'image_path' => $data['image_path'],
+                'is_primary' => 'TRUE',
+                'sort_order' => 0
+            ]);
         }
 
         // Insert features
@@ -347,10 +374,11 @@ class AdminController
             foreach ($features as $feature) {
                 $feature = trim($feature);
                 if (!empty($feature)) {
-                    $sql = "INSERT INTO catalog_product_attribute (product_id, attribute_code, attribute_value) 
-                            VALUES (?, 'feature', ?)";
-                    $stmt = $this->conn->prepare($sql);
-                    $stmt->execute([$productId, $feature]);
+                    $this->qb->table('catalog_product_attribute')->insert([
+                        'product_id' => $productId,
+                        'attribute_code' => 'feature',
+                        'attribute_value' => $feature
+                    ]);
                 }
             }
         }
@@ -362,66 +390,58 @@ class AdminController
     private function updateProduct($productId, $data, $categoryId, $brandId)
     {
         // Update product
-        $sql = "UPDATE catalog_product_entity 
-                SET name = ?, description = ?, price = ?, shipping_type = ?, updated_at = CURRENT_TIMESTAMP 
-                WHERE entity_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([
-            $data['name'],
-            $data['description'],
-            $data['price'],
-            $data['shipping_type'] ?? 'standard',
-            $productId
-        ]);
+        $this->qb->table('catalog_product_entity')
+            ->where('entity_id', $productId)
+            ->update([
+                'name' => $data['name'],
+                'description' => $data['description'],
+                'price' => $data['price'],
+                'shipping_type' => $data['shipping_type'] ?? 'standard',
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
 
         // Update category
         if ($categoryId) {
-            $sql = "DELETE FROM catalog_category_product WHERE product_id = ?";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$productId]);
-
-            $sql = "INSERT INTO catalog_category_product (category_id, product_id, position) VALUES (?, ?, 0)";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$categoryId, $productId]);
+            $this->qb->table('catalog_category_product')->where('product_id', $productId)->delete();
+            $this->qb->table('catalog_category_product')->insert([
+                'category_id' => $categoryId,
+                'product_id' => $productId,
+                'position' => 0
+            ]);
         }
 
         // Update brand
         if ($brandId) {
-            $sql = "DELETE FROM catalog_product_brand WHERE product_id = ?";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$productId]);
-
-            $sql = "INSERT INTO catalog_product_brand (product_id, brand_id) VALUES (?, ?)";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$productId, $brandId]);
+            $this->qb->table('catalog_product_brand')->where('product_id', $productId)->delete();
+            $this->qb->table('catalog_product_brand')->insert([
+                'product_id' => $productId,
+                'brand_id' => $brandId
+            ]);
         }
 
         // Update image
         if (!empty($data['image_path'])) {
-            $sql = "DELETE FROM catalog_product_image WHERE product_id = ?";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$productId]);
-
-            $sql = "INSERT INTO catalog_product_image (product_id, image_path, is_primary, sort_order) 
-                    VALUES (?, ?, true, 0)";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$productId, $data['image_path']]);
+            $this->qb->table('catalog_product_image')->where('product_id', $productId)->delete();
+            $this->qb->table('catalog_product_image')->insert([
+                'product_id' => $productId,
+                'image_path' => $data['image_path'],
+                'is_primary' => 'TRUE',
+                'sort_order' => 0
+            ]);
         }
 
         // Update features
-        $sql = "DELETE FROM catalog_product_attribute WHERE product_id = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([$productId]);
-
+        $this->qb->table('catalog_product_attribute')->where('product_id', $productId)->delete();
         if (!empty($data['features'])) {
             $features = explode('|', $data['features']);
             foreach ($features as $feature) {
                 $feature = trim($feature);
                 if (!empty($feature)) {
-                    $sql = "INSERT INTO catalog_product_attribute (product_id, attribute_code, attribute_value) 
-                            VALUES (?, 'feature', ?)";
-                    $stmt = $this->conn->prepare($sql);
-                    $stmt->execute([$productId, $feature]);
+                    $this->qb->table('catalog_product_attribute')->insert([
+                        'product_id' => $productId,
+                        'attribute_code' => 'feature',
+                        'attribute_value' => $feature
+                    ]);
                 }
             }
         }

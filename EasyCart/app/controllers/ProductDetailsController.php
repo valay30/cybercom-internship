@@ -33,15 +33,21 @@ class ProductDetailsController
     }
 
     /**
-     * Load product by ID from URL
+     * Load product by URL key from URL
      */
     private function loadProduct()
     {
-        $id = $_GET['id'] ?? 'p1';
-        $this->product = $this->productModel->getProductBySku($id);
+        // Try to get by URL key first (SEO-friendly)
+        $urlKey = $_GET['url'] ?? $_GET['id'] ?? 'wireless-headphones';
+        $this->product = $this->productModel->getProductByUrlKey($urlKey);
 
+        // Fallback to SKU if URL key doesn't work (backward compatibility)
+        if (!$this->product && isset($_GET['id'])) {
+            $this->product = $this->productModel->getProductBySku($_GET['id']);
+        }
+
+        // Final fallback to default product
         if (!$this->product) {
-            // Fallback to p1 if not found
             $this->product = $this->productModel->getProductBySku('p1');
         }
     }

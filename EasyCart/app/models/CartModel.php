@@ -3,75 +3,58 @@ require_once __DIR__ . '/../../config/database.php';
 
 class CartModel
 {
-    private $db;
-    private $conn;
+    private $qb;
 
-    public function __construct()
+    public function __construct($pdo = null)
     {
-        $this->db = new Database();
-        $this->conn = $this->db->getConnection();
+        require_once __DIR__ . '/../core/QueryBuilder.php';
+        $this->qb = new QueryBuilder($pdo);
     }
 
     /**
      * Add or Update item in cart
-     * @param int|null $userId - Customer ID (null for guest)
-     * @param int $productId - Product entity ID
-     * @param int $qty - Quantity to add
-     * @param string|null $sessionId - Session ID for guest users
      */
     public function addItem($userId, $productId, $qty, $sessionId = null)
     {
-        // For guest users, use session_id instead of customer_id
+        $query = $this->qb->table('sales_cart')
+            ->select(['item_id', 'qty'])
+            ->where('product_id', $productId)
+            ->where('is_active', true);
+
         if ($userId === null && $sessionId !== null) {
-            // Check if item exists for guest
-            $sql = "SELECT item_id, qty FROM sales_cart 
-                    WHERE session_id = ? AND product_id = ? AND is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$sessionId, $productId]);
-            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($existing) {
-                // Update quantity
-                $newQty = $existing['qty'] + $qty;
-                $updateSql = "UPDATE sales_cart SET qty = ?, updated_at = NOW() WHERE item_id = ?";
-                $updateStmt = $this->conn->prepare($updateSql);
-                $updateStmt->execute([$newQty, $existing['item_id']]);
-            } else {
-                // Insert new item for guest
-                $insertSql = "INSERT INTO sales_cart (session_id, product_id, qty, is_active) VALUES (?, ?, ?, TRUE)";
-                $insertStmt = $this->conn->prepare($insertSql);
-                $insertStmt->execute([$sessionId, $productId, $qty]);
-            }
+            $query->where('session_id', $sessionId);
         } else {
-            // Logged in user
-            // Check if item exists and is active
-            $sql = "SELECT item_id, qty FROM sales_cart 
-                    WHERE customer_id = ? AND product_id = ? AND is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$userId, $productId]);
-            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+            $query->where('customer_id', $userId);
+        }
 
-            if ($existing) {
-                // Update quantity
-                $newQty = $existing['qty'] + $qty;
-                $updateSql = "UPDATE sales_cart SET qty = ?, updated_at = NOW() WHERE item_id = ?";
-                $updateStmt = $this->conn->prepare($updateSql);
-                $updateStmt->execute([$newQty, $existing['item_id']]);
+        $existing = $query->first();
+
+        if ($existing) {
+            // Update quantity
+            $newQty = $existing['qty'] + $qty;
+            $this->qb->table('sales_cart')
+                ->where('item_id', $existing['item_id'])
+                ->update(['qty' => $newQty, 'updated_at' => date('Y-m-d H:i:s')]);
+        } else {
+            // Insert new item
+            $data = [
+                'product_id' => $productId,
+                'qty' => $qty,
+                'is_active' => 'TRUE'
+            ];
+
+            if ($userId === null && $sessionId !== null) {
+                $data['session_id'] = $sessionId;
             } else {
-                // Insert new item
-                $insertSql = "INSERT INTO sales_cart (customer_id, product_id, qty, is_active) VALUES (?, ?, ?, TRUE)";
-                $insertStmt = $this->conn->prepare($insertSql);
-                $insertStmt->execute([$userId, $productId, $qty]);
+                $data['customer_id'] = $userId;
             }
+
+            $this->qb->table('sales_cart')->insert($data);
         }
     }
 
     /**
      * Update exact quantity
-     * @param int|null $userId - Customer ID (null for guest)
-     * @param int $productId - Product entity ID
-     * @param int $qty - New quantity
-     * @param string|null $sessionId - Session ID for guest users
      */
     public function updateQty($userId, $productId, $qty, $sessionId = null)
     {
@@ -80,42 +63,35 @@ class CartModel
             return;
         }
 
+        $query = $this->qb->table('sales_cart')
+            ->where('product_id', $productId)
+            ->where('is_active', true);
+
         if ($userId === null && $sessionId !== null) {
-            // Guest user
-            $sql = "UPDATE sales_cart SET qty = ?, updated_at = NOW() 
-                    WHERE session_id = ? AND product_id = ? AND is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$qty, $sessionId, $productId]);
+            $query->where('session_id', $sessionId);
         } else {
-            // Logged in user
-            $sql = "UPDATE sales_cart SET qty = ?, updated_at = NOW() 
-                    WHERE customer_id = ? AND product_id = ? AND is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$qty, $userId, $productId]);
+            $query->where('customer_id', $userId);
         }
+
+        $query->update(['qty' => $qty, 'updated_at' => date('Y-m-d H:i:s')]);
     }
 
     /**
      * Remove item
-     * @param int|null $userId - Customer ID (null for guest)
-     * @param int $productId - Product entity ID
-     * @param string|null $sessionId - Session ID for guest users
      */
     public function removeItem($userId, $productId, $sessionId = null)
     {
+        $query = $this->qb->table('sales_cart')
+            ->where('product_id', $productId)
+            ->where('is_active', true);
+
         if ($userId === null && $sessionId !== null) {
-            // Guest user
-            $sql = "DELETE FROM sales_cart 
-                    WHERE session_id = ? AND product_id = ? AND is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$sessionId, $productId]);
+            $query->where('session_id', $sessionId);
         } else {
-            // Logged in user
-            $sql = "DELETE FROM sales_cart 
-                    WHERE customer_id = ? AND product_id = ? AND is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$userId, $productId]);
+            $query->where('customer_id', $userId);
         }
+
+        $query->delete();
     }
 
     /**
@@ -123,54 +99,43 @@ class CartModel
      */
     public function deactivateCart($userId)
     {
-        $sql = "UPDATE sales_cart SET is_active = FALSE, updated_at = NOW() 
-                WHERE customer_id = ? AND is_active = TRUE";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([$userId]);
+        $this->qb->table('sales_cart')
+            ->where('customer_id', $userId)
+            ->where('is_active', true)
+            ->update(['is_active' => 'FALSE', 'updated_at' => date('Y-m-d H:i:s')]);
     }
 
     /**
      * Get active cart items
-     * @param int|null $userId - Customer ID (null for guest)
-     * @param string|null $sessionId - Session ID for guest users
      */
     public function getCartItems($userId, $sessionId = null)
     {
+        $query = $this->qb->table('sales_cart c')
+            ->select(['c.qty', 'p.*', 'pi.image_path as image'])
+            ->join('catalog_product_entity p', 'c.product_id = p.entity_id')
+            ->leftJoin('catalog_product_image pi', "p.entity_id = pi.product_id AND pi.is_primary = TRUE")
+            ->where('c.is_active', true);
+
         if ($userId === null && $sessionId !== null) {
-            // Guest user
-            $sql = "SELECT c.qty, p.*, pi.image_path as image
-                    FROM sales_cart c
-                    JOIN catalog_product_entity p ON c.product_id = p.entity_id
-                    LEFT JOIN catalog_product_image pi ON p.entity_id = pi.product_id AND pi.is_primary = TRUE
-                    WHERE c.session_id = ? AND c.is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$sessionId]);
+            $query->where('c.session_id', $sessionId);
         } else {
-            // Logged in user
-            $sql = "SELECT c.qty, p.*, pi.image_path as image
-                    FROM sales_cart c
-                    JOIN catalog_product_entity p ON c.product_id = p.entity_id
-                    LEFT JOIN catalog_product_image pi ON p.entity_id = pi.product_id AND pi.is_primary = TRUE
-                    WHERE c.customer_id = ? AND c.is_active = TRUE";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->execute([$userId]);
+            $query->where('c.customer_id', $userId);
         }
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $query->get();
     }
 
     /**
      * Merge guest cart into user cart on login
-     * @param int $userId - Customer ID
-     * @param string $sessionId - Guest session ID
      */
     public function mergeGuestCart($userId, $sessionId)
     {
         // Get all guest cart items
-        $sql = "SELECT product_id, qty FROM sales_cart 
-                WHERE session_id = ? AND is_active = TRUE";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([$sessionId]);
-        $guestItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $guestItems = $this->qb->table('sales_cart')
+            ->select(['product_id', 'qty'])
+            ->where('session_id', $sessionId)
+            ->where('is_active', true)
+            ->get();
 
         // Merge each item into user cart
         foreach ($guestItems as $item) {
@@ -178,8 +143,8 @@ class CartModel
         }
 
         // Delete guest cart items
-        $deleteSql = "DELETE FROM sales_cart WHERE session_id = ?";
-        $deleteStmt = $this->conn->prepare($deleteSql);
-        $deleteStmt->execute([$sessionId]);
+        $this->qb->table('sales_cart')
+            ->where('session_id', $sessionId)
+            ->delete();
     }
 }

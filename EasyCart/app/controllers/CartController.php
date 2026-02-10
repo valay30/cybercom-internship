@@ -24,7 +24,36 @@ class CartController
             $_SESSION['cart'] = [];
         }
 
+        // Sync session with DB to ensure deleted items are removed
+        $this->syncSessionCart();
+
         $this->cart = &$_SESSION['cart'];
+    }
+
+    /**
+     * Sync session cart with database
+     * database is the source of truth
+     */
+    private function syncSessionCart()
+    {
+        $userId = $_SESSION['user_id'] ?? null;
+        $sessionId = session_id();
+
+        // Get fresh items from DB
+        $dbItems = $this->cartModel->getCartItems($userId, $sessionId);
+
+        // Rebuild session cart
+        $_SESSION['cart'] = [];
+
+        foreach ($dbItems as $item) {
+            if (isset($item['sku'])) {
+                $sku = $item['sku'];
+                $_SESSION['cart'][$sku] = [
+                    'product_id' => $item['entity_id'],
+                    'qty' => $item['qty']
+                ];
+            }
+        }
     }
 
     /**
@@ -208,6 +237,12 @@ class CartController
             $discount_percent = min($item['qty'], 50);
             $discounted_price = $item['price'] * (1 - ($discount_percent / 100));
             $itemTotal = $discounted_price * $item['qty'];
+        } else {
+            // Item was removed, fetch original product price
+            $product = $this->productModel->getProductBySku($pid);
+            if ($product) {
+                $productPrice = $product['price'];
+            }
         }
 
         echo json_encode([

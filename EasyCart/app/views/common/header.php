@@ -20,11 +20,22 @@
             if (class_exists('CustomerModel')) {
                 $headerCustomerModel = new CustomerModel();
                 $headerUser = $headerCustomerModel->getCustomerById($userId);
+
                 if ($headerUser) {
                     $headerUserName = htmlspecialchars($headerUser['full_name']);
+                    // Check if user is admin
+                    $headerIsAdmin = $headerCustomerModel->isAdmin($userId);
+                } else {
+                    // User ID exists in session but not in DB (User deleted)
+                    // Force logout
+                    setcookie('user_logged_in', '', time() - 3600, '/');
+                    setcookie('user_id', '', time() - 3600, '/');
+                    unset($_SESSION['user_id']);
+                    unset($_SESSION['cart']);
+                    unset($_SESSION['wishlist']);
+                    header("Location: index");
+                    exit;
                 }
-                // Check if user is admin
-                $headerIsAdmin = $headerCustomerModel->isAdmin($userId);
             }
         }
     }

@@ -8,13 +8,12 @@ require_once __DIR__ . '/../../config/database.php';
  */
 class CategoryModel
 {
-    private $db;
-    private $conn;
+    private $qb;
 
     public function __construct()
     {
-        $this->db = new Database();
-        $this->conn = $this->db->getConnection();
+        require_once __DIR__ . '/../core/QueryBuilder.php';
+        $this->qb = new QueryBuilder();
     }
 
     /**
@@ -22,24 +21,23 @@ class CategoryModel
      */
     public function getAllCategories()
     {
-        $query = "SELECT 
-                    c.entity_id,
-                    c.category_code,
-                    c.name,
-                    c.is_active,
-                    ca.attribute_value as icon,
-                    COUNT(DISTINCT cp.product_id) as product_count
-                  FROM catalog_category_entity c
-                  LEFT JOIN catalog_category_attribute ca ON c.entity_id = ca.category_id AND ca.attribute_code = 'icon'
-                  LEFT JOIN catalog_category_product cp ON c.entity_id = cp.category_id
-                  WHERE c.is_active = TRUE
-                  GROUP BY c.entity_id, c.category_code, c.name, c.is_active, ca.attribute_value
-                  ORDER BY c.name";
+        $categories = $this->qb->table('catalog_category_entity c')
+            ->select([
+                'c.entity_id',
+                'c.category_code',
+                'c.name',
+                'c.is_active',
+                'ca.attribute_value as icon',
+                'COUNT(DISTINCT cp.product_id) as product_count'
+            ])
+            ->leftJoin('catalog_category_attribute ca', "c.entity_id = ca.category_id AND ca.attribute_code = 'icon'")
+            ->leftJoin('catalog_category_product cp', 'c.entity_id = cp.category_id')
+            ->where('c.is_active', true)
+            ->groupBy(['c.entity_id', 'c.category_code', 'c.name', 'c.is_active', 'ca.attribute_value'])
+            ->orderBy('c.name')
+            ->get();
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-
-        return $this->formatCategories($stmt->fetchAll());
+        return $this->formatCategories($categories);
     }
 
     /**
@@ -47,19 +45,17 @@ class CategoryModel
      */
     public function getCategoryByCode($code)
     {
-        $query = "SELECT 
-                    c.entity_id,
-                    c.category_code,
-                    c.name,
-                    c.is_active,
-                    ca.attribute_value as icon
-                  FROM catalog_category_entity c
-                  LEFT JOIN catalog_category_attribute ca ON c.entity_id = ca.category_id AND ca.attribute_code = 'icon'
-                  WHERE c.category_code = ?";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$code]);
-        $category = $stmt->fetch();
+        $category = $this->qb->table('catalog_category_entity c')
+            ->select([
+                'c.entity_id',
+                'c.category_code',
+                'c.name',
+                'c.is_active',
+                'ca.attribute_value as icon'
+            ])
+            ->leftJoin('catalog_category_attribute ca', "c.entity_id = ca.category_id AND ca.attribute_code = 'icon'")
+            ->where('c.category_code', $code)
+            ->first();
 
         return $category ? $this->formatCategory($category) : null;
     }

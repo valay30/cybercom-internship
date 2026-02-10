@@ -4,220 +4,132 @@ require_once __DIR__ . '/../../config/database.php';
 
 class OrderModel
 {
-    private $db;
-    private $conn;
+    private $qb;
 
-    public function __construct()
+    public function __construct($pdo = null)
     {
-        $this->db = new Database();
-        $this->conn = $this->db->getConnection();
+        require_once __DIR__ . '/../core/QueryBuilder.php';
+        $this->qb = new QueryBuilder($pdo);
     }
 
     public function createOrder($userId, $orderData, $cartItems)
     {
         try {
-            $this->conn->beginTransaction();
+            $this->qb->beginTransaction();
 
             // Generate Order Number
             $orderNumber = 'ORD-' . time() . '-' . rand(100, 999);
 
             // 1. Insert into sales_order
-            $query = "INSERT INTO sales_order (
-                        customer_id, 
-                        order_number,
-                        subtotal, 
-                        shipping_type, 
-                        shipping_cost, 
-                        tax_amount, 
-                        discount_amount,
-                        coupon_code,
-                        payment_method,
-                        grand_total, 
-                        order_status,
-                        created_at
-                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()) RETURNING order_id";
+            $orderId = $this->qb->table('sales_order')->insertGetId([
+                'customer_id' => $userId,
+                'order_number' => $orderNumber,
+                'subtotal' => $orderData['subtotal'],
+                'shipping_type' => $orderData['shipping_type'],
+                'shipping_cost' => $orderData['shipping_cost'],
+                'tax_amount' => $orderData['tax_amount'],
+                'discount_amount' => $orderData['discount_amount'] ?? 0.00,
+                'coupon_code' => $orderData['coupon_code'] ?? null,
+                'payment_method' => $orderData['payment_method'] ?? null,
+                'grand_total' => $orderData['grand_total'],
+                'order_status' => 'pending',
+                'created_at' => date('Y-m-d H:i:s')
+            ], 'order_id');
 
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute([
-                $userId,
-                $orderNumber,
-                $orderData['subtotal'],
-                $orderData['shipping_type'],
-                $orderData['shipping_cost'],
-                $orderData['tax_amount'],
-                $orderData['discount_amount'] ?? 0.00,
-                $orderData['coupon_code'] ?? null,
-                $orderData['payment_method'] ?? null,
-                $orderData['grand_total'],
-                'pending'
-            ]);
-
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$result) {
-                throw new Exception("Failed to retrieve order ID");
+            if (!$orderId) {
+                throw new Exception("Failed to create order");
             }
-            $orderId = $result['order_id'];
 
             // 2. Insert into sales_order_address
-            $addrQuery = "INSERT INTO sales_order_address (
-                            order_id,
-                            customer_id,
-                            address_type,
-                            full_name,
-                            email,
-                            street,
-                            city,
-                            state,
-                            postcode,
-                            country,
-                            telephone
-                          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-            $addrStmt = $this->conn->prepare($addrQuery);
-
             $addressesToSave = [];
-
             // Prepare Billing Address
             if (isset($orderData['billing_address'])) {
                 $addressesToSave['billing'] = $orderData['billing_address'];
             }
-
             // Prepare Shipping Address
             if (isset($orderData['shipping_address'])) {
                 $addressesToSave['shipping'] = $orderData['shipping_address'];
             } elseif (isset($orderData['address'])) {
-                // Fallback for backward compatibility
                 $addressesToSave['shipping'] = $orderData['address'];
-                // If billing not set, use this for billing too? 
-                // Let's assume controller handles duplication if user said "Same as billing"
                 if (!isset($addressesToSave['billing'])) {
                     $addressesToSave['billing'] = $orderData['address'];
                 }
             }
 
             foreach ($addressesToSave as $type => $addr) {
-                $addrStmt->execute([
-                    $orderId,
-                    $userId,
-                    $type,
-                    $addr['fullname'] ?? '',
-                    $addr['email'] ?? '',
-                    $addr['street'] ?? '',
-                    $addr['city'] ?? '',
-                    $addr['state'] ?? '',
-                    $addr['postcode'] ?? '',
-                    $addr['country'] ?? '',
-                    $addr['phone'] ?? ''
+                $this->qb->table('sales_order_address')->insert([
+                    'order_id' => $orderId,
+                    'customer_id' => $userId,
+                    'address_type' => $type,
+                    'full_name' => $addr['full_name'] ?? $addr['name'] ?? '',
+                    'email' => $addr['email'] ?? '',
+                    'street' => $addr['street'] ?? '',
+                    'city' => $addr['city'] ?? '',
+                    'state' => $addr['state'] ?? '',
+                    'postcode' => $addr['postcode'] ?? '',
+                    'country' => $addr['country'] ?? '',
+                    'telephone' => $addr['phone'] ?? $addr['telephone'] ?? ''
                 ]);
             }
 
             // 3. Insert into sales_order_product
-            $itemQuery = "INSERT INTO sales_order_product (
-                            order_id,
-                            product_id,
-                            product_sku, 
-                            product_name, 
-                            price, 
-                            quantity, 
-                            row_total
-                          ) VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-            $itemStmt = $this->conn->prepare($itemQuery);
-            $lookupStmt = $this->conn->prepare("SELECT entity_id FROM catalog_product_entity WHERE sku = ?");
+            // Prefetch product IDs if needed
+            $productTable = $this->qb->table('catalog_product_entity');
 
             foreach ($cartItems as $sku => $item) {
                 $productId = $item['product_id'] ?? null;
 
-                // Fallback: lookup ID if not in session (e.g. old cart session)
                 if (!$productId) {
-                    $lookupStmt->execute([$sku]);
-                    $productId = $lookupStmt->fetchColumn();
+                    $productId = $productTable->where('sku', $sku)->value('entity_id');
                 }
 
-                $itemStmt->execute([
-                    $orderId,
-                    $productId, // Insert Product ID
-                    $sku, // SKU is key
-                    $item['name'],
-                    $item['price'],
-                    $item['qty'],
-                    $item['price'] * $item['qty']
+                $this->qb->table('sales_order_product')->insert([
+                    'order_id' => $orderId,
+                    'product_id' => $productId,
+                    'product_sku' => $sku,
+                    'product_name' => $item['name'],
+                    'price' => $item['price'],
+                    'quantity' => $item['qty'],
+                    'row_total' => $item['price'] * $item['qty']
                 ]);
             }
 
             // 4. Deactivate items in DB Cart (if customer logged in)
             if ($userId) {
                 require_once __DIR__ . '/CartModel.php';
-                $cartModel = new CartModel();
+                // Pass current PDO connection to share transaction
+                $cartModel = new CartModel($this->qb->getPdo());
                 $cartModel->deactivateCart($userId);
             }
 
             // 5. Save Address to Customer Address Book (if logged in)
             if ($userId) {
-                // Check if this specific address already exists for the user avoid duplicates
-                $checkAddr = "SELECT entity_id FROM customer_address 
-                              WHERE customer_id = ? 
-                              AND street = ? 
-                              AND city = ? 
-                              AND postcode = ?";
-                $checkStmt = $this->conn->prepare($checkAddr);
-                $checkStmt->execute([
-                    $userId,
-                    $address['street'] ?? '',
-                    $address['city'] ?? '',
-                    $address['postcode'] ?? ''
-                ]);
+                require_once __DIR__ . '/CustomerModel.php';
+                $customerModel = new CustomerModel($this->qb->getPdo());
 
-                if (!$checkStmt->fetch()) {
-                    // Start: Insert new address
-                    $saveAddrSql = "INSERT INTO customer_address (
-                                        customer_id,
-                                        street,
-                                        city,
-                                        state,
-                                        postcode,
-                                        country,
-                                        telephone,
-                                        is_default
-                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-                    // Check if this is their first address (make it default)
-                    $countStmt = $this->conn->prepare("SELECT COUNT(*) FROM customer_address WHERE customer_id = ?");
-                    $countStmt->execute([$userId]);
-                    $isDefault = ($countStmt->fetchColumn() == 0) ? true : false;
-
-                    $saveStmt = $this->conn->prepare($saveAddrSql);
-                    $saveStmt->execute([
-                        $userId,
-                        $address['street'] ?? '',
-                        $address['city'] ?? '',
-                        $address['state'] ?? '',
-                        $address['postcode'] ?? '',
-                        $address['country'] ?? '',
-                        $address['phone'] ?? '',
-                        $isDefault ? 1 : 0 // Boolean to integer/bit
-                    ]);
+                if (isset($addressesToSave['shipping'])) {
+                    $customerModel->saveAddress($userId, $addressesToSave['shipping'], 'shipping');
+                }
+                if (isset($addressesToSave['billing'])) {
+                    $customerModel->saveAddress($userId, $addressesToSave['billing'], 'billing');
                 }
             }
 
-            $this->conn->commit();
-            return $orderNumber; // Return the display-friendly Order Number
-
+            $this->qb->commit();
+            return $orderNumber;
         } catch (Exception $e) {
-            $this->conn->rollBack();
-            error_log("Database Error: " . $e->getMessage());
-            // For debugging (remove in production if strict)
-            // echo "DEBUG ERROR: " . $e->getMessage() . "\n";
-            return false;
+            $this->qb->rollBack();
+            error_log("Create Order Error: " . $e->getMessage());
+            throw $e;
         }
     }
 
     public function getUserOrders($userId)
     {
-        $query = "SELECT * FROM sales_order WHERE customer_id = ? ORDER BY created_at DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$userId]);
-        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $orders = $this->qb->table('sales_order')
+            ->where('customer_id', $userId)
+            ->orderBy('created_at', 'DESC')
+            ->get();
 
         // Fetch items for each order
         foreach ($orders as &$order) {
@@ -248,36 +160,25 @@ class OrderModel
 
     private function getOrderItems($orderId)
     {
-        // Join with product/image tables to get the product image
-        // Match using SKU (assuming sales_order_product.product_sku maps to catalog_product_entity.sku)
-        $query = "SELECT 
-                    sop.*, 
-                    COALESCE(pi.image_path, 'images/placeholder.png') as image
-                  FROM sales_order_product sop
-                  LEFT JOIN catalog_product_entity p ON sop.product_sku = p.sku
-                  LEFT JOIN catalog_product_image pi ON p.entity_id = pi.product_id AND pi.is_primary = TRUE
-                  WHERE sop.order_id = ?";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$orderId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->qb->table('sales_order_product sop')
+            ->select(['sop.*', "COALESCE(pi.image_path, 'images/placeholder.png') as image"])
+            ->leftJoin('catalog_product_entity p', 'sop.product_sku = p.sku')
+            ->leftJoin('catalog_product_image pi', "p.entity_id = pi.product_id AND pi.is_primary = TRUE")
+            ->where('sop.order_id', $orderId)
+            ->get();
     }
+
     /**
      * Get the last shipping address used by this customer
      */
     public function getLastOrderAddress($userId)
     {
-        // Fetch the most recent address based on order date
-        $query = "SELECT sa.* 
-                  FROM sales_order_address sa
-                  JOIN sales_order so ON sa.order_id = so.order_id
-                  WHERE so.customer_id = ? AND sa.address_type = 'shipping'
-                  ORDER BY so.created_at DESC
-                  LIMIT 1";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$userId]);
-
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $this->qb->table('sales_order_address sa')
+            ->select(['sa.*'])
+            ->join('sales_order so', 'sa.order_id = so.order_id')
+            ->where('so.customer_id', $userId)
+            ->where('sa.address_type', 'shipping')
+            ->orderBy('so.created_at', 'DESC')
+            ->first();
     }
 }

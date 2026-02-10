@@ -172,6 +172,7 @@ class ProductListingController
                 'price' => $product['price'],
                 'image' => $product['image'],
                 'shipping_type' => $product['shipping_type'],
+                'url_key' => $product['url_key'] ?? $product['id'],
                 'in_wishlist' => in_array($product['id'], $_SESSION['wishlist'])
             ];
         }

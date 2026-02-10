@@ -184,7 +184,7 @@ function updateQuantity(productId, change) {
     formData.append('qty', newQty);
     formData.append('ajax', 'true');
 
-    fetch('cart.php', {
+    fetch('cart', {
         method: 'POST',
         body: formData
     })

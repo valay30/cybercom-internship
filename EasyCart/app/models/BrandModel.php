@@ -8,13 +8,12 @@ require_once __DIR__ . '/../../config/database.php';
  */
 class BrandModel
 {
-    private $db;
-    private $conn;
+    private $qb;
 
     public function __construct()
     {
-        $this->db = new Database();
-        $this->conn = $this->db->getConnection();
+        require_once __DIR__ . '/../core/QueryBuilder.php';
+        $this->qb = new QueryBuilder();
     }
 
     /**
@@ -22,24 +21,23 @@ class BrandModel
      */
     public function getAllBrands()
     {
-        $query = "SELECT 
-                    b.entity_id,
-                    b.brand_code,
-                    b.name,
-                    b.is_active,
-                    ba.attribute_value as icon,
-                    COUNT(DISTINCT pb.product_id) as product_count
-                  FROM catalog_brand_entity b
-                  LEFT JOIN catalog_brand_attribute ba ON b.entity_id = ba.brand_id AND ba.attribute_code = 'icon'
-                  LEFT JOIN catalog_product_brand pb ON b.entity_id = pb.brand_id
-                  WHERE b.is_active = TRUE
-                  GROUP BY b.entity_id, b.brand_code, b.name, b.is_active, ba.attribute_value
-                  ORDER BY b.name";
+        $brands = $this->qb->table('catalog_brand_entity b')
+            ->select([
+                'b.entity_id',
+                'b.brand_code',
+                'b.name',
+                'b.is_active',
+                'ba.attribute_value as icon',
+                'COUNT(DISTINCT pb.product_id) as product_count'
+            ])
+            ->leftJoin('catalog_brand_attribute ba', "b.entity_id = ba.brand_id AND ba.attribute_code = 'icon'")
+            ->leftJoin('catalog_product_brand pb', 'b.entity_id = pb.brand_id')
+            ->where('b.is_active', true)
+            ->groupBy(['b.entity_id', 'b.brand_code', 'b.name', 'b.is_active', 'ba.attribute_value'])
+            ->orderBy('b.name')
+            ->get();
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-
-        return $this->formatBrands($stmt->fetchAll());
+        return $this->formatBrands($brands);
     }
 
     /**
@@ -47,19 +45,17 @@ class BrandModel
      */
     public function getBrandByCode($code)
     {
-        $query = "SELECT 
-                    b.entity_id,
-                    b.brand_code,
-                    b.name,
-                    b.is_active,
-                    ba.attribute_value as icon
-                  FROM catalog_brand_entity b
-                  LEFT JOIN catalog_brand_attribute ba ON b.entity_id = ba.brand_id AND ba.attribute_code = 'icon'
-                  WHERE b.brand_code = ?";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$code]);
-        $brand = $stmt->fetch();
+        $brand = $this->qb->table('catalog_brand_entity b')
+            ->select([
+                'b.entity_id',
+                'b.brand_code',
+                'b.name',
+                'b.is_active',
+                'ba.attribute_value as icon'
+            ])
+            ->leftJoin('catalog_brand_attribute ba', "b.entity_id = ba.brand_id AND ba.attribute_code = 'icon'")
+            ->where('b.brand_code', $code)
+            ->first();
 
         return $brand ? $this->formatBrand($brand) : null;
     }

@@ -8,13 +8,39 @@ require_once __DIR__ . '/../../config/database.php';
  */
 class ProductModel
 {
-    private $db;
-    private $conn;
+    private $qb;
 
-    public function __construct()
+    public function __construct($pdo = null)
     {
-        $this->db = new Database();
-        $this->conn = $this->db->getConnection();
+        require_once __DIR__ . '/../core/QueryBuilder.php';
+        $this->qb = new QueryBuilder($pdo);
+    }
+
+    /**
+     * Helper to build base product query with joins
+     */
+    private function getBaseQuery()
+    {
+        return $this->qb->table('catalog_product_entity p')
+            ->select([
+                'DISTINCT p.entity_id',
+                'p.sku',
+                'p.name',
+                'p.description',
+                'p.price',
+                'p.shipping_type',
+                'p.url_key',
+                'pi.image_path',
+                'c.name as category_name',
+                'c.category_code',
+                'b.name as brand_name',
+                'b.brand_code'
+            ])
+            ->leftJoin('catalog_product_image pi', "p.entity_id = pi.product_id AND pi.is_primary = TRUE")
+            ->leftJoin('catalog_category_product cp', 'p.entity_id = cp.product_id')
+            ->leftJoin('catalog_category_entity c', 'cp.category_id = c.entity_id')
+            ->leftJoin('catalog_product_brand pb', 'p.entity_id = pb.product_id')
+            ->leftJoin('catalog_brand_entity b', 'pb.brand_id = b.entity_id');
     }
 
     /**
@@ -22,34 +48,16 @@ class ProductModel
      */
     public function getAllProducts($limit = null, $offset = 0)
     {
-        $query = "SELECT DISTINCT
-                    p.entity_id,
-                    p.sku,
-                    p.name,
-                    p.description,
-                    p.price,
-                    p.shipping_type,
-                    pi.image_path,
-                    c.name as category_name,
-                    c.category_code,
-                    b.name as brand_name,
-                    b.brand_code
-                  FROM catalog_product_entity p
-                  LEFT JOIN catalog_product_image pi ON p.entity_id = pi.product_id AND pi.is_primary = TRUE
-                  LEFT JOIN catalog_category_product cp ON p.entity_id = cp.product_id
-                  LEFT JOIN catalog_category_entity c ON cp.category_id = c.entity_id
-                  LEFT JOIN catalog_product_brand pb ON p.entity_id = pb.product_id
-                  LEFT JOIN catalog_brand_entity b ON pb.brand_id = b.entity_id
-                  ORDER BY p.entity_id";
+        $query = $this->getBaseQuery()->orderBy('p.entity_id');
 
         if ($limit) {
-            $query .= " LIMIT $limit OFFSET $offset";
+            $query->limit((int)$limit);
+            if ($offset) {
+                $query->offset((int)$offset);
+            }
         }
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-
-        return $this->formatProducts($stmt->fetchAll());
+        return $this->formatProducts($query->get());
     }
 
     /**
@@ -57,27 +65,9 @@ class ProductModel
      */
     public function getProductById($id)
     {
-        $query = "SELECT 
-                    p.entity_id,
-                    p.sku,
-                    p.name,
-                    p.description,
-                    p.price,
-                    p.shipping_type,
-                    c.name as category_name,
-                    c.category_code,
-                    b.name as brand_name,
-                    b.brand_code
-                  FROM catalog_product_entity p
-                  LEFT JOIN catalog_category_product cp ON p.entity_id = cp.product_id
-                  LEFT JOIN catalog_category_entity c ON cp.category_id = c.entity_id
-                  LEFT JOIN catalog_product_brand pb ON p.entity_id = pb.product_id
-                  LEFT JOIN catalog_brand_entity b ON pb.brand_id = b.entity_id
-                  WHERE p.entity_id = ?";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$id]);
-        $product = $stmt->fetch();
+        $product = $this->getBaseQuery()
+            ->where('p.entity_id', $id)
+            ->first();
 
         if ($product) {
             // Get all images
@@ -97,13 +87,28 @@ class ProductModel
      */
     public function getProductBySku($sku)
     {
-        $query = "SELECT entity_id FROM catalog_product_entity WHERE sku = ?";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$sku]);
-        $result = $stmt->fetch();
+        $result = $this->qb->table('catalog_product_entity')
+            ->where('sku', $sku)
+            ->value('entity_id');
 
         if ($result) {
-            return $this->getProductById($result['entity_id']);
+            return $this->getProductById($result);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get product by URL key (SEO-friendly URL)
+     */
+    public function getProductByUrlKey($urlKey)
+    {
+        $result = $this->qb->table('catalog_product_entity')
+            ->where('url_key', $urlKey)
+            ->value('entity_id');
+
+        if ($result) {
+            return $this->getProductById($result);
         }
 
         return null;
@@ -114,35 +119,15 @@ class ProductModel
      */
     public function getProductsByCategory($categoryCode, $limit = null)
     {
-        $query = "SELECT DISTINCT
-                    p.entity_id,
-                    p.sku,
-                    p.name,
-                    p.description,
-                    p.price,
-                    p.shipping_type,
-                    pi.image_path,
-                    c.name as category_name,
-                    c.category_code,
-                    b.name as brand_name,
-                    b.brand_code
-                  FROM catalog_product_entity p
-                  LEFT JOIN catalog_product_image pi ON p.entity_id = pi.product_id AND pi.is_primary = TRUE
-                  LEFT JOIN catalog_category_product cp ON p.entity_id = cp.product_id
-                  LEFT JOIN catalog_category_entity c ON cp.category_id = c.entity_id
-                  LEFT JOIN catalog_product_brand pb ON p.entity_id = pb.product_id
-                  LEFT JOIN catalog_brand_entity b ON pb.brand_id = b.entity_id
-                  WHERE c.category_code = ?
-                  ORDER BY p.entity_id";
+        $query = $this->getBaseQuery()
+            ->where('c.category_code', $categoryCode)
+            ->orderBy('p.entity_id');
 
         if ($limit) {
-            $query .= " LIMIT $limit";
+            $query->limit((int)$limit);
         }
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$categoryCode]);
-
-        return $this->formatProducts($stmt->fetchAll());
+        return $this->formatProducts($query->get());
     }
 
     /**
@@ -150,35 +135,15 @@ class ProductModel
      */
     public function getProductsByBrand($brandCode, $limit = null)
     {
-        $query = "SELECT DISTINCT
-                    p.entity_id,
-                    p.sku,
-                    p.name,
-                    p.description,
-                    p.price,
-                    p.shipping_type,
-                    pi.image_path,
-                    c.name as category_name,
-                    c.category_code,
-                    b.name as brand_name,
-                    b.brand_code
-                  FROM catalog_product_entity p
-                  LEFT JOIN catalog_product_image pi ON p.entity_id = pi.product_id AND pi.is_primary = TRUE
-                  LEFT JOIN catalog_category_product cp ON p.entity_id = cp.product_id
-                  LEFT JOIN catalog_category_entity c ON cp.category_id = c.entity_id
-                  LEFT JOIN catalog_product_brand pb ON p.entity_id = pb.product_id
-                  LEFT JOIN catalog_brand_entity b ON pb.brand_id = b.entity_id
-                  WHERE b.brand_code = ?
-                  ORDER BY p.entity_id";
+        $query = $this->getBaseQuery()
+            ->where('b.brand_code', $brandCode)
+            ->orderBy('p.entity_id');
 
         if ($limit) {
-            $query .= " LIMIT $limit";
+            $query->limit((int)$limit);
         }
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$brandCode]);
-
-        return $this->formatProducts($stmt->fetchAll());
+        return $this->formatProducts($query->get());
     }
 
     /**
@@ -186,32 +151,16 @@ class ProductModel
      */
     public function searchProducts($searchTerm)
     {
-        $query = "SELECT DISTINCT
-                    p.entity_id,
-                    p.sku,
-                    p.name,
-                    p.description,
-                    p.price,
-                    p.shipping_type,
-                    pi.image_path,
-                    c.name as category_name,
-                    c.category_code,
-                    b.name as brand_name,
-                    b.brand_code
-                  FROM catalog_product_entity p
-                  LEFT JOIN catalog_product_image pi ON p.entity_id = pi.product_id AND pi.is_primary = TRUE
-                  LEFT JOIN catalog_category_product cp ON p.entity_id = cp.product_id
-                  LEFT JOIN catalog_category_entity c ON cp.category_id = c.entity_id
-                  LEFT JOIN catalog_product_brand pb ON p.entity_id = pb.product_id
-                  LEFT JOIN catalog_brand_entity b ON pb.brand_id = b.entity_id
-                  WHERE p.name ILIKE ? OR p.description ILIKE ?
-                  ORDER BY p.entity_id";
-
         $searchPattern = "%$searchTerm%";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$searchPattern, $searchPattern]);
 
-        return $this->formatProducts($stmt->fetchAll());
+        // Note: Using ILIKE for case-insensitive search if PostgreSQL, or LIKE for MySQL
+        // Assuming PostgreSQL as per context (insertGetId usage)
+        $query = $this->getBaseQuery()
+            ->where('p.name', 'ILIKE', $searchPattern)
+            ->orWhere('p.description', 'ILIKE', $searchPattern)
+            ->orderBy('p.entity_id');
+
+        return $this->formatProducts($query->get());
     }
 
     /**
@@ -219,15 +168,10 @@ class ProductModel
      */
     private function getProductImages($productId)
     {
-        $query = "SELECT image_path, is_primary, sort_order
-                  FROM catalog_product_image
-                  WHERE product_id = ?
-                  ORDER BY sort_order";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$productId]);
-
-        return array_column($stmt->fetchAll(), 'image_path');
+        return $this->qb->table('catalog_product_image')
+            ->where('product_id', $productId)
+            ->orderBy('sort_order')
+            ->pluck('image_path');
     }
 
     /**
@@ -235,15 +179,11 @@ class ProductModel
      */
     private function getProductFeatures($productId)
     {
-        $query = "SELECT attribute_value
-                  FROM catalog_product_attribute
-                  WHERE product_id = ? AND attribute_code = 'feature'
-                  ORDER BY attribute_id";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute([$productId]);
-
-        return array_column($stmt->fetchAll(), 'attribute_value');
+        return $this->qb->table('catalog_product_attribute')
+            ->where('product_id', $productId)
+            ->where('attribute_code', 'feature')
+            ->orderBy('attribute_id')
+            ->pluck('attribute_value');
     }
 
     /**
@@ -260,6 +200,7 @@ class ProductModel
             'description' => $product['description'],
             'price' => (float)$product['price'],
             'shipping_type' => $product['shipping_type'],
+            'url_key' => $product['url_key'] ?? null,
             'image' => $product['images'][0] ?? ($product['image_path'] ?? 'images/placeholder.png'),
             'images' => $product['images'] ?? [$product['image_path'] ?? 'images/placeholder.png'],
             'category' => $product['category_code'] ?? null,
@@ -293,12 +234,7 @@ class ProductModel
      */
     public function getTotalCount()
     {
-        $query = "SELECT COUNT(*) as count FROM catalog_product_entity";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $result = $stmt->fetch();
-
-        return (int)$result['count'];
+        return $this->qb->table('catalog_product_entity')->count();
     }
 
     /**
