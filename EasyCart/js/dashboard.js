@@ -48,17 +48,35 @@ function fetchChartData() {
 /**
  * Render the chart using Chart.js
  */
+/**
+ * Render the chart using Chart.js
+ */
+let orderChart = null; // Store chart instance globally
+
 function renderChart(chartData) {
     const ctx = document.getElementById('orderChart');
     if (!ctx) return;
 
+    // Destroy existing chart if it exists
+    if (orderChart) {
+        orderChart.destroy();
+    }
+
     // Format dates for better display
     const labels = chartData.labels.map(date => {
-        const d = new Date(date);
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        // Only format if it looks like a date/month
+        if (date.length === 7) { // YYYY-MM
+            const [year, month] = date.split('-');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[parseInt(month) - 1]} ${year}`;
+        } else if (date.length === 10) { // YYYY-MM-DD
+            const d = new Date(date);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+        return date;
     });
 
-    new Chart(ctx, {
+    orderChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -157,6 +175,59 @@ function renderChart(chartData) {
             }
         }
     });
+}
+
+/**
+ * Toggle custom date inputs visibility
+ */
+function toggleDateInputs() {
+    const filter = document.getElementById('chartFilter').value;
+    const customInputs = document.getElementById('customDateInputs');
+
+    if (filter === 'custom') {
+        customInputs.style.display = 'flex';
+    } else {
+        customInputs.style.display = 'none';
+        fetchChartDataByFilter(filter);
+    }
+}
+
+/**
+ * Apply custom date filter
+ */
+function applyCustomFilter() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+    }
+
+    fetchChartDataByFilter('custom', startDate, endDate);
+}
+
+/**
+ * Fetch filtered chart data
+ */
+function fetchChartDataByFilter(filter, start = null, end = null) {
+    let url = `dashboard?ajax=true&action=get_chart_data&filter=${filter}`;
+    if (start && end) {
+        url += `&start=${start}&end=${end}`;
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderChart(data.chartData);
+            } else {
+                console.error('Failed to load chart data');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching chart data:', error);
+        });
 }
 
 /**

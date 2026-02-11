@@ -36,3 +36,11 @@ RewriteRule ^(.+)$ $1.php [L,QSA]
 # Custom error pages (optional)
 # ErrorDocument 403 /error/403.html
 # ErrorDocument 404 /error/404.html
+
+# ============================================
+# PRODUCT URLs
+# ============================================
+# If the request is not a file, and not a directory, treat as product URL
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^/]+)$ pdp.php?url=$1 [L,QSA]

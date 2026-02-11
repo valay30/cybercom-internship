@@ -12,6 +12,11 @@ class OrderModel
         $this->qb = new QueryBuilder($pdo);
     }
 
+    public function getQb()
+    {
+        return $this->qb;
+    }
+
     public function createOrder($userId, $orderData, $cartItems)
     {
         try {

@@ -31,7 +31,7 @@
                         <h3><?php echo $product['name']; ?></h3>
                         <p>₹<?php echo number_format($product['price']); ?></p>
                         <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
-                            <a href="pdp?url=<?php echo isset($product['url_key']) && $product['url_key'] ? $product['url_key'] : $product['id']; ?>"><button class="product-btn">View Details</button></a>
+                            <a href="<?php echo isset($product['url_key']) && $product['url_key'] ? $product['url_key'] : $product['id']; ?>"><button class="product-btn">View Details</button></a>
                             <?php
                             $in_wishlist = in_array($product['id'], $wishlistIds);
                             ?>

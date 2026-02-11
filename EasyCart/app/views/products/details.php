@@ -110,7 +110,7 @@
                     <img src="<?php echo $featuredProduct['image']; ?>" alt="<?php echo $featuredProduct['name']; ?>">
                     <h3><?php echo $featuredProduct['name']; ?></h3>
                     <p>₹<?php echo number_format($featuredProduct['price'], 2); ?></p>
-                    <a href="pdp?url=<?php echo isset($featuredProduct['url_key']) && $featuredProduct['url_key'] ? $featuredProduct['url_key'] : $featuredProduct['id']; ?>"><button class="product-btn">View Details</button></a>
+                    <a href="<?php echo isset($featuredProduct['url_key']) && $featuredProduct['url_key'] ? $featuredProduct['url_key'] : $featuredProduct['id']; ?>"><button class="product-btn">View Details</button></a>
                 </div>
             <?php endforeach; ?>
         </div>

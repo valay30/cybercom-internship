@@ -86,7 +86,7 @@
                     <?php endif; ?>
                     <div class="product-actions"
                         style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                        <a href="pdp?url=<?php echo isset($product['url_key']) && $product['url_key'] ? $product['url_key'] : $product['id']; ?>"><button class="product-btn">View
+                        <a href="<?php echo isset($product['url_key']) && $product['url_key'] ? $product['url_key'] : $product['id']; ?>"><button class="product-btn">View
                                 Details</button></a>
                         <?php
                         $in_wishlist = in_array($product['id'], $wishlistIds);
