@@ -1,5 +1,4 @@
 <?php
-
 /**
  * DashboardController
  * Handles user dashboard with order statistics and visualizations
