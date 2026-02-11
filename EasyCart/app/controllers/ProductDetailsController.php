@@ -42,8 +42,8 @@ class ProductDetailsController
         $this->product = $this->productModel->getProductByUrlKey($urlKey);
 
         // Fallback to SKU if URL key doesn't work (backward compatibility)
-        if (!$this->product && $urlKey) {
-            $this->product = $this->productModel->getProductBySku($urlKey);
+        if (!$this->product && isset($_GET['id'])) {
+            $this->product = $this->productModel->getProductBySku($_GET['id']);
         }
 
         // Final fallback to default product

@@ -126,78 +126,7 @@ class DashboardController
     }
 
     /**
-     * Get chart data filtered by date range
-     */
-    private function getChartDataByFilter($filter, $startDate = null, $endDate = null)
-    {
-        try {
-            $query = $this->orderModel->getQb()->table('sales_order')
-                ->where('customer_id', $this->customerId);
-
-            if ($filter === 'month') {
-                // Last 30 days
-                $query->where('created_at', '>=', date('Y-m-d', strtotime('-30 days')));
-            } elseif ($filter === 'year') {
-                // Last 12 months (grouped by month)
-                // Note: Grouping logic will need to be handled in processing loop as simple query builder might not support complex DB-specific DATE_FORMAT/EXTRACT without raw queries
-                $query->where('created_at', '>=', date('Y-m-d', strtotime('-1 year')));
-            } elseif ($filter === 'custom' && $startDate && $endDate) {
-                $query->where('created_at', '>=', $startDate . ' 00:00:00')
-                    ->where('created_at', '<=', $endDate . ' 23:59:59');
-            }
-
-            $orders = $query->orderBy('created_at', 'ASC')->get();
-
-            $chartData = [];
-
-            if ($filter === 'year') {
-                // Initialize last 12 months with 0
-                for ($i = 11; $i >= 0; $i--) {
-                    $monthKey = date('Y-m', strtotime("-$i months"));
-                    $chartData[$monthKey] = 0;
-                }
-
-                foreach ($orders as $order) {
-                    $monthKey = date('Y-m', strtotime($order['created_at']));
-                    if (isset($chartData[$monthKey])) {
-                        $chartData[$monthKey] += floatval($order['grand_total']);
-                    }
-                }
-
-                // Format labels nicely
-                $labels = [];
-                foreach (array_keys($chartData) as $ym) {
-                    $labels[] = date('M Y', strtotime($ym . '-01'));
-                }
-                $data = array_values($chartData);
-            } else {
-                // Detail by day for month/custom view
-                foreach ($orders as $order) {
-                    $date = date('Y-m-d', strtotime($order['created_at']));
-                    if (!isset($chartData[$date])) {
-                        $chartData[$date] = 0;
-                    }
-                    $chartData[$date] += floatval($order['grand_total']);
-                }
-
-                // Sort by date just in case
-                ksort($chartData);
-                $labels = array_keys($chartData);
-                $data = array_values($chartData);
-            }
-
-            return [
-                'labels' => $labels,
-                'data' => $data
-            ];
-        } catch (Exception $e) {
-            error_log("Chart filter error: " . $e->getMessage());
-            return ['labels' => [], 'data' => []];
-        }
-    }
-
-    /**
-     * Handle AJAX requests
+     * Handle AJAX request for chart data
      */
     public function handleAjax()
     {
@@ -209,13 +138,7 @@ class DashboardController
 
         switch ($action) {
             case 'get_chart_data':
-                $filter = $_GET['filter'] ?? 'month';
-                $start = $_GET['start'] ?? null;
-                $end = $_GET['end'] ?? null;
-                $data = $this->getChartDataByFilter($filter, $start, $end);
-
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'chartData' => $data]);
+                $this->sendChartData();
                 break;
             case 'get_stats':
                 $this->sendStats();
@@ -224,6 +147,18 @@ class DashboardController
                 echo json_encode(['success' => false, 'message' => 'Invalid action']);
         }
         exit;
+    }
+
+    /**
+     * Send chart data as JSON
+     */
+    private function sendChartData()
+    {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'chartData' => $this->chartData
+        ]);
     }
 
     /**

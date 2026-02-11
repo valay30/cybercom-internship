@@ -200,7 +200,7 @@ function renderProducts(products) {
             '<span style="display: inline-block; padding: 4px 8px; background: #6c757d; color: white; border-radius: 4px; font-size: 0.75em; font-weight: 600;"><i class="fa-solid fa-truck"></i> Freight</span>'
         }
             <div class="product-actions" style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
-                <a href="${product.url_key || product.id}"><button class="product-btn">View Details</button></a>
+                <a href="pdp?url=${product.url_key || product.id}"><button class="product-btn">View Details</button></a>
                 <button class="wishlist-btn" onclick="toggleWishlist('${product.id}', this)" 
                     style="background: white; border: 1px solid #ddd; padding: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
                     <i class="fa-${product.in_wishlist ? 'solid' : 'regular'} fa-heart" 

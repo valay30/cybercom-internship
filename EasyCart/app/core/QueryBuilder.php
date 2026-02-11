@@ -447,18 +447,7 @@ class QueryBuilder
             if (isset($where['raw'])) {
                 $sqlParts[] = $prefix . $where['raw'];
             } else {
-                if ($where['value'] === null) {
-                    if ($where['operator'] === '=') {
-                        $sqlParts[] = $prefix . "{$where['column']} IS NULL";
-                    } elseif ($where['operator'] === '!=' || $where['operator'] === '<>') {
-                        $sqlParts[] = $prefix . "{$where['column']} IS NOT NULL";
-                    } else {
-                        // Fallback for other operators with NULL (rarely used but syntactically valid)
-                         $sqlParts[] = $prefix . "{$where['column']} {$where['operator']} NULL";
-                    }
-                } else {
-                    $sqlParts[] = $prefix . "{$where['column']} {$where['operator']} ?";
-                }
+                $sqlParts[] = $prefix . "{$where['column']} {$where['operator']} ?";
             }
         }
 
