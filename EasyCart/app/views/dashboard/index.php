@@ -66,8 +66,34 @@
         <!-- Chart Section -->
         <div class="chart-section">
             <div class="chart-header">
-                <h2>Order Amount vs Order Date</h2>
-                <p class="chart-subtitle">Track your spending over time</p>
+                <div>
+                    <h2>Order Amount vs Order Date</h2>
+                    <p class="chart-subtitle">Track your spending over time</p>
+                </div>
+
+                <!-- Chart Controls -->
+                <div class="chart-controls">
+                    <div class="select-wrapper">
+                        <i class="fa-solid fa-calendar-days select-icon"></i>
+                        <select id="chartFilter" onchange="toggleDateInputs()" class="chart-filter-select">
+                            <option value="month">Last 30 Days</option>
+                            <option value="year">Last 12 Months</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div id="customDateInputs" class="custom-date-container" style="display:none;">
+                        <div class="date-input-group">
+                            <input type="date" id="startDate" class="date-input" placeholder="Start Date">
+                        </div>
+                        <span class="date-separator">to</span>
+                        <div class="date-input-group">
+                            <input type="date" id="endDate" class="date-input" placeholder="End Date">
+                        </div>
+                        <button onclick="applyCustomFilter()" class="apply-btn">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="chart-container">
                 <canvas id="orderChart"></canvas>
@@ -125,6 +151,11 @@
     </div>
 
     <?php include __DIR__ . '/../common/footer.php'; ?>
+
+    <!-- Data for Chart -->
+    <script id="chartData" type="application/json">
+        <?php echo json_encode($chartData); ?>
+    </script>
 
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

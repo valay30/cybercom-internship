@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeChart();
 });
 
+let orderChart = null;
+
 /**
  * Initialize the order chart
  */
@@ -19,25 +21,70 @@ function initializeChart() {
     let chartData;
 
     if (chartDataElement) {
-        chartData = JSON.parse(chartDataElement.textContent);
+        try {
+            chartData = JSON.parse(chartDataElement.textContent);
+            renderChart(chartData);
+        } catch (e) {
+            console.error('Error parsing chart data:', e);
+            fetchChartDataByFilter('month'); // Fallback
+        }
     } else {
-        // Fallback: fetch via AJAX
-        fetchChartData();
-        return;
+        // Fallback: fetch default
+        fetchChartDataByFilter('month');
     }
-
-    renderChart(chartData);
 }
 
 /**
- * Fetch chart data via AJAX
+ * Toggle custom date inputs based on dropdown selection
  */
-function fetchChartData() {
-    fetch('dashboard?ajax=true&action=get_chart_data')
+function toggleDateInputs() {
+    const filter = document.getElementById('chartFilter').value;
+    const customDateContainer = document.getElementById('customDateInputs');
+
+    if (filter === 'custom') {
+        customDateContainer.style.display = 'flex';
+    } else {
+        customDateContainer.style.display = 'none';
+        fetchChartDataByFilter(filter);
+    }
+}
+
+/**
+ * Apply custom date filter
+ */
+function applyCustomFilter() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+        alert('Start date should be before end date');
+        return;
+    }
+
+    fetchChartDataByFilter('custom', startDate, endDate);
+}
+
+/**
+ * Fetch chart data via AJAX with filters
+ */
+function fetchChartDataByFilter(filter, start = null, end = null) {
+    let url = `dashboard?ajax=true&action=get_chart_data&filter=${filter}`;
+    if (start && end) {
+        url += `&start=${start}&end=${end}`;
+    }
+
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 renderChart(data.chartData);
+            } else {
+                console.error('Failed to load chart data');
             }
         })
         .catch(error => {
@@ -52,13 +99,26 @@ function renderChart(chartData) {
     const ctx = document.getElementById('orderChart');
     if (!ctx) return;
 
+    // Destroy existing chart if it exists
+    if (orderChart) {
+        orderChart.destroy();
+    }
+
     // Format dates for better display
     const labels = chartData.labels.map(date => {
-        const d = new Date(date);
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        // Handle different date formats
+        if (date.length === 7) { // YYYY-MM format (monthly data)
+            const [year, month] = date.split('-');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[parseInt(month) - 1]} ${year}`;
+        } else if (date.length === 10) { // YYYY-MM-DD format (daily data)
+            const d = new Date(date);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+        return date; // Return as-is if already formatted
     });
 
-    new Chart(ctx, {
+    orderChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
