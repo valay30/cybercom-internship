@@ -84,6 +84,22 @@ class QueryBuilder
             $operator = '=';
         }
 
+        // Handle NULL values with IS NULL / IS NOT NULL syntax
+        if ($value === null) {
+            if ($operator === '=') {
+                $this->wheres[] = [
+                    'type' => 'AND',
+                    'raw' => "{$column} IS NULL"
+                ];
+            } elseif ($operator === '!=' || $operator === '<>') {
+                $this->wheres[] = [
+                    'type' => 'AND',
+                    'raw' => "{$column} IS NOT NULL"
+                ];
+            }
+            return $this;
+        }
+
         $this->wheres[] = [
             'type' => 'AND',
             'column' => $column,
@@ -91,9 +107,7 @@ class QueryBuilder
             'value' => $value
         ];
 
-        if ($value !== null) {
-            $this->bindings[] = $value;
-        }
+        $this->bindings[] = $value;
 
         return $this;
     }
@@ -105,6 +119,22 @@ class QueryBuilder
             $operator = '=';
         }
 
+        // Handle NULL values with IS NULL / IS NOT NULL syntax
+        if ($value === null) {
+            if ($operator === '=') {
+                $this->wheres[] = [
+                    'type' => 'OR',
+                    'raw' => "{$column} IS NULL"
+                ];
+            } elseif ($operator === '!=' || $operator === '<>') {
+                $this->wheres[] = [
+                    'type' => 'OR',
+                    'raw' => "{$column} IS NOT NULL"
+                ];
+            }
+            return $this;
+        }
+
         $this->wheres[] = [
             'type' => 'OR',
             'column' => $column,
@@ -112,9 +142,7 @@ class QueryBuilder
             'value' => $value
         ];
 
-        if ($value !== null) {
-            $this->bindings[] = $value;
-        }
+        $this->bindings[] = $value;
 
         return $this;
     }

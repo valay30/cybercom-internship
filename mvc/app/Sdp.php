@@ -1,19 +1,19 @@
 <?php
 
-class Sdp{
-    public static function run(){
-        $front = new Core_Controllers_Front();
+class Sdp {
+    public static function run() {
+        $request = new Core_Model_Request();
+        $className = sprintf(
+            "%s_Controllers_%s",
+            ucfirst($request->getModuleName()),
+            ucfirst($request->getControllerName())
+        );
+        $action = $request->getActionName()."Action";
+        $classObj = new $className();
+        $classObj->$action();
         
-        $admin = new Core_Controllers_Admin();
-
-        echo "<pre>";
-        print_r($front);
-        "</pre>";
-
-        echo "<pre>";
-        print_r($admin);
-        "</pre>";
-    }    
+        // var_dump($className);
+    }
 }
 
 ?>
