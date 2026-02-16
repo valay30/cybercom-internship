@@ -1,7 +1,9 @@
 <?php
 
-class Core_Controllers_Front{
-    public function run(){
+class Core_Controllers_Front
+{
+    public function run()
+    {
         // $request = new Core_Model_Request();
         $request = Sdp::getModel("core/request");
 
@@ -10,15 +12,15 @@ class Core_Controllers_Front{
             ucfirst($request->getModuleName()),
             ucfirst($request->getControllerName())
         );
-        $action = $request->getActionName()."Action";
+        $action = $request->getActionName() . "Action";
         $classObj = new $className();
         $classObj->$action();
-        
+
         // var_dump($className);
     }
 
-//     function __constuct(){
-    
-        // }
+    //     function __constuct(){
+
+    // }
 }
 ?>
