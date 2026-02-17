@@ -5,6 +5,8 @@ class Catalog_Controllers_Product
     public function listAction()
     {
         $root = Sdp::getBlock("Page/Root");
+        $list = Sdp::getBlock("Catalog/Product_List");
+        $root->getChild('content')->addChild('list',$list);
         $root->toHtml();
     }
     public function viewAction()

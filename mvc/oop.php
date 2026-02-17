@@ -6,7 +6,6 @@ class A
     public function i($n)
     {
         $this->n = $n;
-
     }
 
     public function g()
@@ -20,18 +19,15 @@ class B
     public function a()
     {
         if ($this->a == null) {
-            $this->a = new A;
+            $this->a = new A();
         }
         print_r($this->a);
         return $this->a;
-
     }
-
 }
 
-$b = new B;
+$b = new B();
 $b->a()->i(20);
 echo $b->a()->g();
-
 
 ?>
