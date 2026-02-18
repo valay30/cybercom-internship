@@ -13,9 +13,8 @@ class Core_Block_Template{
         $this->_template = $template;
     }
 
-    public function toHtml(){
-        
-    include getcwd(). "/app/code/" . $this->_template;
+    public function toHtml(){   
+        include getcwd(). "/app/code/" . $this->_template;
     }
 
     public function addChild($name,$block){

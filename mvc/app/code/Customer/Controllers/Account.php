@@ -1,5 +1,5 @@
 <?php
-class Customer_Controllers_Account{
+class Customer_Controllers_Account extends Core_Controllers_Front{
     public function indexAction(){
         $root = Sdp::getBlock("Page/Root");
         $index = Sdp::getBlock("Customer/Account_index");

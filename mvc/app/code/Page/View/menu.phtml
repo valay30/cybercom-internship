@@ -1,0 +1,13 @@
+<?php $menu = $this->getMenuArray(); ?>
+<!-- <?php print_r($menu); ?> -->
+
+
+<html>
+    <body>
+        <ul>
+            <?php foreach($menu as $key => $value): ?>
+                <li><a href="<?php echo $key; ?>"><?php echo $value; ?></a></li>
+            <?php endforeach ?>
+        </ul>
+    </body>
+</html>
