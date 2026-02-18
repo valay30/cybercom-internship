@@ -33,10 +33,8 @@ class Garage
 
 $garage = new Garage();
 
-// Method chaining (same style)
 $garage->getCar()->setSpeed(120);
 
-// Again calling same object
 echo "Car Speed: " . $garage->getCar()->getSpeed();
 
 ?>

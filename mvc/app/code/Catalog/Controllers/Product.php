@@ -1,6 +1,6 @@
 <?php
 
-class Catalog_Controllers_Product extends Core_Controllers_Front
+class Catalog_Controllers_Product extends Core_Controllers_Front 
 {
     public function listAction()
     {
@@ -12,8 +12,11 @@ class Catalog_Controllers_Product extends Core_Controllers_Front
     public function viewAction()
     {
         $root = Sdp::getBlock("Page/Root");
-        $view = Sdp::getBlock("Catalog/Product_View");
+        $view = Sdp::getBlock("Catalog/Product_View");    
         $root->getChild('content')->addChild('view',$view);
+        $root->getChild("head")->addJs("js/catalog/product.js");
+        $root->getChild("head")->addCss("css/catalog/product.css");
+
         $root->toHtml();
     }
 }
