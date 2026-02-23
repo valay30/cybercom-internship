@@ -1,0 +1,15 @@
+<?php
+$base = Sdp::getModel("core/request")->getBaseUrl();
+$js   = $this->getJs();
+$css  = $this->getCss();
+?>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<?php foreach ($js as $_js): ?>
+    <script src="<?php echo $base . $_js; ?>"></script>
+<?php endforeach; ?>
+
+<?php foreach ($css as $_css): ?>
+    <link rel="stylesheet" href="<?php echo $base . $_css; ?>">
+<?php endforeach; ?>
