@@ -41,7 +41,7 @@ class Core_Model_Request{
     }
 
     public function getBaseUrl(){
-        return "http://localhost/cybercom-internship/mvc3/";
+        return "http://localhost/cybercom-internship/mvc2/";
     }
 
     public function getControllerName(){
