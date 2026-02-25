@@ -18,9 +18,8 @@ class Core_Model_Connection_Mysql
         $this->connect();
     }
 
-    public function fetchOne()
+    public function fetchOne($sql)
     {
-        $sql = "SELECT * FROM catalog_product";
         $result = $this->_connection->query($sql);
 
         while ($row = $result->fetch_assoc()) {
