@@ -136,38 +136,25 @@ aggregated as (
         qtr,
 
         -- Completed
-        COUNT(DISTINCT CASE
-            WHEN status = 'completed' THEN order_id
-        END) as completed_orders,
+        COUNT(DISTINCT CASE WHEN status = 'completed' THEN order_id END) as completed_orders,
 
-        COALESCE(SUM(CASE
-            WHEN status = 'completed' THEN line_revenue
-        END), 0) as completed_amount,
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN line_revenue END), 0) as completed_amount,
 
         -- Pending
-        COUNT(DISTINCT CASE
-            WHEN status = 'pending'   THEN order_id
-        END) as pending_orders,
+        COUNT(DISTINCT CASE WHEN status = 'pending'   THEN order_id END) as pending_orders,
 
-        COALESCE(SUM(CASE
-            WHEN status = 'pending'   THEN line_revenue
-        END), 0) as pending_amount,
+        COALESCE(SUM(CASE WHEN status = 'pending'   THEN line_revenue END), 0) as pending_amount,
 
         -- Cancelled 
-        COUNT(DISTINCT CASE
-            WHEN status = 'cancelled' THEN order_id
-        END) as cancelled_orders,
+        COUNT(DISTINCT CASE WHEN status = 'cancelled' THEN order_id END) as cancelled_orders,
 
-        COALESCE(SUM(CASE
-            WHEN status = 'cancelled' THEN line_revenue
-        END), 0) as cancelled_amount,
+        COALESCE(SUM(CASE WHEN status = 'cancelled' THEN line_revenue END), 0) as cancelled_amount,
 
         -- ── Totals 
         COUNT(DISTINCT order_id) as total_orders,
         SUM(line_revenue) as total_revenue
 
-    from base
-    group by category_name, yr, qtr
+    from base group by category_name, yr, qtr
 )
 
 SELECT
