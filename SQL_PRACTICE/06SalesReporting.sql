@@ -115,66 +115,63 @@ insert into order_items (order_id, product_id, quantity, unit_price) values
 
 select * from order_items;
 
-WITH
-
-base AS (
-    SELECT
-        c.category_name,
-        YEAR(o.order_date)                              AS yr,
-        QUARTER(o.order_date)                           AS qtr,
+with base as (
+    select c.category_name,
+        year(o.order_date) as yr,
+        quarter(o.order_date) as qtr,
         o.status,
         o.order_id,
-        oi.quantity * oi.unit_price                     AS line_revenue
-    FROM orders o
-    JOIN order_items oi ON o.order_id   = oi.order_id
-    JOIN products    p  ON oi.product_id = p.product_id
-    JOIN categories  c  ON p.category_id = c.category_id
+        oi.quantity * oi.unit_price as line_revenue
+    from orders o
+    join order_items oi on o.order_id   = oi.order_id
+    join products    p  on oi.product_id = p.product_id
+    join categories  c  on p.category_id = c.category_id
 ),
 
-aggregated AS (
-    SELECT
+aggregated as (
+    select
         category_name,
-        CONCAT('Q', qtr, ' ', yr)                      AS quarter,
+        CONCAT('Q', qtr, ' ', yr) as quarter,
         yr,
         qtr,
 
         -- Completed
         COUNT(DISTINCT CASE
             WHEN status = 'completed' THEN order_id
-        END)                                            AS completed_orders,
+        END) as completed_orders,
 
         COALESCE(SUM(CASE
             WHEN status = 'completed' THEN line_revenue
-        END), 0)                                        AS completed_amount,
+        END), 0) as completed_amount,
 
         -- Pending
         COUNT(DISTINCT CASE
             WHEN status = 'pending'   THEN order_id
-        END)                                            AS pending_orders,
+        END) as pending_orders,
 
         COALESCE(SUM(CASE
             WHEN status = 'pending'   THEN line_revenue
-        END), 0)                                        AS pending_amount,
+        END), 0) as pending_amount,
 
         -- Cancelled 
         COUNT(DISTINCT CASE
             WHEN status = 'cancelled' THEN order_id
-        END)                                            AS cancelled_orders,
+        END) as cancelled_orders,
 
         COALESCE(SUM(CASE
             WHEN status = 'cancelled' THEN line_revenue
-        END), 0)                                        AS cancelled_amount,
+        END), 0) as cancelled_amount,
 
         -- ── Totals 
-        COUNT(DISTINCT order_id)                        AS total_orders,
-        SUM(line_revenue)                               AS total_revenue
+        COUNT(DISTINCT order_id) as total_orders,
+        SUM(line_revenue) as total_revenue
 
-    FROM base
-    GROUP BY category_name, yr, qtr
+    from base
+    group by category_name, yr, qtr
 )
 
 SELECT
-    category_name                                       AS category,
+    category_name as category,
     quarter,
     completed_orders,
     completed_amount,
@@ -185,5 +182,5 @@ SELECT
     total_orders,
     total_revenue
 
-FROM aggregated
-ORDER BY category_name, yr, qtr;
+from aggregated
+order by category_name, yr, qtr;
