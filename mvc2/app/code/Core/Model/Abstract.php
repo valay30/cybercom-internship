@@ -49,4 +49,9 @@ class Core_Model_Abstract
         $data = $this->getResource()->load($this, $value, $field);
         $this->_data = $data;
     }
+
+    public function isEmpty()
+    {
+        return empty($this->_data);
+    }
 }

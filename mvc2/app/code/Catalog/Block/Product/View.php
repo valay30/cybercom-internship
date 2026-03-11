@@ -10,7 +10,7 @@ class Catalog_Block_Product_View extends Core_Block_Template
         parent::__construct();
         $this->setTemplate("Catalog/View/Product/view.phtml");
         $this->request = Sdp::getModel("core/request");
-        $this->base = $this->request->getBaseUrl();
+        // $this->base = $this->request->getBaseUrl();
     }
 
     public function _construct()
@@ -32,8 +32,9 @@ class Catalog_Block_Product_View extends Core_Block_Template
     public function getProduct()
     {
         $product = Sdp::getModel("catalog/product");
+        $id = $this->request->getParams()['id'] ?? 1;
         
-        $product->load(1);
+        $product->load($id);
 
         return $product;
     }

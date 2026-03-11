@@ -3,6 +3,11 @@ class Core_Model_Connection_Mysql
 {
     protected $_connection = null;
 
+    public function __construct()
+    {
+        $this->connect();
+    }
+
     public function connect()
     {
         if (is_null($this->_connection)) {
@@ -11,11 +16,6 @@ class Core_Model_Connection_Mysql
         if ($this->_connection->connect_error) {
             die("Connection failed: " . $this->_connection->connect_error);
         }
-    }
-
-    public function __construct()
-    {
-        $this->connect();
     }
 
     public function fetchOne($sql)
