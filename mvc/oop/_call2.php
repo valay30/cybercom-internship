@@ -1,0 +1,1 @@
+$this->$property = implode(" ", $args);

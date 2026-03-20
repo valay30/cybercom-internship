@@ -1,0 +1,15 @@
+{
+    "name": "valay/kafka-solr",
+    "authors": [
+        {
+            "name": "valay30",
+            "email": "patelvalay308@gmail.com"
+        }
+    ],
+    "require": {
+        "kwn/php-rdkafka-stubs": "^0.0.1",
+        "nmred/kafka-php": "^0.2.0",
+        "react/event-loop": "^1.6",
+        "longlang/phpkafka": "^1.2"
+    }
+}
