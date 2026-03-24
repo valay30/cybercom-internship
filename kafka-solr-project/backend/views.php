@@ -29,14 +29,23 @@ if ($method === 'GET') {
         exit();
     }
     $views = loadViews($file);
+    
+    $newName = trim($body['name']);
+    foreach ($views as $existing) {
+        if (strtolower(trim($existing['name'])) === strtolower($newName)) {
+            http_response_code(409); // Conflict
+            echo json_encode(['error' => 'A view with this name already exists']);
+            exit();
+        }
+    }
     $view  = [
         'id'         => uniqid(),
-        'name'       => $body['name'],
+        'name'       => $newName,
         'columns'    => $body['columns']    ?? [],
         'filters'    => $body['filters']    ?? [],
         'sort'       => $body['sort']       ?? '',
         'colWidths'  => $body['colWidths']  ?? (object)[],
-        'created_at' => date('Y-m-d H:i:s'),
+        'created_at' => $body['created_at'] ?? date('Y-m-d H:i:s'),
     ];
     $views[] = $view;
     saveViews($file, $views);

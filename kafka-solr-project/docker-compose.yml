@@ -26,7 +26,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://127.0.0.1:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -40,18 +40,8 @@ services:
     container_name: kafka-setup
     depends_on:
       - kafka
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      echo "Waiting for Kafka..."
-      cub kafka-ready -b kafka:9092 1 60
-      echo "Creating topic with 4 partitions..."
-      kafka-topics --create --if-not-exists \
-        --bootstrap-server kafka:9092 \
-        --topic csvdata \
-        --partitions 4 \
-        --replication-factor 1
-      echo "Topic ready!"
-      kafka-topics --describe --bootstrap-server kafka:9092 --topic csvdata
+    command: >
+      sh -c " echo 'Waiting for Kafka...' && cub kafka-ready -b kafka:9092 1 60 && sleep 10 && echo 'Creating topic with 4 partitions...' && kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --topic csvdata --partitions 4 --replication-factor 1 && echo 'Topic ready!' && kafka-topics --describe --bootstrap-server kafka:9092 --topic csvdata"
 
   solr:
     image: solr:9
@@ -92,10 +82,49 @@ services:
     environment:
       SOLR_URL: http://solr:8983/solr/csvcore
       KAFKA_BROKER: kafka:9092
-      KAFKA_TOPIC: solr-data
+      KAFKA_TOPIC: csvdata
+
+  php-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+    container_name: php-consumer
+    restart: always
+    volumes:
+      - ./:/app
+    depends_on:
+      - kafka
+      - solr
+    environment:
+      SOLR_URL: http://solr:8983/solr/csvcore
+      KAFKA_BROKER: kafka:9092
+      KAFKA_TOPIC: csvdata
+    command: [ "php", "/app/consumer.php" ]
+
+  redis:
+    image: redis:alpine
+    container_name: redis-cache
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - php-api
 
 volumes:
   kafka_data:
   zk_data:
   zk_log:
   solr_data:
+  redis_data:

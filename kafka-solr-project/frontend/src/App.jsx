@@ -15,27 +15,31 @@ import { formatFieldName, getFieldType } from './utils/fieldFormatter';
 const API = 'http://localhost:8000';
 
 export default function App() {
-    const [data, setData]               = useState([]);
-    const [total, setTotal]             = useState(0);
+    const [data, setData] = useState([]);
+    const [total, setTotal] = useState(0);
     const [globalColumns, setGlobalColumns] = useState([]);
-    const [allColumns, setAllColumns]   = useState([]);
+    const [allColumns, setAllColumns] = useState([]);
     const [visibleCols, setVisibleCols] = useState([]);
-    const [filters, setFilters]         = useState([]);
-    const [colWidths, setColWidths]     = useState(() => {
+    const [filters, setFilters] = useState([]);
+    const [colWidths, setColWidths] = useState(() => {
         try { return JSON.parse(localStorage.getItem('dataflow_colWidths') || '{}'); }
         catch { return {}; }
     });
 
-    const [sort, setSort]               = useState('');
-    const [page, setPage]               = useState(0);
-    const [rows, setRows]               = useState(200);
-    const [loading, setLoading]         = useState(false);
-    const [activeTab, setActiveTab]     = useState('table');
-    const [dateRange, setDateRange]     = useState({ from: '', to: '', field: '' });
+    // Role-Based Access Control
+    const [role, setRole] = useState(() => localStorage.getItem('dataflow_role') || 'admin'); // admin, analyst, viewer
+    useEffect(() => { localStorage.setItem('dataflow_role', role); }, [role]);
+
+    const [sort, setSort] = useState('');
+    const [page, setPage] = useState(0);
+    const [rows, setRows] = useState(200);
+    const [loading, setLoading] = useState(false);
+    const [activeTab, setActiveTab] = useState('table');
+    const [dateRange, setDateRange] = useState({ from: '', to: '', field: '' });
     const [selectedFile, setSelectedFile] = useState('');
     const [sourceFiles, setSourceFiles] = useState([]);
-    const [facets, setFacets]           = useState({});
-    const [error, setError]             = useState('');
+    const [facets, setFacets] = useState({});
+    const [error, setError] = useState('');
     const [schemaLoaded, setSchemaLoaded] = useState(false);
 
     // Persist colWidths to localStorage whenever it changes
@@ -50,44 +54,44 @@ export default function App() {
             axios.get(`${API}/search.php?q=*:*&rows=3&fl=*`),   // sample docs to capture real field names
             axios.get(`${API}/search.php?q=*:*&rows=0&facet=true&facet.field=source_file_s&facet.limit=200&facet.sort=index`),
         ])
-        .then(([schemaRes, sampleRes, facetRes]) => {
-            // ── Schema fields ─────────────────────────────────────────────────
-            const schemaFields = (schemaRes.data.fields || [])
-                .map(f => f.name)
-                .filter(f => !['_version_', '_root_'].includes(f));
+            .then(([schemaRes, sampleRes, facetRes]) => {
+                // ── Schema fields ─────────────────────────────────────────────────
+                const schemaFields = (schemaRes.data.fields || [])
+                    .map(f => f.name)
+                    .filter(f => !['_version_', '_root_'].includes(f));
 
-            // ── Sample-doc fields (catches dynamic fields Luke might miss) ────
-            const sampleDocs  = sampleRes.data.response?.docs || [];
-            const sampleFields = sampleDocs.flatMap(d => Object.keys(d))
-                .filter(f => !['_version_', '_root_', 'score', 'id'].includes(f));
+                // ── Sample-doc fields (catches dynamic fields Luke might miss) ────
+                const sampleDocs = sampleRes.data.response?.docs || [];
+                const sampleFields = sampleDocs.flatMap(d => Object.keys(d))
+                    .filter(f => !['_version_', '_root_', 'score', 'id'].includes(f));
 
-            // Merge: schema fields first, then any extras from real docs
-            const merged = [...new Set([...schemaFields, ...sampleFields])];
+                // Merge: schema fields first, then any extras from real docs
+                const merged = [...new Set([...schemaFields, ...sampleFields])];
 
-            setGlobalColumns(merged);
-            setAllColumns(merged);
+                setGlobalColumns(merged);
+                setAllColumns(merged);
 
-            // Default visible columns
-            const defaultCols = merged.filter(f =>
-                ['product_id_i', 'Product_Name_s', 'Brand_Name_s', 'Price_f',
-                 'Map_Price_f', 'Stock_s', 'source_file_s', 'Date_s', 'Date_dt'].includes(f)
-            );
-            setVisibleCols(defaultCols.length ? defaultCols : merged.slice(0, 8));
-            setSchemaLoaded(true);
+                // Default visible columns
+                const defaultCols = merged.filter(f =>
+                    ['product_id_i', 'Product_Name_s', 'Brand_Name_s', 'Price_f',
+                        'Map_Price_f', 'Stock_s', 'source_file_s', 'Date_s', 'Date_dt'].includes(f)
+                );
+                setVisibleCols(defaultCols.length ? defaultCols : merged.slice(0, 8));
+                setSchemaLoaded(true);
 
-            // ── Source file facet ─────────────────────────────────────────────
-            const rawFacets = facetRes.data.facet_counts?.facet_fields?.source_file_s || [];
-            const files = [];
-            for (let i = 0; i < rawFacets.length; i += 2) files.push(rawFacets[i]);
-            setSourceFiles(files.sort());
-        })
-        .catch(() => {
-            setError('Cannot connect to PHP API at ' + API + '. Make sure docker-compose is running.');
-        });
+                // ── Source file facet ─────────────────────────────────────────────
+                const rawFacets = facetRes.data.facet_counts?.facet_fields?.source_file_s || [];
+                const files = [];
+                for (let i = 0; i < rawFacets.length; i += 2) files.push(rawFacets[i]);
+                setSourceFiles(files.sort());
+            })
+            .catch(() => {
+                setError('Cannot connect to PHP API at ' + API + '. Make sure docker-compose is running.');
+            });
     }, []);
 
     // State and Logic for fetching data
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (bypassCache = false) => {
         if (!schemaLoaded) return;
         setLoading(true);
         setError('');
@@ -97,17 +101,18 @@ export default function App() {
             ).slice(0, 3);
 
             const res = await axios.post(`${API}/search.php`, {
-                q:           '*:*',
-                start:       page * rows,
+                q: '*:*',
+                start: page * rows,
                 rows,
-                fl:          '*',
-                sort:        sort || undefined,
-                facet:       facetFields.length ? 'true' : undefined,
+                fl: '*',
+                sort: sort || undefined,
+                facet: facetFields.length ? 'true' : undefined,
                 facet_field: facetFields,
                 // These are now handled safely by the backend
-                filters:      filters,
-                dateRange:    dateRange,
+                filters: filters,
+                dateRange: dateRange,
                 selectedFile: selectedFile,
+                bypass_cache: bypassCache === true,
             });
 
             const solr = res.data;
@@ -132,7 +137,7 @@ export default function App() {
             // Reset to default core columns for global view
             const defaults = globalColumns.filter(f =>
                 ['product_id_i', 'Product_Name_s', 'Brand_Name_s', 'Price_f',
-                 'Map_Price_f', 'Stock_s', 'source_file_s', 'Date_s'].includes(f)
+                    'Map_Price_f', 'Stock_s', 'source_file_s', 'Date_s'].includes(f)
             );
             if (defaults.length > 0) setVisibleCols(defaults);
             return;
@@ -150,20 +155,26 @@ export default function App() {
                 const merged = [...new Set([...docKeys, ...globalDateCols])];
 
                 setAllColumns(merged);
-                
+
                 // Select ALL columns of the selected file to view
                 setVisibleCols(docKeys);
             }
         }).catch(e => console.error("Could not fetch file columns", e));
     }, [selectedFile, globalColumns]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    // Debounce API calls by 300ms
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            fetchData();
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [fetchData]);
 
     const handleSavedView = (view) => {
-        if (view.columns?.length)   setVisibleCols(view.columns);
-        if (view.filters?.length)   setFilters(view.filters);
-        if (view.sort)              setSort(view.sort);
-        if (view.colWidths)         setColWidths(view.colWidths);
+        if (view.columns?.length) setVisibleCols(view.columns);
+        if (view.filters?.length) setFilters(view.filters);
+        if (view.sort) setSort(view.sort);
+        if (view.colWidths) setColWidths(view.colWidths);
         setPage(0);
         setActiveTab('table');
     };
@@ -187,9 +198,9 @@ export default function App() {
     };
 
     const tabs = [
-        { id: 'table',  label: 'Data Table', icon: LayoutDashboard },
-        { id: 'charts', label: 'Charts',      icon: BarChart3 },
-        { id: 'saved',  label: 'Saved Views', icon: BookmarkCheck },
+        { id: 'table', label: 'Data Table', icon: LayoutDashboard },
+        { id: 'charts', label: 'Charts', icon: BarChart3 },
+        { id: 'saved', label: 'Saved Views', icon: BookmarkCheck },
     ];
 
     return (
@@ -225,19 +236,30 @@ export default function App() {
                     ))}
                 </nav>
 
-                <UploadCSV onUploaded={() => {
-                    fetchData();
-                    // Also refresh source files list
-                    axios.get(`${API}/search.php?q=*:*&rows=0&facet=true&facet.field=source_file_s&facet.limit=200&facet.sort=index`)
-                        .then(res => {
-                            const rawFacets = res.data.facet_counts?.facet_fields?.source_file_s || [];
-                            const files = [];
-                            for (let i = 0; i < rawFacets.length; i += 2) files.push(rawFacets[i]);
-                            setSourceFiles(files.sort());
-                        });
-                }} />
+                {role === 'admin' && (
+                    <UploadCSV onUploaded={() => {
+                        fetchData();
+                        // Also refresh source files list
+                        axios.get(`${API}/search.php?q=*:*&rows=0&facet=true&facet.field=source_file_s&facet.limit=200&facet.sort=index`)
+                            .then(res => {
+                                const rawFacets = res.data.facet_counts?.facet_fields?.source_file_s || [];
+                                const files = [];
+                                for (let i = 0; i < rawFacets.length; i += 2) files.push(rawFacets[i]);
+                                setSourceFiles(files.sort());
+                            });
+                    }} />
+                )}
 
-                <button className="refresh-btn" onClick={fetchData} disabled={loading}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingLeft: 12, borderLeft: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Role:</span>
+                    <select className="input" style={{ padding: '4px 8px', fontSize: 12 }} value={role} onChange={e => setRole(e.target.value)}>
+                        <option value="admin">Admin</option>
+                        <option value="analyst">Analyst</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+
+                <button className="refresh-btn" onClick={() => fetchData(true)} disabled={loading}>
                     <RefreshCw size={13} className={loading ? 'spinning' : ''} />
                     Refresh
                 </button>
@@ -318,15 +340,16 @@ export default function App() {
                     />
                 )}
                 {activeTab === 'charts' && (
-                    <ChartRenderer 
-                        data={data} 
-                        columns={visibleCols} 
-                        total={total} 
+                    <ChartRenderer
+                        data={data}
+                        columns={visibleCols}
+                        total={total}
                         onFilter={handleChartFilter}
                     />
                 )}
                 {activeTab === 'saved' && (
                     <SavedViews
+                        role={role}
                         currentFilters={filters}
                         currentColumns={visibleCols}
                         currentSort={sort}

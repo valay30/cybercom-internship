@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ArrowUpDown, ArrowUp, ArrowDown, Download, ExternalLink, Image } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Download, Pin, PinOff } from 'lucide-react';
 import { formatFieldName, formatValue, getRetailerPrefix } from '../utils/fieldFormatter';
 
 export default function DataTable({ data, columns, total, page, rows, loading, sort, onSort, onPage, onRowsChange, onColumnReorder, facets, colWidths = {}, onColWidthsChange }) {
@@ -10,7 +10,62 @@ export default function DataTable({ data, columns, total, page, rows, loading, s
     const [draggedColIdx, setDraggedColIdx] = useState(null);
     const [dragOverColIdx, setDragOverColIdx] = useState(null);
 
+    // ── Column Pinning ────────────────────────────────────────────────────────
+    const [pinnedCols, setPinnedCols] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('dataflow_pinnedCols') || '[]'); }
+        catch { return []; }
+    });
+    useEffect(() => {
+        localStorage.setItem('dataflow_pinnedCols', JSON.stringify(pinnedCols));
+    }, [pinnedCols]);
+
+    const togglePin = (col) => {
+        setPinnedCols(prev =>
+            prev.includes(col) ? prev.filter(c => c !== col) : [...prev, col]
+        );
+    };
+
+    // Reorder columns so pinned ones appear first
+    const orderedColumns = useMemo(() => {
+        const pinned = columns.filter(c => pinnedCols.includes(c));
+        const rest   = columns.filter(c => !pinnedCols.includes(c));
+        return [...pinned, ...rest];
+    }, [columns, pinnedCols]);
+
+    // Default column width (used for sticky left offset calculation)
+    const DEFAULT_COL_WIDTH = 120;
+    const ROW_NUM_COL_WIDTH = 36;
+
+    // Compute sticky left offsets: row-number col + all preceding pinned cols
+    const stickyLeftOf = useMemo(() => {
+        const offsets = {};
+        let left = ROW_NUM_COL_WIDTH;
+        for (const col of orderedColumns) {
+            if (!pinnedCols.includes(col)) break;
+            offsets[col] = left;
+            left += (colWidths[col] || DEFAULT_COL_WIDTH);
+        }
+        return offsets;
+    }, [orderedColumns, pinnedCols, colWidths]);
+
+    // The last pinned column (needs the separator border)
+    const lastPinnedCol = useMemo(() =>
+        [...orderedColumns].reverse().find(c => pinnedCols.includes(c)),
+    [orderedColumns, pinnedCols]);
+
     const [isResizing, setIsResizing] = useState(false);
+    const [scrollTop, setScrollTop] = useState(0);
+
+    const ROW_HEIGHT = 38; 
+    const VIEWPORT_HEIGHT = 600;
+    const OVERSCAN = 15;
+
+    const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
+    const endIndex = Math.min(data.length, Math.floor((scrollTop + VIEWPORT_HEIGHT) / ROW_HEIGHT) + OVERSCAN);
+    const visibleData = data.slice(startIndex, endIndex);
+
+    const topSpacerHeight = startIndex * ROW_HEIGHT;
+    const bottomSpacerHeight = Math.max(0, (data.length - endIndex) * ROW_HEIGHT);
 
     const handleSort = (col) => {
         if (sort === `${col} asc`) onSort(`${col} desc`);
@@ -114,7 +169,7 @@ export default function DataTable({ data, columns, total, page, rows, loading, s
             )}
 
             {/* Table */}
-            <div className="table-wrap" style={{ flex: 1, overflowY: 'auto' }}>
+            <div className="table-wrap" style={{ flex: 1, overflowY: 'auto' }} onScroll={(e) => setScrollTop(e.target.scrollTop)}>
                 {loading ? (
                     <SkeletonRows columns={columns} />
                 ) : data.length === 0 ? (
@@ -123,16 +178,29 @@ export default function DataTable({ data, columns, total, page, rows, loading, s
                     <table>
                         <thead>
                             <tr>
-                                <th style={{ width: 36, textAlign: 'center', color: 'var(--text-dim)', fontSize: 10 }}>
+                                <th style={{
+                                    width: ROW_NUM_COL_WIDTH,
+                                    textAlign: 'center',
+                                    color: 'var(--text-dim)',
+                                    fontSize: 10,
+                                    position: pinnedCols.length > 0 ? 'sticky' : undefined,
+                                    left: pinnedCols.length > 0 ? 0 : undefined,
+                                    zIndex: pinnedCols.length > 0 ? 31 : undefined,
+                                    background: 'var(--bg-secondary)',
+                                }}>
                                     #
                                 </th>
-                                {columns.map((col, idx) => {
+                                {orderedColumns.map((col, idx) => {
                                     const color = getColColor(col);
+                                    const isPinned = pinnedCols.includes(col);
+                                    const isLastPinned = col === lastPinnedCol;
+                                    const stickyLeft = stickyLeftOf[col];
                                     return (
                                         <th key={col} title={col}
-                                            draggable={!isResizing}
+                                            className={`col-th${isPinned ? ' col-pinned' : ''}${isLastPinned ? ' col-pin-last' : ''}`}
+                                            draggable={!isResizing && !isPinned}
                                             onDragStart={(e) => {
-                                                if (isResizing) return;
+                                                if (isResizing || isPinned) return;
                                                 setDraggedColIdx(idx);
                                                 e.dataTransfer.effectAllowed = "move";
                                             }}
@@ -145,7 +213,7 @@ export default function DataTable({ data, columns, total, page, rows, loading, s
                                                 e.preventDefault();
                                                 setDragOverColIdx(null);
                                                 if (draggedColIdx === null || draggedColIdx === idx) return;
-                                                const newCols = [...columns];
+                                                const newCols = [...orderedColumns];
                                                 const [moved] = newCols.splice(draggedColIdx, 1);
                                                 newCols.splice(idx, 0, moved);
                                                 if (onColumnReorder) onColumnReorder(newCols);
@@ -156,32 +224,79 @@ export default function DataTable({ data, columns, total, page, rows, loading, s
                                                 setDragOverColIdx(null);
                                             }}
                                             onDragEnter={(e) => e.preventDefault()}
-                                            style={{ 
-                                                position: 'relative',
-                                                cursor: isResizing ? 'col-resize' : 'grab',
+                                            style={{
+                                                position: isPinned ? 'sticky' : 'relative',
+                                                left: isPinned ? stickyLeft : undefined,
+                                                zIndex: isPinned ? 30 : undefined,
+                                                cursor: isResizing ? 'col-resize' : isPinned ? 'default' : 'grab',
                                                 width: colWidths[col] ? `${colWidths[col]}px` : undefined,
-                                                minWidth: colWidths[col] ? `${colWidths[col]}px` : 100,
-                                                background: dragOverColIdx === idx ? 'var(--bg-hover)' : undefined,
+                                                minWidth: colWidths[col] ? `${colWidths[col]}px` : DEFAULT_COL_WIDTH,
+                                                background: isPinned
+                                                    ? 'var(--bg-secondary)'
+                                                    : dragOverColIdx === idx ? 'var(--bg-hover)' : undefined,
                                                 opacity: draggedColIdx === idx ? 0.4 : 1,
                                                 boxShadow: dragOverColIdx === idx && dragOverColIdx < draggedColIdx ? 'inset 3px 0 0 var(--accent)' :
                                                            dragOverColIdx === idx && dragOverColIdx > draggedColIdx ? 'inset -3px 0 0 var(--accent)' : undefined,
                                             }}>
+                                            {/* Retailer color bar */}
                                             {color && (
                                                 <div style={{
                                                     position: 'absolute', top: 0, left: 0, right: 0,
                                                     height: 2, background: color, borderRadius: '2px 2px 0 0'
                                                 }} />
                                             )}
-                                            <div onClick={() => !isResizing && handleSort(col)} style={{ display: 'flex', alignItems: 'center', gap: 4, paddingTop: color ? 4 : 0 }}>
-                                                <span style={{ color: color || undefined, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {/* Pinned indicator bar */}
+                                            {isPinned && (
+                                                <div style={{
+                                                    position: 'absolute', top: 0, left: 0, right: 0,
+                                                    height: 2,
+                                                    background: color ? color : 'var(--accent)',
+                                                    borderRadius: '2px 2px 0 0',
+                                                }} />
+                                            )}
+                                            <div
+                                                onClick={() => !isResizing && handleSort(col)}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 4,
+                                                    paddingTop: color || isPinned ? 4 : 0,
+                                                    paddingRight: 28, // Leave space for centered pin button
+                                                    overflow: 'hidden',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <span style={{
+                                                    color: color || undefined,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
                                                     {formatFieldName(col)}
                                                 </span>
                                                 {getSortIcon(col)}
                                             </div>
-                                            
+
+                                            {/* Pin / Unpin button — Perfectly vertically centered */}
+                                            <button
+                                                className={`pin-btn${isPinned ? ' pinned' : ''}`}
+                                                title={isPinned ? 'Unpin column' : 'Pin column to left'}
+                                                onClick={(e) => { e.stopPropagation(); togglePin(col); }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: 6,
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)', // Pure vertical centering
+                                                    marginTop: color || isPinned ? 2 : 0, // Compensate for the top color bar
+                                                    zIndex: 40
+                                                }}
+                                            >
+                                                {isPinned ? <PinOff size={13} /> : <Pin size={13} />}
+                                            </button>
+
                                             {/* Column Resizer Handle */}
                                             <div
-                                                title="Double-click to expand, drag to resize"
+                                                title="Drag to resize"
                                                 onMouseDown={(e) => {
                                                     e.preventDefault();
                                                     e.stopPropagation();
@@ -218,18 +333,55 @@ export default function DataTable({ data, columns, total, page, rows, loading, s
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((row, i) => (
-                                <tr key={row.id || i}>
-                                    <td style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: 10, width: 36 }}>
-                                        {startRow + i}
+                            {topSpacerHeight > 0 && (
+                                <tr style={{ height: `${topSpacerHeight}px` }}>
+                                    <td colSpan={columns.length + 1} style={{ padding: 0, border: 'none' }}>
+                                        <div style={{ height: `${topSpacerHeight}px` }} />
                                     </td>
-                                    {columns.map(col => (
-                                        <td key={col}>
-                                            <CellRenderer field={col} value={row[col]} />
-                                        </td>
-                                    ))}
                                 </tr>
-                            ))}
+                            )}
+                            {visibleData.map((row, i) => {
+                                const absIndex = startIndex + i;
+                                return (
+                                    <tr key={row.id || absIndex} style={{ height: `${ROW_HEIGHT}px` }}>
+                                        <td style={{
+                                            textAlign: 'center', color: 'var(--text-dim)', fontSize: 10,
+                                            width: ROW_NUM_COL_WIDTH, minWidth: ROW_NUM_COL_WIDTH,
+                                            position: pinnedCols.length > 0 ? 'sticky' : undefined,
+                                            left: pinnedCols.length > 0 ? 0 : undefined,
+                                            zIndex: pinnedCols.length > 0 ? 20 : undefined,
+                                            background: 'var(--bg-card)',
+                                        }}>
+                                            {startRow + absIndex}
+                                        </td>
+                                        {orderedColumns.map(col => {
+                                            const isPinned = pinnedCols.includes(col);
+                                            const isLastPinned = col === lastPinnedCol;
+                                            return (
+                                                <td
+                                                    key={col}
+                                                    className={isPinned ? 'col-pinned' : isLastPinned ? 'col-pin-last' : ''}
+                                                    style={{
+                                                        position: isPinned ? 'sticky' : undefined,
+                                                        left: isPinned ? stickyLeftOf[col] : undefined,
+                                                        zIndex: isPinned ? 20 : undefined,
+                                                        background: isPinned ? 'var(--bg-card)' : undefined,
+                                                    }}
+                                                >
+                                                    <CellRenderer field={col} value={row[col]} />
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                );
+                            })}
+                            {bottomSpacerHeight > 0 && (
+                                <tr style={{ height: `${bottomSpacerHeight}px` }}>
+                                    <td colSpan={columns.length + 1} style={{ padding: 0, border: 'none' }}>
+                                        <div style={{ height: `${bottomSpacerHeight}px` }} />
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 )}

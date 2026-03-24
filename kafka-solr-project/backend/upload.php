@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 $kafkaBroker = getenv('KAFKA_BROKER') ?: 'kafka:9092';
-$topic       = getenv('KAFKA_TOPIC')  ?: 'solr-data';
+$topic       = getenv('KAFKA_TOPIC')  ?: 'csvdata';
 $batchSize   = 500;
 
 // ── Validate upload ───────────────────────────────────────────────────────────

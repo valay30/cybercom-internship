@@ -1,5 +1,5 @@
 <?php
- 
+
 /**
  * Kafka Consumer → Solr Indexer
  * Reads from Kafka topic and pushes to Solr in batches
@@ -7,25 +7,25 @@
  *
  * Usage: php consumer.php
  */
- 
+
 require_once __DIR__ . '/vendor/autoload.php';
- 
+
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
- 
+
 // ── Logger ────────────────────────────────────────────────────────────────────
 $log = new Logger('consumer');
 $log->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
- 
+
 // ── Config ────────────────────────────────────────────────────────────────────
-$kafkaBroker = getenv('KAFKA_BROKER') ?: '127.0.0.1:9092';
-$topic       = getenv('KAFKA_TOPIC')  ?: 'solr-data';
+$kafkaBroker = getenv('KAFKA_BROKER') ?: '127.0.0.1:29092';
+$topic       = getenv('KAFKA_TOPIC')  ?: 'csvdata';
 $dlqTopic    = $topic . '-dlq';
 $solrUrl     = getenv('SOLR_URL')     ?: 'http://localhost:8983/solr/csvcore';
 $groupId     = getenv('KAFKA_GROUP')  ?: 'solr-indexer-group';
 $batchSize   = (int)(getenv('BATCH_SIZE') ?: 1000);
 $commitWithin = (int)(getenv('COMMIT_WITHIN') ?: 5000);
- 
+
 $log->info("🚀 Consumer starting", [
     'broker'  => $kafkaBroker,
     'topic'   => $topic,
@@ -33,7 +33,7 @@ $log->info("🚀 Consumer starting", [
     'solr'    => $solrUrl,
     'batch'   => $batchSize,
 ]);
- 
+
 // ── Kafka Consumer Config ─────────────────────────────────────────────────────
 $conf = new RdKafka\Conf();
 $conf->set('metadata.broker.list', $kafkaBroker);
@@ -45,11 +45,11 @@ $conf->set('session.timeout.ms', '30000');
 $conf->set('max.poll.interval.ms', '300000');
 $conf->set('socket.timeout.ms', '60000');
 $conf->set('fetch.wait.max.ms', '500');
- 
+
 $conf->setErrorCb(function ($kafka, $err, $reason) use ($log) {
     $log->error("Kafka error: $reason", ['code' => $err]);
 });
- 
+
 $conf->setRebalanceCb(function (RdKafka\KafkaConsumer $kafka, $err, array $partitions = null) use ($log) {
     switch ($err) {
         case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
@@ -65,19 +65,19 @@ $conf->setRebalanceCb(function (RdKafka\KafkaConsumer $kafka, $err, array $parti
             break;
     }
 });
- 
+
 // ── Setup Consumer ────────────────────────────────────────────────────────────
 $consumer = new RdKafka\KafkaConsumer($conf);
 $consumer->subscribe([$topic]);
- 
+
 // ── DLQ Producer ─────────────────────────────────────────────────────────────
 $dlqConf = new RdKafka\Conf();
 $dlqConf->set('metadata.broker.list', $kafkaBroker);
 $dlqProducer = new RdKafka\Producer($dlqConf);
 $dlqKafkaTopic = $dlqProducer->newTopic($dlqTopic);
- 
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
- 
+
 function getSolrSuffix(mixed $value): string
 {
     if (is_int($value))   return '_i';
@@ -86,22 +86,22 @@ function getSolrSuffix(mixed $value): string
     if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}T/', $value)) return '_dt';
     return '_s';
 }
- 
+
 function sanitizeKey(string $key): string
 {
     $key = preg_replace('/[^a-zA-Z0-9_]/', '_', $key);
     $key = preg_replace('/_+/', '_', $key);
     return trim($key, '_');
 }
- 
+
 function buildSolrDoc(array $data): array
 {
     $doc = [];
- 
+
     foreach ($data as $rawKey => $value) {
         $cleanKey  = sanitizeKey((string)$rawKey);
         $cleanValue = ($value === null) ? '' : $value;
- 
+
         // Special reserved fields
         if (in_array($cleanKey, ['source_file', '_source_file'])) {
             $doc['source_file_s'] = $cleanValue;
@@ -115,9 +115,9 @@ function buildSolrDoc(array $data): array
             // stored separately
             continue;
         }
- 
+
         $suffix = getSolrSuffix($value);
- 
+
         // Date detection for mm/dd/yyyy or dd/mm/yyyy hh:mm formats
         if ($suffix === '_s' && is_string($cleanValue)) {
             if (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/', trim($cleanValue), $m)) {
@@ -126,7 +126,9 @@ function buildSolrDoc(array $data): array
                 $yr  = $m[3];
                 // simple heuristic for EU vs US dates (if month > 12, swap)
                 if ((int)$mon > 12 && (int)$day <= 12) {
-                    $tmp = $mon; $mon = $day; $day = $tmp;
+                    $tmp = $mon;
+                    $mon = $day;
+                    $day = $tmp;
                 }
                 $hr  = isset($m[4]) ? str_pad($m[4], 2, '0', STR_PAD_LEFT) : '00';
                 $min = isset($m[5]) ? str_pad($m[5], 2, '0', STR_PAD_LEFT) : '00';
@@ -136,24 +138,24 @@ function buildSolrDoc(array $data): array
                 continue;
             }
         }
- 
+
         $doc[$cleanKey . $suffix] = $cleanValue;
     }
- 
+
     // Build stable ID for deduplication
     $productId = $data['product_id'] ?? $data['id'] ?? null;
     $sourceFile = $data['_source_file'] ?? $data['source_file'] ?? 'unknown';
     $doc['id'] = 'doc_' . md5($sourceFile . '_' . ($productId ?? uniqid()));
- 
+
     return $doc;
 }
- 
+
 function sendBatchToSolr(array $batch, string $solrUrl, int $commitWithin, Logger $log): bool
 {
     if (empty($batch)) return true;
- 
+
     $url = "$solrUrl/update/json/docs?commitWithin=$commitWithin&overwrite=true";
- 
+
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL            => $url,
@@ -164,12 +166,12 @@ function sendBatchToSolr(array $batch, string $solrUrl, int $commitWithin, Logge
         CURLOPT_TIMEOUT        => 30,
         CURLOPT_CONNECTTIMEOUT => 10,
     ]);
- 
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr  = curl_error($ch);
     curl_close($ch);
- 
+
     if ($curlErr) {
         $log->error("cURL error: $curlErr");
         return false;
@@ -178,11 +180,11 @@ function sendBatchToSolr(array $batch, string $solrUrl, int $commitWithin, Logge
         $log->error("Solr error HTTP $httpCode", ['response' => substr($response, 0, 300)]);
         return false;
     }
- 
+
     $log->info("✅ Indexed batch", ['docs' => count($batch)]);
     return true;
 }
- 
+
 function sendToDlq(RdKafka\Producer $dlqProducer, mixed $dlqTopic, string $payload, string $reason, Logger $log): void
 {
     $wrapper = json_encode([
@@ -194,24 +196,24 @@ function sendToDlq(RdKafka\Producer $dlqProducer, mixed $dlqTopic, string $paylo
     $dlqProducer->flush(5000);
     $log->warning("📤 Sent to DLQ: $reason");
 }
- 
+
 // ── Main Consume Loop ─────────────────────────────────────────────────────────
 $batch         = [];
 $totalIndexed  = 0;
 $totalErrors   = 0;
 $msgBuffer     = [];    // Keep messages for commit after success
- 
+
 $log->info("🎧 Listening for messages...");
- 
+
 while (true) {
     $message = $consumer->consume(3000);
- 
+
     switch ($message->err) {
         case RD_KAFKA_RESP_ERR_NO_ERROR:
             $payload = $message->payload;
- 
+
             $data = json_decode($payload, true);
- 
+
             if (!$data || !is_array($data)) {
                 $log->warning("Invalid JSON payload, sending to DLQ");
                 sendToDlq($dlqProducer, $dlqKafkaTopic, $payload, 'invalid_json', $log);
@@ -220,7 +222,7 @@ while (true) {
                 $totalErrors++;
                 break;
             }
- 
+
             try {
                 $doc = buildSolrDoc($data);
                 $batch[]    = $doc;
@@ -231,7 +233,7 @@ while (true) {
                 $totalErrors++;
                 break;
             }
- 
+
             if (count($batch) >= $batchSize) {
                 $success = sendBatchToSolr($batch, $solrUrl, $commitWithin, $log);
                 if ($success) {
@@ -252,7 +254,7 @@ while (true) {
                 $msgBuffer = [];
             }
             break;
- 
+
         case RD_KAFKA_RESP_ERR__PARTITION_EOF:
             // Flush remaining batch on EOF
             if (!empty($batch)) {
@@ -269,7 +271,7 @@ while (true) {
             }
             $log->debug("Partition EOF — waiting for new messages...");
             break;
- 
+
         case RD_KAFKA_RESP_ERR__TIMED_OUT:
             // Flush pending batch on timeout too
             if (!empty($batch)) {
@@ -285,7 +287,7 @@ while (true) {
                 $msgBuffer = [];
             }
             break;
- 
+
         default:
             $log->error("Kafka error: " . $message->errstr(), ['code' => $message->err]);
             break;

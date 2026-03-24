@@ -7,8 +7,8 @@ RUN a2enmod rewrite
 RUN apt-get update && apt-get install -y \
     librdkafka-dev \
     libcurl4-openssl-dev \
-    && pecl install rdkafka \
-    && docker-php-ext-enable rdkafka \
+    && pecl install rdkafka redis \
+    && docker-php-ext-enable rdkafka redis \
     && docker-php-ext-install curl
 
 # Allow .htaccess overrides

@@ -45,19 +45,19 @@ export default function DateRangeFilter({ columns, value, onChange, matchCount }
 
   // Quick-select presets update draft only
   const applyPreset = (days) => {
-    const to   = new Date();
+    const to = new Date();
     const from = new Date(Date.now() - days * 86400000);
     setDraft(prev => ({
       field: prev.field || dateCols[0] || '',
-      from:  from.toISOString().split('T')[0],
-      to:    to.toISOString().split('T')[0],
+      from: from.toISOString().split('T')[0],
+      to: to.toISOString().split('T')[0],
     }));
   };
 
   const draftIsApplied =
     draft.field === value.field &&
-    draft.from  === value.from  &&
-    draft.to    === value.to;
+    draft.from === value.from &&
+    draft.to === value.to;
 
   return (
     <div className="dropdown-panel">
@@ -148,10 +148,10 @@ export default function DateRangeFilter({ columns, value, onChange, matchCount }
                 <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>Quick Select</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {[
-                    { label: 'Last 7 days',  days: 7 },
+                    { label: 'Last 7 days', days: 7 },
                     { label: 'Last 30 days', days: 30 },
                     { label: 'Last 90 days', days: 90 },
-                    { label: 'This year',    days: 365 },
+                    { label: 'This year', days: 365 },
                   ].map(({ label, days }) => (
                     <button key={label} className="btn btn-sm" onClick={() => applyPreset(days)}>
                       {label}

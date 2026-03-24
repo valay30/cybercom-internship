@@ -20,7 +20,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 .app {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Space Grotesk', sans-serif;
@@ -123,7 +124,7 @@
 .main-content {
   flex: 1;
   padding: 20px 24px;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* ── Card ───────────────────────────────── */
@@ -185,7 +186,15 @@ table {
   font-size: 13px;
 }
 
-thead tr { border-bottom: 1px solid var(--border); }
+thead tr {
+  border-bottom: 1px solid var(--border);
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
 th {
   padding: 10px 14px;
@@ -404,4 +413,77 @@ tr:last-child td { border-bottom: none; }
 
 .top-value-row:hover {
   background: var(--bg-hover) !important;
+}
+
+/* ── Column Pinning ─────────────────────── */
+
+/* Pinned th/td: solid background + right-shadow separator on the last one */
+th.col-pinned,
+td.col-pinned {
+  background: var(--bg-secondary);
+}
+td.col-pinned {
+  background: var(--bg-card);
+}
+tr:hover td.col-pinned {
+  background: var(--bg-hover);
+}
+
+/* Separator line after last pinned column */
+th.col-pin-last,
+td.col-pin-last {
+  box-shadow: 4px 0 10px -2px rgba(0, 0, 0, 0.5), 2px 0 0 0 var(--border);
+}
+
+/* Pin toggle button */
+.pin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0; /* Fully hidden by default */
+  transition: all 0.2s ease;
+}
+
+/* Show pin button more clearly on header hover */
+th:hover .pin-btn,
+th .pin-btn:focus {
+  opacity: 1; /* Show on hover of the header */
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+/* Always show when already pinned */
+.pin-btn.pinned {
+  opacity: 1;
+  color: var(--accent);
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.pin-btn:hover {
+  opacity: 1 !important;
+  color: var(--accent) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  background: rgba(99, 102, 241, 0.2) !important;
+  scale: 1.1; /* Modern scale property to avoid transform conflict */
+}
+
+/* Pinned column header top accent bar */
+th.col-pinned::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(99, 102, 241, 0.3);
 }

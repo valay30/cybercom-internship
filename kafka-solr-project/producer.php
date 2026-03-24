@@ -17,8 +17,8 @@ $log = new Logger('producer');
 $log->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
  
 // ── Config ────────────────────────────────────────────────────────────────────
-$kafkaBroker = getenv('KAFKA_BROKER') ?: '127.0.0.1:9092';
-$topic       = getenv('KAFKA_TOPIC')  ?: 'solr-data';
+$kafkaBroker = getenv('KAFKA_BROKER') ?: '127.0.0.1:29092';
+$topic       = getenv('KAFKA_TOPIC')  ?: 'csvdata';
 $csvFolder   = $argv[1]              ?? (__DIR__ . '/csvfiles');
 $batchSize   = (int)(getenv('BATCH_SIZE') ?: 500);
 $maxRetries  = 3;

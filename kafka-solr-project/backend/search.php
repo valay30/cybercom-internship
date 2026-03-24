@@ -3,13 +3,17 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit(); }
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 /**
  * Advanced Solr Query Builder (Backend implementation)
  * Translates abstract filter JSON into safe Solr filter queries.
  */
-function buildSolrFq(array $filters): ?string {
+function buildSolrFq(array $filters): ?string
+{
     $clauses = [];
 
     foreach ($filters as $f) {
@@ -41,22 +45,39 @@ function buildSolrFq(array $filters): ?string {
             $escaped = preg_quote($val, '/'); // Simplified escaping
             $escaped = str_replace([' ', ':'], ['\\ ', '\\:'], $val); // Basic Solr escapes
             $clause = "{$field}:*{$escaped}*";
-        }
-        elseif ($op === 'starts' && !empty($val)) {
+        } elseif ($op === 'starts' && !empty($val)) {
             $escaped = str_replace([' ', ':'], ['\\ ', '\\:'], $val);
             $clause = "{$field}:{$escaped}*";
         }
         // 3. Comparison
         elseif ($op === 'gt' && !empty($cleanVal)) {
             $clause = "{$field}:[{$cleanVal} TO *]";
-        }
-        elseif ($op === 'lt' && !empty($cleanVal)) {
+        } elseif ($op === 'lt' && !empty($cleanVal)) {
             $clause = "{$field}:[* TO {$cleanVal}]";
         }
         // 4. Exact match
         elseif ($op === 'exact' && $val !== '') {
-            $safeVal = ($type === 'string' || $type === 'boolean') ? "\"{$cleanVal}\"" : $cleanVal;
-            $clause = "{$field}:{$safeVal}";
+            if ($type === 'date') {
+                if (preg_match('/^W(\d{4}-\d{2}-\d{2})$/', $cleanVal, $m)) {
+                    // Week: W2026-03-08
+                    $clause = "{$field}:[{$m[1]}T00:00:00Z TO {$m[1]}T00:00:00Z+7DAYS-1MILLISECOND]";
+                } elseif (preg_match('/^\d{4}-\d{2}-\d{2}$/', $cleanVal)) {
+                    // Day: 2026-03-10
+                    $clause = "{$field}:[{$cleanVal}T00:00:00Z TO {$cleanVal}T23:59:59.999Z]";
+                } elseif (preg_match('/^\d{4}-\d{2}$/', $cleanVal)) {
+                    // Month: 2026-03
+                    $clause = "{$field}:[{$cleanVal}-01T00:00:00Z TO {$cleanVal}-01T00:00:00Z+1MONTH-1MILLISECOND]";
+                } elseif (preg_match('/^\d{4}$/', $cleanVal)) {
+                    // Year: 2026
+                    $clause = "{$field}:[{$cleanVal}-01-01T00:00:00Z TO {$cleanVal}-01-01T00:00:00Z+1YEAR-1MILLISECOND]";
+                } else {
+                    $safeVal = trim($cleanVal, 'Z') . 'Z'; 
+                    $clause = "{$field}:{$safeVal}";
+                }
+            } else {
+                $safeVal = ($type === 'string' || $type === 'boolean') ? "\"{$cleanVal}\"" : $cleanVal;
+                $clause = "{$field}:{$safeVal}";
+            }
         }
 
         if ($clause) {
@@ -86,7 +107,8 @@ function buildSolrFq(array $filters): ?string {
 /**
  * Handle Date Range (Specific)
  */
-function buildDateRangeFq(array $dr): ?string {
+function buildDateRangeFq(array $dr): ?string
+{
     if (empty($dr['field']) || empty($dr['from'])) return null;
 
     $field = $dr['field'];
@@ -98,8 +120,8 @@ function buildDateRangeFq(array $dr): ?string {
         $isoFrom = date('Y-m-d\TH:i:s\Z', strtotime($from));
         $isoTo   = ($to === '*') ? '*' : date('Y-m-d\TH:i:s\Z', strtotime($to . ' 23:59:59'));
         return "{$field}:[{$isoFrom} TO {$isoTo}]";
-    } 
-    
+    }
+
     // String dates (_s) fallback to pattern match or wildcard range
     return "{$field}:[{$from} TO {$to}]";
 }
@@ -119,6 +141,7 @@ $fl           = $input['fl']           ?? '*';
 $facet        = $input['facet']        ?? '';
 $facetFields  = $input['facet_field']  ?? [];
 $selectedFile = $input['selectedFile'] ?? '';
+$bypassCache  = !empty($input['bypass_cache']);
 
 // Build FQ array
 $fq = [];
@@ -141,8 +164,9 @@ if (!empty($input['dateRange']) && is_array($input['dateRange'])) {
     if ($builtDr) $fq[] = $builtDr;
 }
 
-// 4. Selected file
-if ($selectedFile) {
+// 4. Selected File global filter (NEW)
+if (!empty($selectedFile)) {
+    // Exact match for the source file
     $fq[] = "source_file_s:\"{$selectedFile}\"";
 }
 
@@ -175,6 +199,29 @@ foreach ($facetFields as $ff) {
     if ($ff) $url .= '&facet.field=' . urlencode($ff);
 }
 
+// ── Caching Layer (Redis) ──────────────────────────────────────────────────
+$redis = new Redis();
+$cacheEnabled = false;
+try {
+    if ($redis->connect('redis', 6379)) {
+        $cacheEnabled = true;
+    }
+} catch (Exception $e) {
+}
+
+// Create unique key for the query
+$cacheKey = 'search_' . md5($url . serialize($fq) . serialize($facetFields));
+
+if ($cacheEnabled && !$bypassCache) {
+    $cachedData = $redis->get($cacheKey);
+    if ($cachedData) {
+        header('X-Cache-Status: HIT');
+        header('Cache-Control: public, max-age=60'); // Browser cache for 60s
+        echo $cachedData;
+        exit();
+    }
+}
+
 $context  = stream_context_create(['http' => ['timeout' => 30, 'method' => 'GET']]);
 $response = @file_get_contents($url, false, $context);
 
@@ -184,4 +231,11 @@ if (!$response) {
     exit();
 }
 
+// Save result to cache for 5 minutes (300 seconds)
+if ($cacheEnabled) {
+    $redis->setex($cacheKey, 300, $response);
+}
+
+header('X-Cache-Status: MISS');
+header('Cache-Control: public, max-age=60');
 echo $response;

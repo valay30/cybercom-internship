@@ -4,11 +4,12 @@ import axios from 'axios';
 
 const API = 'http://localhost:8000';
 
-export default function SavedViews({ currentFilters, currentColumns, currentSort, currentColWidths = {}, onLoad }) {
+export default function SavedViews({ role, currentFilters, currentColumns, currentSort, currentColWidths = {}, onLoad }) {
   const [views, setViews]     = useState([]);
   const [name, setName]       = useState('');
   const [saving, setSaving]   = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const fetchViews = async () => {
     setLoading(true);
@@ -26,11 +27,20 @@ export default function SavedViews({ currentFilters, currentColumns, currentSort
   useEffect(() => { fetchViews(); }, []);
 
   const saveView = async () => {
-    if (!name.trim()) return;
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+    
+    if (views.some(v => v.name.toLowerCase() === trimmedName.toLowerCase())) {
+        const msg = 'A view with this name already exists.';
+        setErrorMsg(msg);
+        return;
+    }
+    
+    setErrorMsg('');
     setSaving(true);
     const view = {
       id:          Date.now().toString(),
-      name:        name.trim(),
+      name:        trimmedName,
       columns:     currentColumns,
       filters:     currentFilters,
       sort:        currentSort,
@@ -39,12 +49,26 @@ export default function SavedViews({ currentFilters, currentColumns, currentSort
     };
     try {
       await axios.post(`${API}/views.php`, view);
-    } catch {
-      // Fallback to localStorage
+    } catch (err) {
+      if (err.response && err.response.status === 409) {
+          const msg = err.response.data.error || 'A view with this name already exists.';
+          setErrorMsg(msg);
+          setSaving(false);
+          return;
+      }
+      
+      // Fallback to localStorage ONLY for offline/network issues
       const local = JSON.parse(localStorage.getItem('saved_views') || '[]');
+      if (local.some(v => v.name.toLowerCase() === trimmedName.toLowerCase())) {
+          setErrorMsg('A view with this name already exists locally.');
+          setSaving(false);
+          return;
+      }
+      
       local.push(view);
       localStorage.setItem('saved_views', JSON.stringify(local));
     }
+    
     setName('');
     setSaving(false);
     fetchViews();
@@ -62,29 +86,32 @@ export default function SavedViews({ currentFilters, currentColumns, currentSort
 
   return (
     <div>
-      {/* Save current view */}
-      <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-        <div className="section-title" style={{ marginBottom: 12 }}>Save Current View</div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <input className="input" placeholder="View name..." value={name}
-            onChange={e => setName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && saveView()}
-            style={{ flex: 1, maxWidth: 320 }} />
-          <button className="btn btn-primary" onClick={saveView} disabled={saving || !name.trim()}>
-            <BookmarkPlus size={14} />
-            {saving ? 'Saving...' : 'Save View'}
-          </button>
-        </div>
-        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Current snapshot:</span>
-          <span className="tag">{currentColumns.length} columns</span>
-          <span className="tag">{currentFilters.length} filters</span>
-          {Object.keys(currentColWidths).length > 0 && (
-            <span className="tag">↔ {Object.keys(currentColWidths).length} widths</span>
-          )}
-          {currentSort && <span className="tag">sort: {currentSort}</span>}
-        </div>
-      </div>
+      {/* Save current view (Hidden for viewers) */}
+      {role !== 'viewer' && (
+          <div className="card" style={{ padding: 20, marginBottom: 20 }}>
+            <div className="section-title" style={{ marginBottom: 12 }}>Save Current View</div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <input className="input" placeholder="View name..." value={name}
+                onChange={e => { setName(e.target.value); setErrorMsg(''); }}
+                onKeyDown={e => e.key === 'Enter' && saveView()}
+                style={{ flex: 1, maxWidth: 320, borderColor: errorMsg ? 'var(--danger)' : undefined }} />
+              <button className="btn btn-primary" onClick={saveView} disabled={saving || !name.trim()}>
+                <BookmarkPlus size={14} />
+                {saving ? 'Saving...' : 'Save View'}
+              </button>
+            </div>
+            {errorMsg && <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>{errorMsg}</div>}
+            <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Current snapshot:</span>
+              <span className="tag">{currentColumns.length} columns</span>
+              <span className="tag">{currentFilters.length} filters</span>
+              {Object.keys(currentColWidths).length > 0 && (
+                <span className="tag">↔ {Object.keys(currentColWidths).length} widths</span>
+              )}
+              {currentSort && <span className="tag">sort: {currentSort}</span>}
+            </div>
+          </div>
+      )}
 
       {/* Views list */}
       <div className="section-title">Saved Views ({views.length})</div>
@@ -115,9 +142,11 @@ export default function SavedViews({ currentFilters, currentColumns, currentSort
                 <button className="btn btn-sm btn-primary" onClick={() => onLoad(view)} style={{ flex: 1, justifyContent: 'center' }}>
                   <Play size={12} /> Load View
                 </button>
-                <button className="btn btn-sm btn-danger" onClick={() => deleteView(view.id)}>
-                  <Trash2 size={12} />
-                </button>
+                {role !== 'viewer' && (
+                    <button className="btn btn-sm btn-danger" onClick={() => deleteView(view.id)}>
+                      <Trash2 size={12} />
+                    </button>
+                )}
               </div>
             </div>
           ))}

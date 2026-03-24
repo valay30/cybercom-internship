@@ -27,18 +27,16 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
   // -- State --
   const [chartType, setChartType]   = useState('Bar');
   const [xAxis, setXAxis]           = useState('');
-  const [yAxes, setYAxes]           = useState([]); // Multi-metrics support
-  const [groupBy, setGroupBy]       = useState(''); // Multi-series support
-  const [timeStep, setTimeStep]     = useState('Day'); // For date-trend
+  const [yAxes, setYAxes]           = useState([]); 
+  const [groupBy, setGroupBy]       = useState(''); 
+  const [timeStep, setTimeStep]     = useState('Day'); 
   const [exporting, setExporting]   = useState(false);
   const [limit, setLimit]           = useState(15);
 
-  // -- Column categorization --
   const numericCols = useMemo(() => columns.filter(c => c.endsWith('_i') || c.endsWith('_f')), [columns]);
   const dateCols    = useMemo(() => columns.filter(c => c.endsWith('_dt') || c.toLowerCase().includes('date') || c.toLowerCase().includes('time')), [columns]);
   const stringCols  = useMemo(() => columns.filter(c => !numericCols.includes(c) && !dateCols.includes(c)), [columns, numericCols, dateCols]);
 
-  // -- Defaults --
   const activeX = xAxis || dateCols[0] || stringCols[0] || columns[0] || '';
   const activeYs = yAxes.length > 0 ? yAxes : (numericCols[0] ? [numericCols[0]] : []);
   const isDateX  = dateCols.includes(activeX);
@@ -184,33 +182,53 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Calendar size={14} color="var(--text-dim)" />
-            <select className="input input-sm" value={activeX} onChange={e => setXAxis(e.target.value)}>
-              <option disabled>Dimension (X Axis)</option>
-              <optgroup label="Dates">
-                {dateCols.map(c => <option key={c} value={c}>{formatFieldName(c)}</option>)}
-              </optgroup>
-              <optgroup label="Categories">
-                {stringCols.map(c => <option key={c} value={c}>{formatFieldName(c)}</option>)}
-              </optgroup>
-            </select>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 9, fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase' }}>X-Axis (Dimension)</label>
+              <select className="input input-sm" value={activeX} onChange={e => setXAxis(e.target.value)} style={{ width: 160 }}>
+                <optgroup label="Dates">
+                  {dateCols.map(c => <option key={c} value={c}>{formatFieldName(c)}</option>)}
+                </optgroup>
+                <optgroup label="Categories">
+                  {stringCols.map(c => <option key={c} value={c}>{formatFieldName(c)}</option>)}
+                </optgroup>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 9, fontWeight: 800, color: 'var(--success)', textTransform: 'uppercase' }}>Y-Axis (Metric)</label>
+              <select 
+                className="input input-sm" 
+                value={yAxes[0] || ''} 
+                onChange={e => setYAxes(e.target.value ? [e.target.value] : [])}
+                style={{ width: 160 }}
+              >
+                <option value=""># Record Count</option>
+                {numericCols.map(c => <option key={c} value={c}>{formatFieldName(c)}</option>)}
+              </select>
+            </div>
 
             {isDateX && (
-              <select className="input input-sm" value={timeStep} onChange={e => setTimeStep(e.target.value)} style={{ borderColor: 'var(--accent)' }}>
-                <option value="Day">Group by Day</option>
-                <option value="Week">Group by Week</option>
-                <option value="Month">Group by Month</option>
-                <option value="Year">Group by Year</option>
-              </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 9, fontWeight: 800, color: 'var(--accent2)', textTransform: 'uppercase' }}>Interval</label>
+                <select className="input input-sm" value={timeStep} onChange={e => setTimeStep(e.target.value)}>
+                  <option value="Day">Daily</option>
+                  <option value="Week">Weekly</option>
+                  <option value="Month">Monthly</option>
+                  <option value="Year">Yearly</option>
+                </select>
+              </div>
             )}
 
-            <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 4px' }} />
+            <div style={{ width: 1, height: 30, background: 'var(--border)', margin: '0 4px' }} />
 
-            <select className="input input-sm" value={groupBy} onChange={e => setGroupBy(e.target.value)}>
-              <option value="">No Series Grouping</option>
-              {stringCols.slice(0, 10).map(c => <option key={c} value={c}>Grouped by {formatFieldName(c)}</option>)}
-            </select>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 9, fontWeight: 800, color: 'var(--warning)', textTransform: 'uppercase' }}>Series (Group By)</label>
+              <select className="input input-sm" value={groupBy} onChange={e => setGroupBy(e.target.value)} style={{ width: 160 }}>
+                <option value="">No Grouping</option>
+                {stringCols.slice(0, 15).map(c => <option key={c} value={c}>{formatFieldName(c)}</option>)}
+              </select>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
@@ -221,27 +239,21 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
           </div>
         </div>
 
-        {/* Multi-Y Selection Chips */}
+        {/* Advanced Multi-Metric Multi-Select (Optional) */}
         {!groupBy && (
           <div style={{ marginTop: 12, pt: 12, borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 600 }}>METRICS:</span>
+            <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 800 }}>QUICK COMPARE:</span>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <button 
-                className={`tag-btn ${yAxes.length === 0 ? 'active' : ''}`}
-                onClick={() => setYAxes([])}
-              >
-                Record Count
-              </button>
-              {numericCols.map(c => (
+              {numericCols.slice(0, 6).map(c => (
                 <button 
                   key={c}
                   className={`tag-btn ${yAxes.includes(c) ? 'active' : ''}`}
                   onClick={() => {
                     const next = yAxes.includes(c) ? yAxes.filter(x => x !== c) : [...yAxes, c];
-                    setYAxes(next.slice(0, 3)); // Max 3
+                    setYAxes(next.slice(0, 3)); 
                   }}
                 >
-                  {formatFieldName(c)}
+                  + {formatFieldName(c)}
                 </button>
               ))}
             </div>
@@ -254,7 +266,8 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
         <div className="chart-main card">
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between' }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-              {isDateX ? 'Trend Analysis' : 'Comparison Analysis'}: {formatFieldName(activeX)}
+              {isDateX ? '📅 Trend' : '📊 Analysis'}: {formatFieldName(activeX)} 
+              {activeYs.length > 0 && ` vs ${activeYs.map(y => formatFieldName(y)).join(', ')}`}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>
               Analytics on <strong>{data.length.toLocaleString()}</strong> rows
@@ -269,28 +282,43 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
                 {(() => {
                   const props = { 
                     data: aggregated.data, 
-                    margin: { top: 10, right: 30, left: 0, bottom: 40 },
+                    margin: { top: 20, right: 30, left: 30, bottom: 60 },
                     onClick: (e) => e && handlePointClick(e.activePayload?.[0]?.payload)
                   };
                   
+                  const dataKeys = groupBy ? aggregated.series : (yAxes.length > 0 ? yAxes : ['count']);
+
                   const shared = (
                     <>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                       <XAxis 
                         dataKey="name" 
                         tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
-                        angle={-30} 
+                        angle={-45} 
                         textAnchor="end" 
-                        interval={Math.ceil(aggregated.data.length / 15)}
+                        height={70}
+                        interval={0} 
+                        label={{ value: formatFieldName(activeX), position: 'insideBottom', offset: -10, fill: 'var(--accent)', fontSize: 11, fontWeight: 700 }}
                       />
-                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
+                      {dataKeys.map((yKey, idx) => (
+                          <YAxis 
+                            key={`yaxis-${idx}`}
+                            yAxisId={idx}
+                            orientation={idx % 2 === 0 ? 'left' : 'right'}
+                            tick={{ fill: COLORS[idx % COLORS.length], fontSize: 10, fontWeight: 600 }} 
+                            label={{ 
+                              value: formatFieldName(yKey), 
+                              angle: idx % 2 === 0 ? -90 : 90, 
+                              position: idx % 2 === 0 ? 'insideLeft' : 'insideRight', 
+                              offset: 10,
+                              style: { textAnchor: 'middle', fill: COLORS[idx % COLORS.length], fontSize: 11, fontWeight: 700 }
+                            }}
+                          />
+                      ))}
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend iconType="circle" wrapperStyle={{ paddingTop: 20, fontSize: 11 }} />
+                      <Legend align="center" verticalAlign="top" iconType="circle" wrapperStyle={{ paddingBottom: 20, fontSize: 11 }} />
                     </>
                   );
-
-                  // Decide if we use built-in count or series or Y-axes
-                  const dataKeys = groupBy ? aggregated.series : (yAxes.length > 0 ? yAxes : ['count']);
 
                   if (chartType === 'Bar') {
                     return (
@@ -299,6 +327,7 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
                         {dataKeys.map((key, i) => (
                           <Bar 
                             key={key} 
+                            yAxisId={i}
                             dataKey={key} 
                             name={formatFieldName(key)}
                             fill={COLORS[i % COLORS.length]} 
@@ -318,6 +347,7 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
                         {dataKeys.map((key, i) => (
                           <Line 
                             key={key} 
+                            yAxisId={i}
                             type="monotone" 
                             dataKey={key} 
                             name={formatFieldName(key)}
@@ -339,6 +369,7 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
                         {dataKeys.map((key, i) => (
                           <Area 
                             key={key} 
+                            yAxisId={i}
                             type="monotone" 
                             dataKey={key} 
                             name={formatFieldName(key)}
@@ -346,7 +377,7 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
                             fill={COLORS[i % COLORS.length]} 
                             fillOpacity={0.15}
                             strokeWidth={2}
-                            stackId="1"
+                            stackId={groupBy ? 'a' : undefined}
                             style={{ cursor: 'pointer' }}
                           />
                         ))}
@@ -391,6 +422,12 @@ export default function ChartRenderer({ data, columns, total, onFilter }) {
                   { label: 'Total Volume', value: total.toLocaleString(), sub: 'All matches' },
                   { label: 'Sample Population', value: data.length.toLocaleString(), sub: 'Loaded rows' },
                   { label: 'Unique Groups', value: aggregated.data.length.toLocaleString(), sub: `On ${formatFieldName(activeX)}` },
+               ...(activeYs[0] ? [{
+                 label: `Max ${formatFieldName(activeYs[0])}`,
+                 value: Math.max(...data.map(d => Number(d[activeYs[0]] ?? 0))).toLocaleString(),
+                 color: 'var(--danger)',
+                 sub: 'Highest value in sample'
+               }] : []),
                 ].map((m, i) => (
                   <div key={i} style={{ padding: '12px 16px', background: 'var(--bg-secondary)', borderRadius: 10 }}>
                     <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4 }}>{m.label}</div>
